@@ -26,7 +26,7 @@ function AxisLabel({ text, position, color, width = 2.15 }: { text: string; posi
 
 function Controls() {
   const { camera, gl } = useThree();
-  useEffect(() => { const controls = new OrbitControls(camera, gl.domElement); controls.enableDamping = true; controls.dampingFactor = 0.06; controls.minDistance = 7; controls.maxDistance = 25; controls.maxPolarAngle = Math.PI * 0.87; const timer = setInterval(() => controls.update(), 16); return () => { clearInterval(timer); controls.dispose(); }; }, [camera, gl]);
+  useEffect(() => { const controls = new OrbitControls(camera, gl.domElement); controls.target.set(0, -0.45, 0); controls.enableDamping = true; controls.dampingFactor = 0.06; controls.minDistance = 7; controls.maxDistance = 25; controls.maxPolarAngle = Math.PI * 0.87; const timer = setInterval(() => controls.update(), 16); return () => { clearInterval(timer); controls.dispose(); }; }, [camera, gl]);
   return null;
 }
 
@@ -41,9 +41,9 @@ function Star({ paper, selected, onPick, onHover, motion }: { paper: Paper; sele
   useFrame(({ clock }) => { if (!mesh.current || !aura.current) return; const pulse = motion && paper.year >= 2025 ? 1 + Math.sin(clock.elapsedTime * 2.1 + position[0]) * 0.08 : 1; mesh.current.scale.setScalar(pulse); aura.current.scale.setScalar(pulse * (selected ? 1.6 : 1.25)); });
   const over = (event: ThreeEvent<PointerEvent>) => { event.stopPropagation(); document.body.style.cursor = "pointer"; onHover(paper); };
   return <group position={position}>
-    <mesh ref={aura}><sphereGeometry args={[radius * 2.1, 16, 16]} /><meshBasicMaterial color={methodColors[paper.method]} transparent opacity={selected ? 0.18 : 0.07} depthWrite={false} /></mesh>
+    <mesh ref={aura}><sphereGeometry args={[radius * 1.85, 16, 16]} /><meshBasicMaterial color={methodColors[paper.method]} transparent opacity={selected ? 0.19 : 0.045} depthWrite={false} /></mesh>
     <mesh ref={mesh} onClick={e => { e.stopPropagation(); onPick(paper); }} onPointerOver={over} onPointerOut={() => { document.body.style.cursor = "auto"; onHover(null); }}>
-      <sphereGeometry args={[radius, 20, 20]} /><meshStandardMaterial color={methodColors[paper.method]} emissive={methodColors[paper.method]} emissiveIntensity={selected ? 1.1 : 0.35 + paper.relevance * 0.35} roughness={0.16} metalness={0.18} />
+      <sphereGeometry args={[radius, 20, 20]} /><meshStandardMaterial color={methodColors[paper.method]} emissive={methodColors[paper.method]} emissiveIntensity={selected ? 0.7 : 0.12 + paper.relevance * 0.26} roughness={0.32} metalness={0.05} />
     </mesh>
   </group>;
 }
@@ -58,9 +58,9 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
     <mesh position={[0, -2.63, 2.7]}><boxGeometry args={[10.3, 0.028, 0.028]} /><meshBasicMaterial color="#70e1e1" /></mesh>
     <mesh position={[-5.15, 0, 2.7]}><boxGeometry args={[0.028, 5.26, 0.028]} /><meshBasicMaterial color="#e8bd7f" /></mesh>
     <mesh position={[-5.15, -2.63, 0]}><boxGeometry args={[0.028, 0.028, 5.4]} /><meshBasicMaterial color="#bcaaf9" /></mesh>
-    <AxisLabel text="X · 发表时间" position={[5.25, -2.65, 2.7]} color="#70e1e1" />
-    <AxisLabel text="Y · 医学模态" position={[-5.15, 3.1, 2.7]} color="#e8bd7f" />
-    <AxisLabel text="Z · 临床任务" position={[-5.15, -2.6, -3.1]} color="#bcaaf9" />
+    <AxisLabel text="X · 发表时间" position={[4.15, -3.58, 2.7]} color="#70e1e1" />
+    <AxisLabel text="Y · 医学模态" position={[-4.45, 3.05, 2.7]} color="#e8bd7f" />
+    <AxisLabel text="Z · 临床任务" position={[-4.3, -2.6, -3.1]} color="#bcaaf9" />
     {[2018, 2020, 2022, 2024, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2022) * 1.14, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
     {papers.map(p => <Star key={p.id} paper={p} selected={p.id === selectedId} onPick={onPick} onHover={onHover} motion={motion} />)}
   </group>;
@@ -69,8 +69,8 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
 export default function AtlasScene({ papers, selectedId, onPick, motion }: { papers: Paper[]; selectedId: string; onPick: (p: Paper) => void; motion: boolean }) {
   const [hovered, setHovered] = useState<Paper | null>(null);
   return <div className="scene-wrap" aria-label="三维论文时间地图">
-    <Canvas camera={{ position: [7, 5.8, 10], fov: 42, zoom: 1.1 }} dpr={[1, 1.6]} gl={{ antialias: true, alpha: true }}>
-      <ambientLight intensity={1.15} /><pointLight position={[0, 6, 3]} intensity={22} color="#87e7ed" /><pointLight position={[-5, 3, -4]} intensity={12} color="#adb5fd" />
+    <Canvas camera={{ position: [7, 6.4, 10], fov: 42, zoom: 1.05 }} dpr={[1, 1.6]} gl={{ antialias: true, alpha: true }}>
+      <ambientLight intensity={0.82} /><pointLight position={[0, 6, 3]} intensity={4.5} color="#87e7ed" /><pointLight position={[-5, 3, -4]} intensity={2.5} color="#adb5fd" />
       <Plot papers={papers} selectedId={selectedId} onPick={onPick} onHover={setHovered} motion={motion} /><Controls />
     </Canvas>
     {hovered && <div className="scene-tooltip"><span>{hovered.year} · {hovered.paperType}</span><strong>{hovered.title}</strong></div>}
