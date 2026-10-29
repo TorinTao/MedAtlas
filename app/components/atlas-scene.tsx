@@ -3,12 +3,24 @@
 import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { CanvasTexture, Group, Mesh, SRGBColorSpace } from "three";
+import { BufferGeometry, CanvasTexture, Group, Line as ThreeLine, LineBasicMaterial, Mesh, SRGBColorSpace, Vector3 } from "three";
 import type { Paper } from "../../lib/types";
 
 const modalities = ["影像+文本", "影像", "病历文本", "多模态"];
 const tasks = ["诊断决策", "报告生成", "医学问答", "风险预测", "基础模型"];
 export const methodColors: Record<string, string> = { "视觉语言模型": "#7de7e5", "Agent 协作": "#dfb779", "检索增强": "#b7a1fa", "表征学习": "#8ab7ed", "其他方法": "#91a8bc" };
+
+function paperPosition(paper: Paper): [number, number, number] {
+  const hash = paper.id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 0) >>> 0;
+  const jitter = (shift: number) => ((hash >> shift) % 100) / 100 - 0.5;
+  return [(Math.max(2018, Math.min(2026, paper.year)) - 2022) * 1.14, (modalities.indexOf(paper.modality) - 1.5) * 1.28 + jitter(3) * 0.22, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05 + jitter(8) * 0.28];
+}
+
+function Connection({ from, to, color }: { from: [number, number, number]; to: [number, number, number]; color: string }) {
+  const line = useMemo(() => new ThreeLine(new BufferGeometry().setFromPoints([new Vector3(...from), new Vector3(...to)]), new LineBasicMaterial({ color, transparent: true, opacity: 0.29, depthWrite: false })), [from[0], from[1], from[2], to[0], to[1], to[2], color]);
+  useEffect(() => () => { line.geometry.dispose(); (line.material as LineBasicMaterial).dispose(); }, [line]);
+  return <primitive object={line} />;
+}
 
 function AxisLabel({ text, position, color, width = 2.15 }: { text: string; position: [number, number, number]; color: string; width?: number }) {
   const texture = useMemo(() => {
@@ -32,11 +44,7 @@ function Controls() {
 
 function Star({ paper, selected, onPick, onHover, motion }: { paper: Paper; selected: boolean; onPick: (p: Paper) => void; onHover: (p: Paper | null) => void; motion: boolean }) {
   const mesh = useRef<Mesh>(null); const aura = useRef<Mesh>(null);
-  const position = useMemo(() => {
-    const hash = paper.id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 0) >>> 0;
-    const jitter = (shift: number) => ((hash >> shift) % 100) / 100 - 0.5;
-    return [(Math.max(2018, Math.min(2026, paper.year)) - 2022) * 1.14, (modalities.indexOf(paper.modality) - 1.5) * 1.28 + jitter(3) * 0.22, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05 + jitter(8) * 0.28] as [number, number, number];
-  }, [paper]);
+  const position = useMemo(() => paperPosition(paper), [paper]);
   const radius = 0.115 + Math.min(1, paper.citationPercentile / 100) * 0.16 + (selected ? 0.075 : 0);
   useFrame(({ clock }) => { if (!mesh.current || !aura.current) return; const pulse = motion && paper.year >= 2025 ? 1 + Math.sin(clock.elapsedTime * 2.1 + position[0]) * 0.08 : 1; mesh.current.scale.setScalar(pulse); aura.current.scale.setScalar(pulse * (selected ? 1.6 : 1.25)); });
   const over = (event: ThreeEvent<PointerEvent>) => { event.stopPropagation(); document.body.style.cursor = "pointer"; onHover(paper); };
@@ -50,6 +58,8 @@ function Star({ paper, selected, onPick, onHover, motion }: { paper: Paper; sele
 
 function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]; selectedId: string; onPick: (p: Paper) => void; onHover: (p: Paper | null) => void; motion: boolean }) {
   const group = useRef<Group>(null);
+  const selected = papers.find(p => p.id === selectedId);
+  const related = selected ? papers.filter(p => p.id !== selectedId && (p.clinicalTask === selected.clinicalTask || p.method === selected.method)).slice(0, 10) : [];
   useFrame((_, dt) => { if (motion && group.current) group.current.rotation.y += dt * 0.018; });
   return <group ref={group}>
     <gridHelper args={[12, 12, "#355365", "#193342"]} position={[0, -3.1, 0]} />
@@ -62,6 +72,7 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
     <AxisLabel text="Y · 医学模态" position={[-4.45, 3.05, 2.7]} color="#e8bd7f" />
     <AxisLabel text="Z · 临床任务" position={[-4.3, -2.6, -3.1]} color="#bcaaf9" />
     {[2018, 2020, 2022, 2024, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2022) * 1.14, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
+    {selected && related.map(p => <Connection key={`${selected.id}-${p.id}`} from={paperPosition(selected)} to={paperPosition(p)} color={methodColors[p.method]} />)}
     {papers.map(p => <Star key={p.id} paper={p} selected={p.id === selectedId} onPick={onPick} onHover={onHover} motion={motion} />)}
   </group>;
 }
