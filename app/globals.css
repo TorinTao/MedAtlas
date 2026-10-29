@@ -118,3 +118,4 @@
 .library-meta .read-badge{display:inline-flex;align-items:center;gap:3px;color:#177e6b;font-weight:700}
 .map-empty-overlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;padding:13px 17px;border:1px solid #5b938c;border-radius:8px;background:#102f39ed;color:#d9f1e9;font-size:11px;text-align:center;line-height:1.6;pointer-events:none;width:min(310px,80%)}
 .read-mark:disabled,.legend button.read-filter:disabled{opacity:.55;cursor:wait}
+.legend .legend-pair{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto}
