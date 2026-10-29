@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
 import { safePublicUrl } from "../lib/url";
+import { coreTimeline, relatedPapers } from "../lib/relations";
 
 test("method legend recognizes common medical Agent and VLM terminology", () => {
   assert.equal(classify("AgentClinic: a benchmark for tool-using clinical AI agents").method, "Agent 协作");
@@ -45,4 +46,18 @@ test("arXiv metadata links are upgraded to HTTPS before Web Fetch", () => {
   const paper = normalizePaper({ id: "arxiv-2", title: "Clinical Image Agent", url: "http://arxiv.org/abs/2401.00002", oaUrl: "http://arxiv.org/html/2401.00002" });
   assert.equal(paper.url, "https://arxiv.org/abs/2401.00002");
   assert.equal(paper.oaUrl, "https://arxiv.org/html/2401.00002");
+});
+
+test("related-work lines require evidence beyond a shared category", () => {
+  const selected = normalizePaper({ id: "a", title: "Radiology Report Generation with Knowledge Graphs", year: 2023, citedByCount: 30 });
+  const related = normalizePaper({ id: "b", title: "Knowledge Graphs for Radiology Report Generation", year: 2024, citedByCount: 25 });
+  const unrelated = normalizePaper({ id: "c", title: "Clinical Image Classification with Neural Networks", year: 2024, citedByCount: 20 });
+  assert.deepEqual(relatedPapers([selected, related, unrelated], selected).map(item => item.paper.id), ["b"]);
+});
+
+test("core timeline uses citation impact and chronological order", () => {
+  const early = normalizePaper({ id: "early", title: "Early work", year: 2020, citedByCount: 120 });
+  const late = normalizePaper({ id: "late", title: "Later work", year: 2024, citedByCount: 220 });
+  const minor = normalizePaper({ id: "minor", title: "Minor work", year: 2022, citedByCount: 2 });
+  assert.deepEqual(coreTimeline([late, minor, early]).map(paper => paper.id), ["early", "late"]);
 });

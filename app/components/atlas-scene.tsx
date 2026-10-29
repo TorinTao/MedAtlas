@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { BufferGeometry, CanvasTexture, Group, Line as ThreeLine, LineBasicMaterial, Sprite, SRGBColorSpace, Vector3 } from "three";
 import type { Method, Paper } from "../../lib/types";
+import { coreTimeline, relatedPapers } from "../../lib/relations";
 
 const modalities = ["影像+文本", "影像", "病历文本", "多模态"];
 const tasks = ["诊断决策", "报告生成", "医学问答", "风险预测", "基础模型"];
@@ -60,8 +61,8 @@ function pointTexture(): CanvasTexture {
   const texture = new CanvasTexture(canvas); texture.colorSpace = SRGBColorSpace; return texture;
 }
 
-function Connection({ from, to, color }: { from: [number, number, number]; to: [number, number, number]; color: string }) {
-  const line = useMemo(() => new ThreeLine(new BufferGeometry().setFromPoints([new Vector3(...from), new Vector3(...to)]), new LineBasicMaterial({ color, transparent: true, opacity: 0.29, depthWrite: false })), [from[0], from[1], from[2], to[0], to[1], to[2], color]);
+function Connection({ from, to, color, opacity }: { from: [number, number, number]; to: [number, number, number]; color: string; opacity: number }) {
+  const line = useMemo(() => new ThreeLine(new BufferGeometry().setFromPoints([new Vector3(...from), new Vector3(...to)]), new LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false, depthTest: false })), [from[0], from[1], from[2], to[0], to[1], to[2], color, opacity]);
   useEffect(() => () => { line.geometry.dispose(); (line.material as LineBasicMaterial).dispose(); }, [line]);
   return <primitive object={line} />;
 }
@@ -86,11 +87,11 @@ function Controls() {
   return null;
 }
 
-function Star({ paper, position, texture, selected, onPick, onHover, motion }: { paper: Paper; position: [number, number, number]; texture: CanvasTexture; selected: boolean; onPick: (p: Paper) => void; onHover: (p: Paper | null) => void; motion: boolean }) {
+function Star({ paper, position, texture, selected, core, onPick, onHover, motion }: { paper: Paper; position: [number, number, number]; texture: CanvasTexture; selected: boolean; core: boolean; onPick: (p: Paper) => void; onHover: (p: Paper | null) => void; motion: boolean }) {
   const group = useRef<Group>(null); const dot = useRef<Sprite>(null);
   const initial = useRef(position);
   const target = useMemo(() => new Vector3(...position), [position]);
-  const size = 0.25 + Math.min(1, paper.citationPercentile / 100) * 0.12 + (selected ? 0.08 : 0);
+  const size = 0.25 + Math.min(1, paper.citationPercentile / 100) * 0.12 + (core ? 0.025 : 0) + (selected ? 0.08 : 0);
   useFrame(({ clock }, dt) => {
     if (group.current) group.current.position.lerp(target, Math.min(1, dt * 3.2));
     if (dot.current) {
@@ -101,7 +102,7 @@ function Star({ paper, position, texture, selected, onPick, onHover, motion }: {
   const over = (event: ThreeEvent<PointerEvent>) => { event.stopPropagation(); document.body.style.cursor = "pointer"; onHover(paper); };
   return <group ref={group} position={initial.current}>
     <sprite ref={dot} scale={[size, size, 1]} onClick={e => { e.stopPropagation(); onPick(paper); }} onPointerOver={over} onPointerOut={() => { document.body.style.cursor = "auto"; onHover(null); }}>
-      <spriteMaterial map={texture} color={methodColors[paper.method]} transparent opacity={selected ? 1 : 0.75 + paper.relevance * 0.22} depthWrite={false} />
+      <spriteMaterial map={texture} color={methodColors[paper.method]} transparent opacity={selected ? 1 : 0.75 + paper.relevance * 0.22} depthWrite={false} depthTest={false} />
     </sprite>
   </group>;
 }
@@ -112,12 +113,14 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
   const texture = useMemo(() => pointTexture(), []);
   useEffect(() => () => texture.dispose(), [texture]);
   const selected = papers.find(p => p.id === selectedId);
-  const related = selected ? papers.filter(p => p.id !== selectedId && (p.clinicalTask === selected.clinicalTask || p.method === selected.method)).slice(0, 10) : [];
+  const related = selected ? relatedPapers(papers, selected, 8) : [];
+  const core = coreTimeline(papers);
+  const coreIds = new Set(core.map(paper => paper.id));
   useFrame((_, dt) => { if (motion && group.current) group.current.rotation.y += dt * 0.018; });
   return <group ref={group}>
     <gridHelper args={[12, 12, "#243d50", "#122b3a"]} position={[0, -3.1, 0]} />
-    <mesh position={[0, -3.05, 0]}><boxGeometry args={[10.3, 0.018, 5.3]} /><meshBasicMaterial color="#264656" transparent opacity={0.15} /></mesh>
-    {[-4.56, -2.28, 0, 2.28, 4.56].map((x, i) => <mesh key={i} position={[x, 0, 0]}><boxGeometry args={[0.008, 6, 5.2]} /><meshBasicMaterial color="#244659" transparent opacity={i === 2 ? 0.24 : 0.10} /></mesh>)}
+    <mesh position={[0, -3.05, 0]}><boxGeometry args={[10.3, 0.018, 5.3]} /><meshBasicMaterial color="#264656" transparent opacity={0.15} depthWrite={false} /></mesh>
+    {[-4.56, -2.28, 0, 2.28, 4.56].map((x, i) => <mesh key={i} position={[x, 0, 0]}><boxGeometry args={[0.008, 6, 5.2]} /><meshBasicMaterial color="#244659" transparent opacity={i === 2 ? 0.24 : 0.10} depthWrite={false} /></mesh>)}
     <mesh position={[0, -2.63, 2.7]}><boxGeometry args={[10.3, 0.028, 0.028]} /><meshBasicMaterial color="#70e1e1" /></mesh>
     <mesh position={[-5.15, 0, 2.7]}><boxGeometry args={[0.028, 5.26, 0.028]} /><meshBasicMaterial color="#e8bd7f" /></mesh>
     <mesh position={[-5.15, -2.63, 0]}><boxGeometry args={[0.028, 0.028, 5.4]} /><meshBasicMaterial color="#bcaaf9" /></mesh>
@@ -125,8 +128,9 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
     <AxisLabel text="Y · 医学模态" position={[-4.45, 3.05, 2.7]} color="#e8bd7f" />
     <AxisLabel text="Z · 临床任务" position={[-4.3, -2.6, -3.1]} color="#bcaaf9" />
     {[2018, 2020, 2022, 2024, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2022) * 1.14, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
-    {selected && related.map(p => <Connection key={`${selected.id}-${p.id}`} from={positions.get(selected.id) || paperPosition(selected)} to={positions.get(p.id) || paperPosition(p)} color={methodColors[p.method]} />)}
-    {papers.map(p => <Star key={p.id} paper={p} position={positions.get(p.id) || paperPosition(p)} texture={texture} selected={p.id === selectedId} onPick={onPick} onHover={onHover} motion={motion} />)}
+    {core.slice(1).map((paper, index) => <Connection key={`core-${paper.id}`} from={positions.get(core[index].id) || paperPosition(core[index])} to={positions.get(paper.id) || paperPosition(paper)} color="#f2d796" opacity={0.32} />)}
+    {selected && related.map(({ paper }) => <Connection key={`related-${selected.id}-${paper.id}`} from={positions.get(selected.id) || paperPosition(selected)} to={positions.get(paper.id) || paperPosition(paper)} color="#74e3db" opacity={0.62} />)}
+    {papers.map(p => <Star key={p.id} paper={p} position={positions.get(p.id) || paperPosition(p)} texture={texture} selected={p.id === selectedId} core={coreIds.has(p.id)} onPick={onPick} onHover={onHover} motion={motion} />)}
   </group>;
 }
 
