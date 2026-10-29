@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { papers as paperTable } from "../db/schema";
-import { dedupePapers, publicPaperUrl, seedPapers } from "./papers";
+import { classify, dedupePapers, publicPaperUrl, seedPapers } from "./papers";
 import type { Paper } from "./types";
 
 export async function allPapers(): Promise<Paper[]> {
@@ -33,7 +33,7 @@ export async function putPapers(items: Paper[]) {
   }
 }
 
-function securePaperUrls(paper: Paper): Paper { return { ...paper, url: publicPaperUrl(paper.url), oaUrl: publicPaperUrl(paper.oaUrl) }; }
+function securePaperUrls(paper: Paper): Paper { return { ...paper, url: publicPaperUrl(paper.url), oaUrl: publicPaperUrl(paper.oaUrl), method: classify(paper.title, paper.abstract).method }; }
 
 export async function takeQuota(request: Request, action: string, limit: number, userId?: string): Promise<boolean> {
   if (!env.DB) return false;

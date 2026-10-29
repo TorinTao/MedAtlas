@@ -11,7 +11,12 @@ const tasks = ["诊断决策", "报告生成", "医学问答", "风险预测", "
 export const methodColors: Record<string, string> = { "视觉语言模型": "#34ebd1", "Agent 协作": "#ffb443", "检索增强": "#ad77ff", "表征学习": "#56a8ff", "其他方法": "#ff718d" };
 
 function paperPosition(paper: Paper): [number, number, number] {
-  return [(Math.max(2018, Math.min(2026, paper.year)) - 2022) * 1.14, (modalities.indexOf(paper.modality) - 1.5) * 1.28, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05];
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const date = paper.publishedAt.toLowerCase();
+  const numericMonth = date.match(/^\d{4}-(\d{2})/);
+  const month = numericMonth ? Number(numericMonth[1]) : monthNames.findIndex(name => date.includes(name)) + 1;
+  const fraction = month >= 1 && month <= 12 ? (month - 6.5) / 12 : 0;
+  return [(Math.max(2018, Math.min(2026, paper.year)) - 2022 + fraction) * 1.14, (modalities.indexOf(paper.modality) - 1.5) * 1.28, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05];
 }
 
 function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
@@ -23,7 +28,7 @@ function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
   const nodes = [...groups.values()].flatMap(group => group.sort((a, b) => a.id.localeCompare(b.id)).map((paper, index) => {
     const base = paperPosition(paper);
     const angle = index * 2.399963 + (paper.id.length % 7) * 0.35;
-    const spread = 0.10 + Math.sqrt(index) * 0.105;
+    const spread = 0.11 + Math.sqrt(index) * 0.13;
     return { paper, base, position: [base[0] + Math.sin(angle * 0.73) * spread * 0.7, base[1] + Math.cos(angle) * spread, base[2] + Math.sin(angle) * spread] };
   }));
   // Relax overlaps while keeping every point close to its semantic coordinates.
@@ -39,7 +44,7 @@ function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
       b.position[0] -= dx * force; b.position[1] -= dy * force; b.position[2] -= dz * force;
     }
     for (const node of nodes) for (let axis = 0; axis < 3; axis++) {
-      const range = [0.43, 0.46, 0.42][axis];
+      const range = [0.47, 0.55, 0.51][axis];
       node.position[axis] = Math.max(node.base[axis] - range, Math.min(node.base[axis] + range, node.position[axis]));
     }
   }

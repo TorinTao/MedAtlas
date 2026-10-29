@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
+import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
+
+test("method legend recognizes common medical Agent and VLM terminology", () => {
+  assert.equal(classify("AgentClinic: a benchmark for tool-using clinical AI agents").method, "Agent 协作");
+  assert.equal(classify("A VLM-Based Automatic Radiological Reporting System").method, "视觉语言模型");
+  assert.equal(classify("Retrieval-Augmented Clinical Decision Support").method, "检索增强");
+});
 import { safePublicUrl } from "../lib/url";
 
 test("preprint and published paper share one record with both identifiers", () => {

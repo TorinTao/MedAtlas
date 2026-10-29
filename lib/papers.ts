@@ -11,7 +11,10 @@ export function classify(title: string, abstract = ""): { paperType: PaperType; 
   const text = /text|report|language|clinical note|record/.test(t);
   const modality: Modality = image && text ? "影像+文本" : image ? "影像" : text ? "病历文本" : "多模态";
   const clinicalTask: ClinicalTask = /report generat|caption/.test(t) ? "报告生成" : /question answer|vqa|dialogue/.test(t) ? "医学问答" : /risk|predict|prognos/.test(t) ? "风险预测" : /foundation model|pretrain|representation|contrastive/.test(t) ? "基础模型" : "诊断决策";
-  const method: Method = /multi.agent|agentic|agent collaboration|agent system/.test(t) ? "Agent 协作" : /retriev|rag/.test(t) ? "检索增强" : /contrastive|self.supervised|representation/.test(t) ? "表征学习" : /vision.language|visual.language|multimodal language|llava/.test(t) ? "视觉语言模型" : "其他方法";
+  const method: Method = /\bagents?\b|agentic|copilot|tool.using|orchestrat/.test(t) ? "Agent 协作"
+    : /retriev|\brag\b|knowledge.graph|knowledge.assist/.test(t) ? "检索增强"
+    : /\bmllm\b|\blvlm\b|\bvlm\b|vision.language|visual.language|multimodal language|llava|llm.vision|language.guided|visual question answer|report generat|multimodal.*(?:llm|large language model)/.test(t) ? "视觉语言模型"
+    : /contrastive|self.supervised|representation|foundation model|pretrain|segmentation/.test(t) ? "表征学习" : "其他方法";
   return { paperType, modality, clinicalTask, method };
 }
 
