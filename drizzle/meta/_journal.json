@@ -15,6 +15,13 @@
       "when": 1793284225294,
       "tag": "0001_square_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793288023300,
+      "tag": "0002_military_zzzax",
+      "breakpoints": true
     }
   ]
 }

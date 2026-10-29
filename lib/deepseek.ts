@@ -1,9 +1,9 @@
-import { runtime } from "./runtime";
+import { resolveDeepSeekKey } from "./user-api-key";
 
 type DeepSeekOptions = { thinking?: boolean; reasoningEffort?: "low" | "high" | "max"; maxTokens?: number; timeoutMs?: number };
 
 export async function deepseekJson(system: string, user: string, options: DeepSeekOptions = {}): Promise<unknown> {
-  const key = runtime("DEEPSEEK_API_KEY");
+  const key = await resolveDeepSeekKey();
   if (!key) throw new Error("DeepSeek API 尚未配置");
   const response = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },

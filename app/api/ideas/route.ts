@@ -7,7 +7,7 @@ import { makeIdea, makeResearchBrief, type ResearchBrief } from "../../../lib/id
 import { dedupePapers } from "../../../lib/papers";
 import { allPapers, findPaper, jsonError, putPapers, takeQuota } from "../../../lib/store";
 import type { IdeasResearch, Paper } from "../../../lib/types";
-import { runtime } from "../../../lib/runtime";
+import { hasDeepSeekKey } from "../../../lib/user-api-key";
 
 type Prepared = { query: string; paperIds: string[]; brief: ResearchBrief; owner: string; sources: string[]; warnings: string[]; scannedCount: number; preparedAt: string; expiresAt: string };
 async function ownerOf(request: Request, userId?: string) {
@@ -38,7 +38,7 @@ function selectEvidence(query: string, corpus: Paper[], preferredIds: string[]):
 export async function POST(request: Request) {
   const body: any = await request.json().catch(() => ({}));
   const action = body.action === "draw" ? "draw" : "prepare";
-  if (!runtime("DEEPSEEK_API_KEY")) return jsonError("DeepSeek API 尚未配置，请联系站点维护者", 503);
+  if (!await hasDeepSeekKey()) return jsonError("DeepSeek API 尚未配置，请在 AI 设置中添加个人 Key", 503);
   if (!env.DB) return jsonError("文献数据库不可用", 503);
   const user = await getChatGPTUser(), owner = await ownerOf(request, user?.userId);
   if (action === "prepare") {

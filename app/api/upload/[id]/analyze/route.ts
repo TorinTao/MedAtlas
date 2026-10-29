@@ -4,7 +4,7 @@ import { getChatGPTUser } from "../../../../chatgpt-auth";
 import { getDb } from "../../../../../db";
 import { uploads } from "../../../../../db/schema";
 import { deepseekJson } from "../../../../../lib/deepseek";
-import { runtime } from "../../../../../lib/runtime";
+import { hasDeepSeekKey } from "../../../../../lib/user-api-key";
 import { jsonError, takeQuota } from "../../../../../lib/store";
 
 async function findOwned(id: string) {
@@ -21,7 +21,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const row = await findOwned((await context.params).id); if (!row || !env.BUCKET) return jsonError("文件不存在或无权访问", 404);
-  if (!runtime("DEEPSEEK_API_KEY")) return jsonError("DeepSeek API 尚未配置", 503);
+  if (!await hasDeepSeekKey()) return jsonError("DeepSeek API 尚未配置，请在 AI 设置中添加个人 Key", 503);
   const cached = await env.BUCKET.get(`${row.storageKey}.analysis.json`); if (cached) return Response.json({ analysis: await cached.json(), cached: true });
   if (!await takeQuota(request, "pdf_read", 5, row.userId)) return jsonError("今日 PDF 精读次数已用完", 429);
   const object = await env.BUCKET.get(`${row.storageKey}.txt`); if (!object) return jsonError("PDF 解析文本不存在", 404);
