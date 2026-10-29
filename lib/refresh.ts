@@ -24,7 +24,7 @@ export async function refreshLiterature() {
   const db = getDb();
   const id = `daily:${new Date().toISOString().slice(0, 10)}`;
   const existing = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1);
-  const requiredSources = ["PubMed", "arXiv"];
+  const requiredSources = ["OpenAlex", "PubMed", "arXiv"];
   if (existing[0]?.status === "done") {
     const oldSources: string[] = JSON.parse(existing[0].detail || "{}").sources || [];
     if (requiredSources.every(source => oldSources.includes(source))) return { status: "already_done", detail: existing[0].detail };
@@ -48,7 +48,7 @@ export async function refreshLiterature() {
   const visibleCount = (await allPapers()).length;
   const sources = [...new Set(core.flatMap(r => r.sources).concat(depth.flatMap(r => [r.openalex.status === "fulfilled" ? "OpenAlex" : "", r.pubmed.status === "fulfilled" ? "PubMed" : ""]).filter(Boolean)))];
   const errors = core.flatMap(r => r.errors).concat(depth.flatMap(r => [r.openalex.status === "rejected" ? `OpenAlex ${r.query}: ${r.openalex.reason?.message || "请求失败"}` : "", r.pubmed.status === "rejected" ? `PubMed ${r.query}: ${r.pubmed.reason?.message || "请求失败"}` : ""].filter(Boolean)));
-  const status = requiredSources.every(source => sources.includes(source)) && visibleCount >= 200 ? "done" : "partial";
+  const status = requiredSources.every(source => sources.includes(source)) && errors.length === 0 && visibleCount >= 200 ? "done" : "partial";
   const detail = JSON.stringify({ fetched: papers.length, visibleCount, target: "200–500", sources, errors });
   await db.insert(jobs).values({ id, status, updatedAt: new Date().toISOString(), detail }).onConflictDoUpdate({ target: jobs.id, set: { status, updatedAt: new Date().toISOString(), detail } });
   return { status, count: visibleCount, fetched: papers.length, detail };

@@ -1,5 +1,4 @@
-import { collectPapers } from "../../../lib/collect";
-import { dedupePapers } from "../../../lib/papers";
+import { collectPapers, englishQuery } from "../../../lib/collect";
 import { allPapers, jsonError, putPapers, takeQuota } from "../../../lib/store";
 
 export async function POST(request: Request) {
@@ -9,7 +8,11 @@ export async function POST(request: Request) {
   const result = await collectPapers(query);
   if (!result.papers.length) return jsonError(`暂未检索到论文。${result.errors.join("；")}`, 502);
   try { await putPapers(result.papers); } catch { /* return live results even when storage is temporarily unavailable */ }
-  const all = await allPapers();
-  const papers = dedupePapers([...result.papers, ...all.filter(p => p.relevance > 0.5)]).slice(0, 60);
-  return Response.json({ query, papers, sources: result.sources, warnings: result.errors, fetchedAt: new Date().toISOString() });
+  const terms = [...new Set((englishQuery(query).toLowerCase().match(/[a-z0-9]+/g) || []).filter(term => term.length > 2))];
+  const papers = (await allPapers()).map(paper => {
+    const text = `${paper.title} ${paper.abstract}`.toLowerCase();
+    const matched = terms.filter(term => text.includes(term)).length;
+    return { ...paper, relevance: Math.min(1, 0.18 + 0.82 * matched / Math.max(terms.length, 1)) };
+  });
+  return Response.json({ query, papers, matchingCount: result.papers.length, sources: result.sources, warnings: result.errors, fetchedAt: new Date().toISOString() });
 }

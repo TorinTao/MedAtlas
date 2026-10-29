@@ -5,7 +5,18 @@ import { runtime } from "./runtime";
 const NOW = () => new Date().toISOString();
 const xmlText = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
 const tag = (s: string, name: string) => xmlText((s.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, "i")) || [])[1] || "");
-async function getJson(url: string): Promise<any> { const r = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12000) }); if (!r.ok) throw new Error(`Source HTTP ${r.status}`); return r.json(); }
+async function getJson(url: string): Promise<any> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
+    if (response.status === 429 && attempt === 0 && response.headers.get("X-RateLimit-Remaining") !== "0") {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      continue;
+    }
+    if (!response.ok) throw new Error(`Source HTTP ${response.status}`);
+    return response.json();
+  }
+  throw new Error("Source HTTP 429");
+}
 
 export function englishQuery(input: string) {
   const dictionary: Record<string, string> = { "医学影像": "medical imaging", "病历": "clinical notes", "报告": "radiology report", "智能体": "agent", "多模态": "multimodal", "诊断": "diagnosis", "临床": "clinical", "病理": "pathology", "胸片": "chest x-ray", "问答": "question answering" };
@@ -32,11 +43,23 @@ export async function searchPubMed(query: string, limit = 8): Promise<Paper[]> {
   const ids = await getJson(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${new URLSearchParams({ db: "pubmed", term, retmax: String(limit), retmode: "json", sort: "pub date" })}`);
   const list: string[] = ids.esearchresult?.idlist || []; if (!list.length) return [];
   const data = await getJson(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${new URLSearchParams({ db: "pubmed", id: list.join(","), retmode: "json" })}`);
+  const abstracts = new Map<string, string>();
+  try {
+    const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?${new URLSearchParams({ db: "pubmed", id: list.join(","), retmode: "xml" })}`, { signal: AbortSignal.timeout(15000) });
+    if (response.ok) {
+      const xml = await response.text();
+      for (const match of xml.matchAll(/<PubmedArticle>([\s\S]*?)<\/PubmedArticle>/g)) {
+        const id = tag(match[1], "PMID");
+        const abstract = [...match[1].matchAll(/<AbstractText(?:\s[^>]*)?>([\s\S]*?)<\/AbstractText>/gi)].map(part => xmlText(part[1])).filter(Boolean).join(" ");
+        if (id && abstract) abstracts.set(id, abstract);
+      }
+    }
+  } catch { /* PubMed metadata remains useful if an abstract is temporarily unavailable. */ }
   return list.map(id => {
     const w = data.result?.[id]; if (!w) return null;
     const doi = (w.articleids || []).find((v: any) => v.idtype === "doi")?.value || "";
     const pub = String(w.pubdate || "");
-    return normalizePaper({ id: `pmid-${id}`, title: xmlText(w.title || ""), abstract: "", year: Number(pub.slice(0, 4)) || 0, publishedAt: pub, doi, pmid: id, source: "PubMed", paperType: w.pubtype?.some((v: string) => /review/i.test(v)) ? "review" : "article", url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, authors: (w.authors || []).slice(0, 12).map((a: any) => ({ name: a.name || "" })), institutions: [], fetchedAt: NOW() });
+    return normalizePaper({ id: `pmid-${id}`, title: xmlText(w.title || ""), abstract: abstracts.get(id) || "", year: Number(pub.slice(0, 4)) || 0, publishedAt: pub, doi, pmid: id, source: "PubMed", paperType: w.pubtype?.some((v: string) => /review/i.test(v)) ? "review" : "article", url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`, authors: (w.authors || []).slice(0, 12).map((a: any) => ({ name: a.name || "" })), institutions: [], fetchedAt: NOW() });
   }).filter(Boolean) as Paper[];
 }
 

@@ -1,4 +1,5 @@
 import seed from "../data/seed-papers.json";
+import pubmedBackfill from "../data/pubmed-backfill.json";
 import type { ClinicalTask, Method, Modality, Paper, PaperType } from "./types";
 
 type RawPaper = Omit<Partial<Paper>, "paperType"> & { id: string; title: string; paperType?: string };
@@ -35,7 +36,7 @@ export function normalizePaper(raw: RawPaper): Paper {
   return {
     id: raw.id, title: raw.title, abstract: raw.abstract || "", year: raw.year || 0,
     publishedAt: raw.publishedAt || "", doi: cleanDoi(raw.doi || ""), pmid: raw.pmid || "", arxivId: raw.arxivId || "",
-    source: raw.source || "", paperType: raw.paperType === "preprint" ? "预印本" : c.paperType,
+    source: raw.source || "", paperType: raw.paperType === "preprint" ? "预印本" : /review/i.test(raw.paperType || "") ? "综述" : c.paperType,
     url: publicPaperUrl(raw.url || ""), oaUrl: publicPaperUrl(raw.oaUrl || ""), citedByCount: raw.citedByCount || 0,
     citationPercentile: Math.min(100, Math.max(0, raw.citationPercentile || 0)), authors: raw.authors || [], institutions: raw.institutions || [], repoUrl: raw.repoUrl || "",
     fetchedAt: raw.fetchedAt || new Date().toISOString(), modality: c.modality, clinicalTask: c.clinicalTask, method: c.method,
@@ -75,4 +76,7 @@ export function dedupePapers(items: Paper[]): Paper[] {
   return [...map.values()];
 }
 
-export const seedPapers: Paper[] = dedupePapers((seed as RawPaper[]).map(p => normalizePaper(p))).filter(p => p.year >= 2018 && /medical|clinical|radiolog|x-ray|chest|vision|biomed|multimodal|patholog/i.test(p.title));
+export const seedPapers: Paper[] = dedupePapers([
+  ...(seed as RawPaper[]).map(normalizePaper).filter(p => p.year >= 2018 && /medical|clinical|radiolog|x-ray|chest|vision|biomed|multimodal|patholog/i.test(p.title)),
+  ...(pubmedBackfill as RawPaper[]).map(normalizePaper),
+]);
