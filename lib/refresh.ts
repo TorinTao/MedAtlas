@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { jobs } from "../db/schema";
-import { collectPapers, searchOpenAlex } from "./collect";
+import { collectPapers, searchOpenAlex, searchPubMed } from "./collect";
 import { dedupePapers } from "./papers";
 import { allPapers, putPapers } from "./store";
 
@@ -24,20 +24,30 @@ export async function refreshLiterature() {
   const db = getDb();
   const id = `daily:${new Date().toISOString().slice(0, 10)}`;
   const existing = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1);
-  const requiredSources = ["PubMed", "arXiv", "OpenAlex"];
+  const requiredSources = ["PubMed", "arXiv"];
   if (existing[0]?.status === "done") {
     const oldSources: string[] = JSON.parse(existing[0].detail || "{}").sources || [];
     if (requiredSources.every(source => oldSources.includes(source))) return { status: "already_done", detail: existing[0].detail };
   }
-  const core = await Promise.all(CORE_QUERIES.map(query => collectPapers(query, "corpus")));
-  const depth = await Promise.allSettled(DEPTH_QUERIES.map(query => searchOpenAlex(query, 50)));
-  const depthPapers = depth.flatMap(result => result.status === "fulfilled" ? result.value : []);
+  const core = [];
+  const depth = [];
+  // PubMed's unauthenticated E-utilities limit is strict; pace the batches.
+  for (const query of CORE_QUERIES) {
+    core.push(await collectPapers(query, "corpus"));
+    await new Promise(resolve => setTimeout(resolve, 1100));
+  }
+  for (const query of DEPTH_QUERIES) {
+    const [openalex, pubmed] = await Promise.allSettled([searchOpenAlex(query, 50), searchPubMed(query, 40)]);
+    depth.push({ query, openalex, pubmed });
+    await new Promise(resolve => setTimeout(resolve, 1100));
+  }
+  const depthPapers = depth.flatMap(r => [r.openalex, r.pubmed].flatMap(result => result.status === "fulfilled" ? result.value : []));
   const papers = dedupePapers([...core.flatMap(r => r.papers), ...depthPapers]);
   if (!papers.length) throw new Error("来源暂不可用");
   await putPapers(papers);
   const visibleCount = (await allPapers()).length;
-  const sources = [...new Set(core.flatMap(r => r.sources).concat(depthPapers.length ? ["OpenAlex"] : []))];
-  const errors = core.flatMap(r => r.errors).concat(depth.flatMap((r, i) => r.status === "rejected" ? [`OpenAlex ${DEPTH_QUERIES[i]}: ${r.reason?.message || "请求失败"}`] : []));
+  const sources = [...new Set(core.flatMap(r => r.sources).concat(depth.flatMap(r => [r.openalex.status === "fulfilled" ? "OpenAlex" : "", r.pubmed.status === "fulfilled" ? "PubMed" : ""]).filter(Boolean)))];
+  const errors = core.flatMap(r => r.errors).concat(depth.flatMap(r => [r.openalex.status === "rejected" ? `OpenAlex ${r.query}: ${r.openalex.reason?.message || "请求失败"}` : "", r.pubmed.status === "rejected" ? `PubMed ${r.query}: ${r.pubmed.reason?.message || "请求失败"}` : ""].filter(Boolean)));
   const status = requiredSources.every(source => sources.includes(source)) && visibleCount >= 200 ? "done" : "partial";
   const detail = JSON.stringify({ fetched: papers.length, visibleCount, target: "200–500", sources, errors });
   await db.insert(jobs).values({ id, status, updatedAt: new Date().toISOString(), detail }).onConflictDoUpdate({ target: jobs.id, set: { status, updatedAt: new Date().toISOString(), detail } });
