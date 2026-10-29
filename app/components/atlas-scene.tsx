@@ -128,7 +128,7 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
     <AxisLabel text="Y · 医学模态" position={[-4.45, 3.05, 2.7]} color="#e8bd7f" />
     <AxisLabel text="Z · 临床任务" position={[-4.3, -2.6, -3.1]} color="#bcaaf9" />
     {[2018, 2020, 2022, 2024, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2022) * 1.14, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
-    {core.slice(1).map((paper, index) => <Connection key={`core-${paper.id}`} from={positions.get(core[index].id) || paperPosition(core[index])} to={positions.get(paper.id) || paperPosition(paper)} color="#f2d796" opacity={0.32} />)}
+    {core.slice(1).map((paper, index) => <Connection key={`core-${paper.id}`} from={positions.get(core[index].id) || paperPosition(core[index])} to={positions.get(paper.id) || paperPosition(paper)} color="#f2d796" opacity={0.46} />)}
     {selected && related.map(({ paper }) => <Connection key={`related-${selected.id}-${paper.id}`} from={positions.get(selected.id) || paperPosition(selected)} to={positions.get(paper.id) || paperPosition(paper)} color="#74e3db" opacity={0.62} />)}
     {papers.map(p => <Star key={p.id} paper={p} position={positions.get(p.id) || paperPosition(p)} texture={texture} selected={p.id === selectedId} core={coreIds.has(p.id)} onPick={onPick} onHover={onHover} motion={motion} />)}
   </group>;
