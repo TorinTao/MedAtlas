@@ -9,12 +9,21 @@ export function classify(title: string, abstract = ""): { paperType: PaperType; 
   const paperType: PaperType = /survey|review|meta-analysis/.test(tl) ? "综述" : /dataset|benchmark/.test(tl) ? "数据集" : "研究论文";
   const image = /image|radiolog|x-ray|chest|patholog|visual|vision/.test(t);
   const text = /text|report|language|clinical note|record/.test(t);
+  const computational = /\bai\b|artificial intelligence|machine[\s-]learning|deep[\s-]learning|\bmodel\b|\bmodels\b|multimodal|\bllm\b|language model|neural network/.test(t);
   const modality: Modality = image && text ? "影像+文本" : image ? "影像" : text ? "病历文本" : "多模态";
   const clinicalTask: ClinicalTask = /report generat|caption/.test(t) ? "报告生成" : /question answer|vqa|dialogue/.test(t) ? "医学问答" : /risk|predict|prognos/.test(t) ? "风险预测" : /foundation model|pretrain|representation|contrastive/.test(t) ? "基础模型" : "诊断决策";
+  // The label is a reproducible keyword tag, not an AI claim about the paper's method.
+  // A review or benchmark without a named method keeps its own category.
   const method: Method = /\bagents?\b|agentic|copilot|tool.using|orchestrat/.test(t) ? "Agent 协作"
     : /retriev|\brag\b|knowledge.graph|knowledge.assist/.test(t) ? "检索增强"
-    : /\bmllm\b|\blvlm\b|\bvlm\b|vision.language|visual.language|multimodal language|llava|llm.vision|language.guided|visual question answer|report generat|multimodal.*(?:llm|large language model)/.test(t) ? "视觉语言模型"
-    : /contrastive|self.supervised|representation|foundation model|pretrain|segmentation/.test(t) ? "表征学习" : "其他方法";
+    : /\bmllm\b|\blvlm\b|\bvlm\b|\w*vqa\b|vision[\W_]*language|visual[\W_]*language|vision.enabled.*language|multimodal language|llava|llm.vision|language.guided|visual question answer|report generat|multimodal.*(?:llm|large language model)/.test(t) ? "视觉语言模型"
+    : /contrastive|self.supervised|representation|foundation model|pretrain|segmentation|domain generaliz|adversarial training/.test(t) ? "表征学习"
+    : /\bbenchmark\b|[- ]bench\b|\bdataset\b|\bdatabase\b|\bchallenge\b/.test(tl) || (computational && /\bevaluat|\breliab|\brobust|\buncertainty|\bcalibrat|explainab|\bsafety\b|\bprivacy\b|\bclaims\b|performance comparison/.test(tl)) ? "评测与资源"
+    : /generative|generated|\bgan\b|diffusion|synthetic data|large language model|\bllm\b|\bgpt\b/.test(t) ? "生成式模型"
+    : /multimodal|multi.modal|cross.modal|image.text|data integration|modality fusion/.test(tl) && computational ? "多模态融合"
+    : /machine[\s-]learning|deep[\s-]learning|classif|predict|detect|localiz|transformer|reinforcement learning|neural network/.test(tl) ? "预测与分类"
+    : /survey|review|meta.analysis|taxonomy|perspective|current status|future directions|trends|road ahead|opportunities.*challenges/.test(tl) ? "综述与趋势"
+    : "待核验";
   return { paperType, modality, clinicalTask, method };
 }
 

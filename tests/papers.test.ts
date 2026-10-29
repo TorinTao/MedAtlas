@@ -1,13 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
+import { safePublicUrl } from "../lib/url";
 
 test("method legend recognizes common medical Agent and VLM terminology", () => {
   assert.equal(classify("AgentClinic: a benchmark for tool-using clinical AI agents").method, "Agent 协作");
   assert.equal(classify("A VLM-Based Automatic Radiological Reporting System").method, "视觉语言模型");
   assert.equal(classify("Retrieval-Augmented Clinical Decision Support").method, "检索增强");
 });
-import { safePublicUrl } from "../lib/url";
+
+test("method labels split formerly generic papers without guessing a method", () => {
+  assert.equal(classify("Artificial Intelligence-Generated Electronic Medical Record Summarization").method, "生成式模型");
+  assert.equal(classify("Multimodal Deep Learning for Diabetic Retinopathy").method, "多模态融合");
+  assert.equal(classify("Machine-Learning-Powered X-ray Classification").method, "预测与分类");
+  assert.equal(classify("A Benchmark for Chest X-ray Classification").method, "评测与资源");
+  assert.equal(classify("Artificial Intelligence in Radiology: A Review").method, "综述与趋势");
+  assert.equal(classify("Safety of alternating denosumab in children").method, "待核验");
+});
 
 test("preprint and published paper share one record with both identifiers", () => {
   const preprint = normalizePaper({ id: "arxiv-1", title: "A Multimodal Medical Agent", year: 2024, arxivId: "2401.00001", paperType: "preprint", abstract: "Short abstract" });

@@ -4,11 +4,11 @@ import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { BufferGeometry, CanvasTexture, Group, Line as ThreeLine, LineBasicMaterial, Sprite, SRGBColorSpace, Vector3 } from "three";
-import type { Paper } from "../../lib/types";
+import type { Method, Paper } from "../../lib/types";
 
 const modalities = ["影像+文本", "影像", "病历文本", "多模态"];
 const tasks = ["诊断决策", "报告生成", "医学问答", "风险预测", "基础模型"];
-export const methodColors: Record<string, string> = { "视觉语言模型": "#34ebd1", "Agent 协作": "#ffb443", "检索增强": "#ad77ff", "表征学习": "#56a8ff", "其他方法": "#ff718d" };
+export const methodColors: Record<Method, string> = { "视觉语言模型": "#34ebd1", "Agent 协作": "#ffb443", "检索增强": "#ad77ff", "表征学习": "#56a8ff", "多模态融合": "#c9df68", "生成式模型": "#ff74ae", "预测与分类": "#ff816b", "评测与资源": "#f4db62", "综述与趋势": "#73c5e8", "待核验": "#8294a0" };
 
 function paperPosition(paper: Paper): [number, number, number] {
   const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
