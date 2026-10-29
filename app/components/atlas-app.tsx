@@ -6,7 +6,7 @@ import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, Bookmark,
 import type { Paper, PaperAnalysis, RepoAudit, ResearchIdea } from "../../lib/types";
 
 const AtlasScene = dynamic(() => import("./atlas-scene"), { ssr: false, loading: () => <div className="scene-loading"><LoaderCircle className="spin" size={28} /> 正在绘制文献星图</div> });
-const methodColors: Record<string, string> = { "视觉语言模型": "#69cfc8", "Agent 协作": "#d5aa70", "检索增强": "#a497e2", "表征学习": "#8caee0", "其他方法": "#91a8bc" };
+const methodColors: Record<string, string> = { "视觉语言模型": "#16bfa8", "Agent 协作": "#d98b1c", "检索增强": "#9256de", "表征学习": "#397fd4", "其他方法": "#dc5a78" };
 const sections = [{ id: "atlas", label: "研究星图", icon: Compass }, { id: "library", label: "文献库", icon: BookOpen }, { id: "ideas", label: "Ideas 工作台", icon: Lightbulb }, { id: "workspace", label: "我的工作区", icon: Bookmark }] as const;
 type Section = typeof sections[number]["id"];
 type Workspace = { savedPapers: Paper[]; ideas: ResearchIdea[]; uploads: { id: string; fileName: string; fileSize: number; pageCount: number; createdAt: string }[] };

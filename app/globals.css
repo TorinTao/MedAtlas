@@ -39,8 +39,8 @@
 .map-toolbar{height:62px;padding:0 25px}
 .map-title{font-size:14px;gap:11px}
 .map-title small{font-size:11px}
-.map-canvas{height:clamp(560px,68vh,780px);background:radial-gradient(ellipse at 46% 38%,#235667 0%,#163b4a 37%,#0b2633 78%),repeating-linear-gradient(90deg,transparent 0 42px,#ffffff07 43px 44px)}
-.map-canvas:before{background-size:42px 36px;opacity:.14}
+.map-canvas{height:clamp(560px,68vh,780px);background:radial-gradient(ellipse at 46% 38%,#102f3e 0%,#0a2332 46%,#041521 100%),repeating-linear-gradient(90deg,transparent 0 42px,#ffffff05 43px 44px)}
+.map-canvas:before{background-size:42px 36px;opacity:.09}
 .map-overlay-top{top:21px;left:25px;right:25px}
 .map-overlay-top span{font-size:10px}
 .map-overlay-top button{font-size:10px;padding:7px 10px}
