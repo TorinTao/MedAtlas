@@ -9,7 +9,7 @@ const refreshTool = {
 };
 const enrichTool = {
   name: "enrich_missing_papers",
-  description: "Enrich up to two papers missing a Chinese overview or detailed reading, and translate review-paper abstracts into Chinese. Use Lexmount Web Fetch on public paper pages, generate evidence-aware analysis, and statically audit a linked public GitHub repository when one can be identified. Persists results and retries incomplete work later.",
+  description: "Enrich up to two papers missing a Chinese overview or detailed reading, translate review abstracts, and evaluate linked GitHub repositories. Lexmount Web Fetch reads public paper and repository pages; DeepSeek produces evidence-aware Chinese explanations. Persists results and retries incomplete work later.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
 };
 

@@ -97,3 +97,10 @@
 .translated-abstract strong{display:block;color:#28746e;font-size:10px;margin-bottom:7px}
 .translated-abstract p{margin:0 0 9px;color:#2e4f4d;line-height:1.7}
 .translated-abstract a{display:inline-flex;align-items:center;gap:4px;color:#277d75;font-size:10px;font-weight:700}
+.repo-evaluation{padding:12px;border:1px solid #c9e3db;border-radius:7px;background:#f3faf6;margin-bottom:11px}
+.repo-evaluation-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.repo-evaluation-head strong{color:#177a70;font-size:12px}.repo-evaluation-head small{color:#7b9992;font-size:9px}
+.repo-evaluation p{color:#345d59;font-size:10px;line-height:1.7;margin:0 0 8px}.repo-evaluation p b{color:#245e58}
+.repo-evaluation-evidence{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0}.repo-evaluation-evidence b{font-size:9px;color:#527d75}
+.repo-evaluation-evidence a{display:inline-flex;align-items:center;gap:3px;padding:4px 6px;background:#fff;border:1px solid #d6e9e2;border-radius:4px;color:#2b756d;font-size:9px}
+.repo-evaluation>small,.repo-evaluation-error{display:block;color:#7b9390;font-size:9px;line-height:1.5}

@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { auditRepository } from "./repo-audit";
+import { evaluateRepository } from "./repo-evaluation";
 import { lexmountExtract, readPaper } from "./reading";
 import { runtime } from "./runtime";
 import { allPapers, putPapers } from "./store";
@@ -45,7 +46,7 @@ export async function enrichMissingPapers(limit = 2) {
   const papers = await allPapers();
   const jobs = await env.DB.prepare("SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'").all<JobRow>();
   const byId = new Map((jobs.results || []).map(job => [job.id, job]));
-  const pending = papers.filter(paper => !paper.summaryZh || !paper.analysis || (paper.paperType === "综述" && paper.abstract.trim() && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit))
+  const pending = papers.filter(paper => !paper.summaryZh || !paper.analysis || (paper.paperType === "综述" && paper.abstract.trim() && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit?.evaluation))
     .sort((a, b) => Number(Boolean(byId.get(`enrich:${a.id}`))) - Number(Boolean(byId.get(`enrich:${b.id}`))) || b.citedByCount - a.citedByCount || b.year - a.year);
   const results: { id: string; status: string; summary: boolean; analysis: boolean; reviewTranslated: boolean; repo: string; errors: string[] }[] = [];
 
@@ -77,15 +78,16 @@ export async function enrichMissingPapers(limit = 2) {
 
       const linkedRepo = chooseRepo(paper, page.text);
       const repoUrl = linkedRepo || paper.repoUrl;
-      if (repoUrl && !paper.repoAudit) {
+      if (repoUrl) {
         try {
-          const repoAudit = await auditRepository(repoUrl, linkedRepo, linkedRepo ? page.finalUrl : "");
+          const repoAudit = paper.repoAudit?.repoUrl === repoUrl ? paper.repoAudit : await auditRepository(repoUrl, linkedRepo, linkedRepo ? page.finalUrl : "");
           updated = { ...updated, repoUrl: repoAudit.repoUrl, repoAudit, ...(linkedRepo ? { repoEvidenceUrl: page.finalUrl } : {}) };
+          if (!repoAudit.evaluation) updated.repoAudit = { ...repoAudit, evaluation: await evaluateRepository(repoAudit, updated) };
         } catch (error) { errors.push(`仓库：${(error as Error).message}`); }
       }
       await putPapers([updated]);
       const reviewTranslated = updated.paperType !== "综述" || !updated.abstract.trim() || Boolean(updated.reviewAbstractZh);
-      const done = Boolean(updated.summaryZh && updated.analysis && reviewTranslated && (!repoUrl || updated.repoAudit));
+      const done = Boolean(updated.summaryZh && updated.analysis && reviewTranslated && (!repoUrl || updated.repoAudit?.evaluation));
       await finish(jobId, done ? "done" : "partial", { sourceUrl: page.finalUrl, repoUrl: updated.repoUrl || "", errors });
       results.push({ id: paper.id, status: done ? "done" : "partial", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated, repo: updated.repoUrl || "", errors });
     } catch (error) {
