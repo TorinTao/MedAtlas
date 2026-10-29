@@ -32,6 +32,8 @@ export async function putPapers(items: Paper[]) {
       '$.summaryZh',coalesce(json_extract(excluded.data,'$.summaryZh'),json_extract(papers.data,'$.summaryZh')),
       '$.summaryBasis',coalesce(json_extract(excluded.data,'$.summaryBasis'),json_extract(papers.data,'$.summaryBasis')),
       '$.summarySourceUrl',coalesce(json_extract(excluded.data,'$.summarySourceUrl'),json_extract(papers.data,'$.summarySourceUrl')),
+      '$.reviewAbstractZh',coalesce(json_extract(excluded.data,'$.reviewAbstractZh'),json_extract(papers.data,'$.reviewAbstractZh')),
+      '$.reviewAbstractSourceUrl',coalesce(json_extract(excluded.data,'$.reviewAbstractSourceUrl'),json_extract(papers.data,'$.reviewAbstractSourceUrl')),
       '$.analysis',json(coalesce(json_extract(excluded.data,'$.analysis'),json_extract(papers.data,'$.analysis'),'null')),
       '$.repoUrl',coalesce(nullif(json_extract(excluded.data,'$.repoUrl'),''),json_extract(papers.data,'$.repoUrl'),''),
       '$.repoEvidenceUrl',coalesce(json_extract(excluded.data,'$.repoEvidenceUrl'),json_extract(papers.data,'$.repoEvidenceUrl')),

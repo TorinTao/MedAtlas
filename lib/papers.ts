@@ -64,6 +64,8 @@ export function dedupePapers(items: Paper[]): Paper[] {
         summaryZh: paper.summaryZh || prior.summaryZh,
         summaryBasis: paper.summaryBasis || prior.summaryBasis,
         summarySourceUrl: paper.summarySourceUrl || prior.summarySourceUrl,
+        reviewAbstractZh: paper.reviewAbstractZh || prior.reviewAbstractZh,
+        reviewAbstractSourceUrl: paper.reviewAbstractSourceUrl || prior.reviewAbstractSourceUrl,
         analysis: paper.analysis || prior.analysis,
         paperType: prior.paperType === "预印本" && paper.paperType !== "预印本" ? paper.paperType : prior.paperType });
     } else { map.set(key, paper); titles.set(titleKey, key); }
