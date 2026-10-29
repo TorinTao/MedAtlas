@@ -67,12 +67,12 @@ function Connection({ from, to, color, opacity }: { from: [number, number, numbe
   return <primitive object={line} />;
 }
 
-function AxisLabel({ text, position, color, width = 2.15 }: { text: string; position: [number, number, number]; color: string; width?: number }) {
+function AxisLabel({ text, position, color, width = 1.55 }: { text: string; position: [number, number, number]; color: string; width?: number }) {
   const texture = useMemo(() => {
     const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 128;
     const context = canvas.getContext("2d")!;
-    context.fillStyle = "rgba(8, 27, 37, .86)"; context.fillRect(3, 12, 506, 104);
-    context.strokeStyle = color; context.lineWidth = 3; context.strokeRect(4, 13, 504, 102);
+    context.fillStyle = "rgba(8, 27, 37, .69)"; context.fillRect(3, 12, 506, 104);
+    context.strokeStyle = color; context.lineWidth = 2; context.strokeRect(4, 13, 504, 102);
     context.fillStyle = color; context.font = "700 44px system-ui, sans-serif"; context.textAlign = "center"; context.textBaseline = "middle";
     context.fillText(text, 256, 65, 470);
     const result = new CanvasTexture(canvas); result.colorSpace = SRGBColorSpace; return result;
