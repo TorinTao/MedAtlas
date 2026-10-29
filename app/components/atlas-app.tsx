@@ -104,7 +104,7 @@ function RepoEvaluationView({ audit }: { audit: RepoAudit }) {
     {evaluation.strengths.length > 0 && <p><b>已有资料：</b>{evaluation.strengths.join("；")}</p>}
     {evaluation.gaps.length > 0 && <p><b>待核验或缺口：</b>{evaluation.gaps.join("；")}</p>}
     {evaluation.nextSteps.length > 0 && <p><b>建议下一步：</b>{evaluation.nextSteps.join("；")}</p>}
-    <div className="repo-evaluation-evidence"><b>依据</b>{evidence.map(check => <a key={check.label} href={check.evidence} target="_blank" rel="noopener noreferrer">{check.label} · {check.status} <ExternalLink size={12} /></a>)}<a href={evaluation.sourceUrl} target="_blank" rel="noopener noreferrer">Lexmount 仓库页面 <ExternalLink size={12} /></a></div>
+    <div className="repo-evaluation-evidence"><b>依据</b>{evidence.map(check => <a key={check.label} href={check.evidence} target="_blank" rel="noopener noreferrer">{check.label} · {check.status} <ExternalLink size={12} /></a>)}<a href={evaluation.sourceUrl} target="_blank" rel="noopener noreferrer">Lexmount 仓库页面 <ExternalLink size={12} /></a>{evaluation.readmeSourceUrl && <a href={evaluation.readmeSourceUrl} target="_blank" rel="noopener noreferrer">README 原文 <ExternalLink size={12} /></a>}</div>
     <small>{evaluation.disclaimer}</small>
   </div>;
 }
