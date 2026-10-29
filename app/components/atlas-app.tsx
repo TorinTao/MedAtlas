@@ -25,7 +25,7 @@ export default function AtlasApp({ user, signInPath, signOutPath }: { user: { na
   const [typeFilter, setTypeFilter] = useState("全部类型"); const [modalityFilter, setModalityFilter] = useState("全部模态"); const [yearFilter, setYearFilter] = useState("全部年份");
   const [loading, setLoading] = useState(false); const [reading, setReading] = useState(false); const [generating, setGenerating] = useState(false); const [auditing, setAuditing] = useState(false); const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(""); const [sourceLine, setSourceLine] = useState("OpenAlex · PubMed · arXiv"); const [ideas, setIdeas] = useState<ResearchIdea[]>([]); const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [pdfAnalysis, setPdfAnalysis] = useState<Record<string, PaperAnalysis>>({}); const [pdfReading, setPdfReading] = useState(""); const [audit, setAudit] = useState<RepoAudit | null>(null); const [repoInput, setRepoInput] = useState(""); const [mobileNav, setMobileNav] = useState(false);
+  const [pdfAnalysis, setPdfAnalysis] = useState<Record<string, PaperAnalysis>>({}); const [pdfReading, setPdfReading] = useState(""); const [audit, setAudit] = useState<RepoAudit | null>(null); const [repoInput, setRepoInput] = useState("");
 
   useEffect(() => { api<{ papers: Paper[] }>("/api/papers").then(r => { setPapers(r.papers); setSelectedId(r.papers[0]?.id || ""); }).catch(e => setMessage(e.message)); const reduced = window.matchMedia("(prefers-reduced-motion: reduce)"); setMotion(!reduced.matches); if (window.innerWidth < 760) setView("2d"); }, []);
   const loadWorkspace = useCallback(async () => { if (!user) return; try { setWorkspace(await api<Workspace>("/api/workspace")); } catch (e) { setMessage((e as Error).message); } }, [user]);
@@ -45,20 +45,8 @@ export default function AtlasApp({ user, signInPath, signOutPath }: { user: { na
   function selectPaper(paper: Paper) { setSelectedId(paper.id); setRepoInput(paper.repoUrl || ""); setAudit(null); }
 
   return <div className="app-shell">
-    <aside className={`sidebar ${mobileNav ? "open" : ""}`}>
-      <div className="brand"><div className="brand-symbol"><span /></div><div><strong>MedAtlas</strong><small>RESEARCH INTELLIGENCE</small></div></div>
-      <div className="side-label">WORKSPACE / 工作空间</div>
-      <nav className="side-nav" aria-label="主要导航">{sections.map(s => <button key={s.id} className={section === s.id ? "nav-item active" : "nav-item"} onClick={() => { setSection(s.id); setMobileNav(false); }}><s.icon size={18} strokeWidth={1.8} /><span>{s.label}</span>{s.id === "atlas" && <i>{papers.length}</i>}</button>)}</nav>
-      <div className="sidebar-rule" />
-      <div className="side-label">RESEARCH FOCUS / 当前主题</div>
-      <div className="focus-card"><div className="focus-icon"><Microscope size={18} /></div><div><strong>医学多模态 Agent</strong><span>影像 × 病历文本</span></div><span className="focus-dot" /></div>
-      <div className="sidebar-spacer" />
-      <div className="side-note"><div className="note-top"><Activity size={16} /> LIVE RESEARCH PIPELINE</div><p>让每一条研究判断都能回到论文、作者和原始证据。</p><a href="https://browser.lexmount.cn" target="_blank" rel="noopener noreferrer">Powered by Lexmount <ArrowUpRight size={14} /></a></div>
-      <div className="sidebar-bottom"><span className="online-dot" /> 研究资料仅供科研参考</div>
-    </aside>
-
     <div className="main-column">
-      <header className="topbar"><div className="top-left"><button className="mobile-menu" aria-label="打开菜单" onClick={() => setMobileNav(!mobileNav)}><Menu size={20} /></button><span className="breadcrumb">工作空间</span><span className="slash">/</span><strong>{sections.find(s => s.id === section)?.label}</strong></div><div className="top-actions"><span className="top-date">2026 · RESEARCH ATLAS</span><div className="top-separator" />{user ? <a className="account-pill" href={signOutPath} target="_top" title="退出登录"><span>{user.name.slice(0, 1).toUpperCase()}</span>{user.name.length > 16 ? `${user.name.slice(0, 16)}…` : user.name}</a> : <a className="sign-in" href={signInPath} target="_top">登录 / 保存研究 <ArrowUpRight size={15} /></a>}</div></header>
+      <header className="topbar"><div className="top-left"><div className="top-brand"><span className="brand-symbol small"><span /></span><span>MedAtlas<small>RESEARCH INTELLIGENCE</small></span></div><span className="slash">/</span><strong>{sections.find(s => s.id === section)?.label}</strong></div><div className="top-actions"><span className="top-date">医学多模态 Agent · 影像 × 病历文本</span><div className="top-separator" />{user ? <a className="account-pill" href={signOutPath} target="_top" title="退出登录"><span>{user.name.slice(0, 1).toUpperCase()}</span>{user.name.length > 16 ? `${user.name.slice(0, 16)}…` : user.name}</a> : <a className="sign-in" href={signInPath} target="_top">登录 / 保存研究 <ArrowUpRight size={15} /></a>}</div></header>
 
       <main className="content">
         {message && <div className="notice" role="status"><span>{message}</span><button aria-label="关闭提示" onClick={() => setMessage("")}><X size={15} /></button></div>}
@@ -88,6 +76,7 @@ export default function AtlasApp({ user, signInPath, signOutPath }: { user: { na
         <footer className="footer"><div><div className="footer-logo"><span className="brand-symbol small"><span /></span> MedAtlas</div><p>让每一个研究想法，都有证据可循。</p></div><div>数据来自 {sourceLine} · Lexmount · Europe PMC<br />仅供科研探索，不提供临床诊断建议。</div></footer>
       </main>
     </div>
+    <nav className="bottom-nav" aria-label="主要导航">{sections.map(s => <button key={s.id} className={section === s.id ? "bottom-nav-item active" : "bottom-nav-item"} aria-current={section === s.id ? "page" : undefined} onClick={() => setSection(s.id)}><s.icon size={19} strokeWidth={1.8} /><span>{s.label}</span>{s.id === "atlas" && <i>{papers.length}</i>}</button>)}</nav>
   </div>;
 }
 
