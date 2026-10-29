@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { papers as paperTable } from "../db/schema";
 import { dedupePapers, publicPaperUrl, seedPapers } from "./papers";
@@ -7,8 +7,8 @@ import type { Paper } from "./types";
 
 export async function allPapers(): Promise<Paper[]> {
   try {
-    const rows = await getDb().select().from(paperTable).limit(500);
-    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]);
+    const rows = await getDb().select().from(paperTable).orderBy(desc(paperTable.updatedAt)).limit(500);
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).slice(0, 500);
   } catch { return seedPapers; }
 }
 
@@ -21,8 +21,16 @@ export async function findPaper(id: string): Promise<Paper | undefined> {
 }
 
 export async function putPapers(items: Paper[]) {
-  const db = getDb(); const updatedAt = new Date().toISOString();
-  for (const paper of items) await db.insert(paperTable).values({ id: paper.id, title: paper.title, data: JSON.stringify(paper), updatedAt }).onConflictDoUpdate({ target: paperTable.id, set: { title: paper.title, data: JSON.stringify(paper), updatedAt } });
+  const updatedAt = new Date().toISOString();
+  const storage = env.DB;
+  if (!storage) throw new Error("文献数据库不可用");
+  // D1 batches keep large background updates within a single Worker request.
+  // Preserve a prior full-text/abstract analysis when metadata is refreshed.
+  const sql = "INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, data=CASE WHEN json_extract(papers.data,'$.analysis') IS NOT NULL THEN json_set(excluded.data,'$.analysis',json_extract(papers.data,'$.analysis')) ELSE excluded.data END, updated_at=excluded.updated_at";
+  for (let offset = 0; offset < items.length; offset += 50) {
+    const batch = items.slice(offset, offset + 50).map(paper => storage.prepare(sql).bind(paper.id, paper.title, JSON.stringify(paper), updatedAt));
+    await storage.batch(batch);
+  }
 }
 
 function securePaperUrls(paper: Paper): Paper { return { ...paper, url: publicPaperUrl(paper.url), oaUrl: publicPaperUrl(paper.oaUrl) }; }

@@ -3,7 +3,7 @@ import { runtime } from "../../lib/runtime";
 
 const tool = {
   name: "refresh_literature",
-  description: "Update the public medical multimodal Agent paper corpus from PubMed, arXiv and OpenAlex. Safe to retry; at most one completed update per UTC day.",
+  description: "Update the public medical multimodal Agent paper corpus toward 200–500 deduplicated papers from PubMed, arXiv and OpenAlex. Safe to retry; at most one completed update per UTC day.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
 };
 

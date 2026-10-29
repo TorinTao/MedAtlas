@@ -14,8 +14,8 @@ export function englishQuery(input: string) {
   return value.replace(/[，。+、／/]/g, " ").replace(/\s+/g, " ").trim().slice(0, 180) || "multimodal medical imaging clinical notes agent";
 }
 
-export async function searchOpenAlex(query: string): Promise<Paper[]> {
-  const params = new URLSearchParams({ search: query, "per-page": "20", select: "id,doi,display_name,publication_year,publication_date,cited_by_count,type,authorships,primary_location,ids,abstract_inverted_index,best_oa_location,cited_by_percentile_year" });
+export async function searchOpenAlex(query: string, limit = 20): Promise<Paper[]> {
+  const params = new URLSearchParams({ search: query, "per-page": String(limit), select: "id,doi,display_name,publication_year,publication_date,cited_by_count,type,authorships,primary_location,ids,abstract_inverted_index,best_oa_location,cited_by_percentile_year" });
   const key = runtime("OPENALEX_API_KEY"); if (key) params.set("api_key", key);
   const data = await getJson(`https://api.openalex.org/works?${params}`);
   return (data.results || []).map((w: any) => {
@@ -27,9 +27,9 @@ export async function searchOpenAlex(query: string): Promise<Paper[]> {
   });
 }
 
-export async function searchPubMed(query: string): Promise<Paper[]> {
+export async function searchPubMed(query: string, limit = 8): Promise<Paper[]> {
   const term = `${query} AND (multimodal OR imaging OR radiology OR vision language)`;
-  const ids = await getJson(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${new URLSearchParams({ db: "pubmed", term, retmax: "8", retmode: "json", sort: "pub date" })}`);
+  const ids = await getJson(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?${new URLSearchParams({ db: "pubmed", term, retmax: String(limit), retmode: "json", sort: "pub date" })}`);
   const list: string[] = ids.esearchresult?.idlist || []; if (!list.length) return [];
   const data = await getJson(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${new URLSearchParams({ db: "pubmed", id: list.join(","), retmode: "json" })}`);
   return list.map(id => {
@@ -40,10 +40,10 @@ export async function searchPubMed(query: string): Promise<Paper[]> {
   }).filter(Boolean) as Paper[];
 }
 
-export async function searchArxiv(query: string): Promise<Paper[]> {
+export async function searchArxiv(query: string, limit = 8): Promise<Paper[]> {
   const words = query.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
   const search = words.map(w => `all:${w.replace(/[^a-z0-9-]/gi, "")}`).filter(x => x !== "all:").join("+AND+") || "all:medical+AND+all:multimodal";
-  const url = `https://export.arxiv.org/api/query?search_query=${search}&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending`;
+  const url = `https://export.arxiv.org/api/query?search_query=${search}&start=0&max_results=${limit}&sortBy=submittedDate&sortOrder=descending`;
   const response = await fetch(url, { signal: AbortSignal.timeout(12000) }); if (!response.ok) throw new Error(`arXiv HTTP ${response.status}`);
   const xml = await response.text();
   return [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(m => {
@@ -53,12 +53,13 @@ export async function searchArxiv(query: string): Promise<Paper[]> {
   }).filter(p => p.title);
 }
 
-export async function collectPapers(input: string): Promise<{ papers: Paper[]; sources: string[]; errors: string[] }> {
+export async function collectPapers(input: string, breadth: "query" | "corpus" = "query"): Promise<{ papers: Paper[]; sources: string[]; errors: string[] }> {
   const query = englishQuery(input);
   const names = ["OpenAlex", "PubMed", "arXiv"];
-  const results = await Promise.allSettled([searchOpenAlex(query), searchPubMed(query), searchArxiv(query)]);
+  const wide = breadth === "corpus";
+  const results = await Promise.allSettled([searchOpenAlex(query, wide ? 50 : 20), searchPubMed(query, wide ? 15 : 8), searchArxiv(query, wide ? 10 : 8)]);
   const papers: Paper[] = []; const sources: string[] = []; const errors: string[] = [];
   results.forEach((r, i) => { if (r.status === "fulfilled") { papers.push(...r.value); sources.push(names[i]); } else errors.push(`${names[i]}: ${r.reason?.message || "请求失败"}`); });
   const terms = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-  return { papers: dedupePapers(papers).map(p => ({ ...p, relevance: Math.min(1, 0.3 + terms.filter(w => `${p.title} ${p.abstract}`.toLowerCase().includes(w)).length / Math.max(terms.length, 1) * 0.7) })).filter(p => p.year >= 2016).sort((a, b) => b.relevance - a.relevance || b.year - a.year).slice(0, 35), sources, errors };
+  return { papers: dedupePapers(papers).map(p => ({ ...p, relevance: Math.min(1, 0.3 + terms.filter(w => `${p.title} ${p.abstract}`.toLowerCase().includes(w)).length / Math.max(terms.length, 1) * 0.7) })).filter(p => p.year >= (wide ? 2010 : 2016)).sort((a, b) => b.relevance - a.relevance || b.year - a.year).slice(0, wide ? 65 : 35), sources, errors };
 }
