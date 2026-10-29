@@ -1,7 +1,7 @@
 import { runtime } from "./runtime";
 import type { RepoAudit, RepoCheck } from "./types";
 
-export async function auditRepository(repoUrl: string, expectedRepoUrl = ""): Promise<RepoAudit> {
+export async function auditRepository(repoUrl: string, expectedRepoUrl = "", paperPageUrl = ""): Promise<RepoAudit> {
   const parsed = new URL(repoUrl); const segments = parsed.pathname.split("/").filter(Boolean);
   if (parsed.protocol !== "https:" || parsed.hostname !== "github.com" || segments.length < 2 || !/^[\w.-]+$/.test(segments[0]) || !/^[\w.-]+$/.test(segments[1])) throw new Error("请输入公开 GitHub 仓库链接");
   const owner = segments[0], repo = segments[1].replace(/\.git$/, ""); const base = `https://api.github.com/repos/${owner}/${repo}`;
@@ -10,7 +10,7 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = ""): Pr
   const [metaResponse, filesResponse] = await Promise.all([fetch(base, { headers, signal: AbortSignal.timeout(10000) }), fetch(`${base}/contents`, { headers, signal: AbortSignal.timeout(10000) })]);
   const canonical = `https://github.com/${owner}/${repo}`;
   if (metaResponse.status === 403 || metaResponse.status === 429) {
-    const labels = ["论文关联", "开源许可证", "README", "根目录依赖文件", "根目录数据说明", "根目录权重说明", "根目录训练/推理入口", "近期维护"];
+    const labels = ["论文页面链接", "开源许可证", "README", "根目录依赖文件", "根目录数据说明", "根目录权重说明", "根目录训练/推理入口", "近期维护"];
     return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks: labels.map(label => ({ label, status: "无法确认" as const, evidence: canonical })), disclaimer: `GitHub API 返回 ${metaResponse.status}，未能取得仓库元数据；请打开证据链接人工检查。未经实际运行复现。` };
   }
   if (!metaResponse.ok) throw new Error(`GitHub HTTP ${metaResponse.status}`);
@@ -19,7 +19,7 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = ""): Pr
   const match = (pattern: RegExp) => rootFiles.find(f => pattern.test(f.name));
   const check = (label: string, ok: boolean | null, evidence: string): RepoCheck => ({ label, status: ok === null ? "无法确认" : ok ? "有" : "缺失", evidence });
   const checks: RepoCheck[] = [
-    check("论文关联", expectedRepoUrl ? expectedRepoUrl.replace(/\/$/, "").toLowerCase() === canonical.toLowerCase() : null, expectedRepoUrl || canonical),
+    check("论文页面链接", paperPageUrl && expectedRepoUrl.replace(/\/$/, "").toLowerCase() === canonical.toLowerCase() ? true : null, paperPageUrl || expectedRepoUrl || canonical),
     check("许可证文件", match(/^(licen[sc]e|copying)(\.|$)/) ? true : filesResponse.ok ? false : null, match(/^(licen[sc]e|copying)(\.|$)/)?.url || `${canonical}?tab=License-1`),
     check("README", filesResponse.ok ? Boolean(match(/^readme(\.|$)/)) : null, match(/^readme(\.|$)/)?.url || canonical),
     check("根目录依赖文件", match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/) ? true : null, match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/)?.url || canonical),

@@ -25,17 +25,17 @@ export async function putPapers(items: Paper[]) {
   const storage = env.DB;
   if (!storage) throw new Error("文献数据库不可用");
   // D1 batches keep large background updates within a single Worker request.
-  // Preserve prior reading and Chinese summaries when the daily metadata refresh runs.
+  // Keep enrichment when a fresh metadata snapshot omits it, while allowing retries to improve it.
   const sql = `INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET
     title=excluded.title,
-    data=CASE WHEN json_extract(papers.data,'$.summaryZh') IS NOT NULL
-      THEN json_set(
-        CASE WHEN json_extract(papers.data,'$.analysis') IS NOT NULL
-          THEN json_set(excluded.data,'$.analysis',json_extract(papers.data,'$.analysis')) ELSE excluded.data END,
-        '$.summaryZh',json_extract(papers.data,'$.summaryZh'),
-        '$.summaryBasis',json_extract(papers.data,'$.summaryBasis'))
-      ELSE CASE WHEN json_extract(papers.data,'$.analysis') IS NOT NULL
-        THEN json_set(excluded.data,'$.analysis',json_extract(papers.data,'$.analysis')) ELSE excluded.data END END,
+    data=json_set(excluded.data,
+      '$.summaryZh',coalesce(json_extract(excluded.data,'$.summaryZh'),json_extract(papers.data,'$.summaryZh')),
+      '$.summaryBasis',coalesce(json_extract(excluded.data,'$.summaryBasis'),json_extract(papers.data,'$.summaryBasis')),
+      '$.summarySourceUrl',coalesce(json_extract(excluded.data,'$.summarySourceUrl'),json_extract(papers.data,'$.summarySourceUrl')),
+      '$.analysis',json(coalesce(json_extract(excluded.data,'$.analysis'),json_extract(papers.data,'$.analysis'),'null')),
+      '$.repoUrl',coalesce(nullif(json_extract(excluded.data,'$.repoUrl'),''),json_extract(papers.data,'$.repoUrl'),''),
+      '$.repoEvidenceUrl',coalesce(json_extract(excluded.data,'$.repoEvidenceUrl'),json_extract(papers.data,'$.repoEvidenceUrl')),
+      '$.repoAudit',json(coalesce(json_extract(excluded.data,'$.repoAudit'),json_extract(papers.data,'$.repoAudit'),'null'))),
     updated_at=excluded.updated_at`;
   for (let offset = 0; offset < items.length; offset += 50) {
     const batch = items.slice(offset, offset + 50).map(paper => storage.prepare(sql).bind(paper.id, paper.title, JSON.stringify(paper), updatedAt));

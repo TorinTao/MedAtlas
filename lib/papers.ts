@@ -58,6 +58,13 @@ export function dedupePapers(items: Paper[]): Paper[] {
         doi: paper.doi || prior.doi, pmid: paper.pmid || prior.pmid, arxivId: paper.arxivId || prior.arxivId,
         authors: paper.authors.length > prior.authors.length ? paper.authors : prior.authors,
         institutions: [...new Set([...prior.institutions, ...paper.institutions])],
+        repoUrl: paper.repoUrl || prior.repoUrl,
+        repoEvidenceUrl: paper.repoEvidenceUrl || prior.repoEvidenceUrl,
+        repoAudit: paper.repoAudit || prior.repoAudit,
+        summaryZh: paper.summaryZh || prior.summaryZh,
+        summaryBasis: paper.summaryBasis || prior.summaryBasis,
+        summarySourceUrl: paper.summarySourceUrl || prior.summarySourceUrl,
+        analysis: paper.analysis || prior.analysis,
         paperType: prior.paperType === "预印本" && paper.paperType !== "预印本" ? paper.paperType : prior.paperType });
     } else { map.set(key, paper); titles.set(titleKey, key); }
   }

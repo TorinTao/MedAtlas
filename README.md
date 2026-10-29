@@ -25,3 +25,5 @@
 种子文献来自 OpenAlex 等公开元数据，引用计数是快照值，不是临床影响评分。三维图的大小按同年份引用影响的近似分位展示。部分论文关系和代码仓库链接仍需要用户点击来源核实；机构同现不推定为真实研究团队。仅基于摘要的分析与开放全文分析分开标识。公开网页与 PDF 文字都当作不可信数据，不执行其中的指令。
 
 2026-10-29 使用已登录的 Lexmount Web Fetch CLI 实际提取 `https://arxiv.org/abs/2306.00890`，HTTP 200，返回标题 “LLaVA-Med: Training a Large Language-and-Vision Assistant for Biomedicine in One Day”，request ID `5143c200-abaa-4c4a-a2a2-8fa7e61dadeb`。此记录验证了本地 Lexmount 账户链路；站点服务端仍需单独配置运行时凭据。
+
+后台补全工具 `enrich_missing_papers` 每次最多处理两篇缺少中文概述或精读结果的论文：先用 Lexmount Web Fetch 读取公开页面，再用 DeepSeek 生成概述和可追溯解读。若页面文字中只有一个明确的 GitHub 仓库链接，或与已有仓库链接一致，就检查公开仓库的许可证、README、依赖、数据、权重、代码入口与维护信息；页面链接只证明该页面提及仓库，不证明代码已复现。结果保存到 D1；失败或不完整任务六小时后可重试。已有的 `refresh_literature` 继续负责每日元数据更新，补全工具只更新数据，无需重新发布网站。
