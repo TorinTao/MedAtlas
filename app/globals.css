@@ -88,5 +88,8 @@
 .rail-related button{border:1px solid #dce9e5;background:#f9fcfa;text-align:left;border-radius:5px;padding:8px;color:#345d60;font-size:10px;line-height:1.4}
 .rail-related button:hover{border-color:#8fc9bd;background:#f0f8f3}
 .rail-related button small{display:block;color:#7fa19d;font-size:8px;margin-bottom:3px}
+.content>.search-box{margin-bottom:24px}
+.atlas-rail{grid-template-columns:minmax(0,1fr)}
+@media(max-width:760px){.content>.search-box{margin-bottom:17px}}
 .map-axis-caption b{font-size:11px;color:#8be3e3;margin-left:5px}.map-axis-caption b:first-child{margin-left:0}.map-axis-caption b:nth-of-type(2){color:#efc38b}.map-axis-caption b:nth-of-type(3){color:#c9b4ff}
 @media(max-width:760px){.map-overlay-top>span{display:none}.map-axis-caption{font-size:9px;padding:6px 8px;gap:4px}.map-axis-caption b{font-size:10px;margin-left:3px}}
