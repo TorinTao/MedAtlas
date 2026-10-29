@@ -1,12 +1,12 @@
 # MedAtlas Research · 医学多模态 Agent 文献地图
 
-围绕医学影像、病历文本及 Agent 研究，提供论文检索、三维发展地图、证据精读、仓库静态审核和 3 个可追溯研究选题。中文界面保留英文论文标题和来源链接。
+围绕医学影像、病历文本及 Agent 研究，提供论文检索、三维发展地图、证据精读、仓库静态审核和可追溯研究选题。中文界面保留英文论文标题和来源链接。
 
 ## 数据流
 
 1. `/api/research` 根据自然语言方向查询 PubMed、arXiv 和 OpenAlex，按 DOI、PMID、arXiv ID 与标准化标题去重；初始界面还有带来源的种子文献。用户查询写入 D1。
 2. `/api/papers/[id]/read` 使用 Lexmount Web Fetch 读取公开论文落地页，并优先用 Europe PMC 开放全文。没有开放全文时将分析标为“摘要”；阅读结果保存到 D1，保留来源 URL 与分析时间，接口返回是否成功使用 Lexmount。
-3. `/api/ideas` 调用 DeepSeek `deepseek-flash`，每次产生 3 个 idea。返回的引用 ID 必须属于本站已检索的论文；缺少足够引用或核心字段时拒绝结果。
+3. `/api/ideas` 先检索并筛选文献，再用 DeepSeek `deepseek-flash` 深度思考。工作台支持 1、3、5、10 张独立选题；每张须包含 5–8 项改进工作、完整方案和可追溯证据链。返回的引用 ID 必须属于已检索论文；缺少足够引用或核心字段时拒绝结果。
 4. 登录用户可收藏论文、上传 PDF、生成并保存选题。PDF 客户端解析，原件及解析文字写入用户隔离的 R2 路径；PDF 精读只调用 DeepSeek，不传给 Lexmount。
 5. `/api/repo-audit` 查询 GitHub 公开元数据和根目录文件，对每项给出状态及证据链接。该审核不表示运行复现。
 
@@ -16,7 +16,7 @@
 
 ## 服务端配置
 
-将 `.env.example` 列出的键配置到 Sites 的运行环境。必需项：`DEEPSEEK_API_KEY`、`LEXMOUNT_API_KEY`、`LEXMOUNT_PROJECT_ID`；`REFRESH_TOKEN` 用于每日更新接口。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。公开检索无需以上密钥，但精读与选题生成需要它们。OpenAlex 与 GitHub 的 key 可选。
+将 `.env.example` 列出的键配置到 Sites 的运行环境。站点默认 AI 服务使用 `DEEPSEEK_API_KEY`；`LEXMOUNT_API_KEY` 与 `LEXMOUNT_PROJECT_ID` 用于公开论文页面读取；`REFRESH_TOKEN` 用于每日更新接口。登录用户可在 AI 设置页提交自己的 DeepSeek API Key，服务端经官方余额接口验证后，用 AES-GCM 按用户加密保存到 D1，并在该用户的 AI 请求中优先使用。此功能要求 Sites Secret `USER_API_KEY_ENCRYPTION_KEY`（32 字节随机值的 Base64）；不要轮换该值而不重新加密已有记录。删除个人 Key 后恢复站点默认配置。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。OpenAlex 与 GitHub 的 key 可选。
 
 每日任务通过站点 MCP 工具 `refresh_literature` 扩充语料至 200–500 篇；三组 PubMed、arXiv、OpenAlex 交叉检索加五组 OpenAlex 与 PubMed 专题检索，按 DOI、PMID、arXiv ID 与标题去重。请求按批次限速，OpenAlex 限流时仍可由 PubMed 补充。该工具要求已登录的站点所有者身份，按 UTC 日期幂等，分批更新 D1，不重新部署。总量不足 200 篇时标记 partial，后续可重试。`MCP_OWNER_EMAIL` 为服务端所有者身份绑定。`POST /api/admin/refresh` 仍可作为其他受控调度器的接口，需要 `Authorization: Bearer <REFRESH_TOKEN>`，不把 token 写入调度提示词。
 

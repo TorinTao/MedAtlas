@@ -8,7 +8,7 @@ function bytesToBase64(bytes: Uint8Array): string { return btoa(String.fromCharC
 function base64ToBytes(value: string): Uint8Array<ArrayBuffer> { const raw = atob(value); const bytes = new Uint8Array(new ArrayBuffer(raw.length)); for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i); return bytes; }
 
 async function encryptionKey(): Promise<CryptoKey> {
-  const encoded = runtime("USER_API_KEY_ENCRYPTION_KEY" as keyof Cloudflare.Env);
+  const encoded = runtime("USER_API_KEY_ENCRYPTION_KEY");
   if (!encoded) throw new Error("个人 API Key 加密服务尚未配置");
   const bytes = base64ToBytes(encoded);
   if (bytes.length !== 32) throw new Error("个人 API Key 加密配置无效");

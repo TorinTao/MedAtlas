@@ -6,6 +6,7 @@ declare namespace Cloudflare {
     LEXMOUNT_PROJECT_ID?: string;
     LEXMOUNT_BASE_URL?: string;
     DEEPSEEK_API_KEY?: string;
+    USER_API_KEY_ENCRYPTION_KEY?: string;
     OPENALEX_API_KEY?: string;
     GITHUB_TOKEN?: string;
     REFRESH_TOKEN?: string;
