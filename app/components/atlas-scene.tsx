@@ -17,7 +17,7 @@ function paperPosition(paper: Paper): [number, number, number] {
   const numericMonth = date.match(/^\d{4}-(\d{2})/);
   const month = numericMonth ? Number(numericMonth[1]) : monthNames.findIndex(name => date.includes(name)) + 1;
   const fraction = month >= 1 && month <= 12 ? (month - 6.5) / 12 : 0;
-  return [(Math.max(2018, Math.min(2026, paper.year)) - 2022 + fraction) * 1.14, (modalities.indexOf(paper.modality) - 1.5) * 1.28, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05];
+  return [(Math.max(2014, Math.min(2026, paper.year)) - 2020 + fraction) * 0.76, (modalities.indexOf(paper.modality) - 1.5) * 1.28, (tasks.indexOf(paper.clinicalTask) - 2) * 1.05];
 }
 
 function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
@@ -127,7 +127,7 @@ function Plot({ papers, selectedId, onPick, onHover, motion }: { papers: Paper[]
     <AxisLabel text="X · 发表时间" position={[4.15, -3.58, 2.7]} color="#70e1e1" />
     <AxisLabel text="Y · 医学模态" position={[-4.45, 3.05, 2.7]} color="#e8bd7f" />
     <AxisLabel text="Z · 临床任务" position={[-4.3, -2.6, -3.1]} color="#bcaaf9" />
-    {[2018, 2020, 2022, 2024, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2022) * 1.14, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
+    {[2014, 2017, 2020, 2023, 2026].map(year => <AxisLabel key={year} text={String(year)} position={[(year - 2020) * 0.76, -2.98, 2.7]} color="#9cc5c7" width={0.85} />)}
     {core.slice(1).map((paper, index) => <Connection key={`core-${paper.id}`} from={positions.get(core[index].id) || paperPosition(core[index])} to={positions.get(paper.id) || paperPosition(paper)} color="#f2d796" opacity={0.46} />)}
     {selected && related.map(({ paper }) => <Connection key={`related-${selected.id}-${paper.id}`} from={positions.get(selected.id) || paperPosition(selected)} to={positions.get(paper.id) || paperPosition(paper)} color="#74e3db" opacity={0.62} />)}
     {papers.map(p => <Star key={p.id} paper={p} position={positions.get(p.id) || paperPosition(p)} texture={texture} selected={p.id === selectedId} core={coreIds.has(p.id)} onPick={onPick} onHover={onHover} motion={motion} />)}

@@ -8,7 +8,7 @@ import type { Paper } from "./types";
 export async function allPapers(): Promise<Paper[]> {
   try {
     const rows = await getDb().select().from(paperTable).orderBy(desc(paperTable.updatedAt)).limit(500);
-    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).slice(0, 500);
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear()).slice(0, 500);
   } catch { return seedPapers; }
 }
 
