@@ -111,3 +111,10 @@
 .library-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 0 5px;color:#728d8c;font-size:10px}
 .library-pagination>div{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.library-pagination button{min-width:27px;height:28px;padding:0 8px;border:1px solid #d5e4df;border-radius:5px;background:#fff;color:#3c6e69;font-size:10px;cursor:pointer}
 .library-pagination button:hover,.library-pagination button.active{background:#e8f5ef;border-color:#7fc0b2;color:#176f66}.library-pagination button:disabled{opacity:.4;cursor:default}
+.legend button.read-filter{border-color:#4a827f;color:#c9e6df}.legend button.read-filter.active{background:#276b64;border-color:#8ae0ca;color:#fff}
+.read-mark{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #b9d9cf;border-radius:6px;background:#f0f8f3;color:#27766e;font-size:10px;font-weight:700;padding:8px 10px;cursor:pointer}
+.read-mark.active{background:#d8f1e8;border-color:#7cc5ae;color:#176d5e}.rail-card>.read-mark{width:100%;margin-top:8px}
+.detail-actions{flex-wrap:wrap}.detail-actions button.read-mark{background:#f0f8f3;border-color:#b9d9cf;color:#27766e}.detail-actions button.read-mark.active{background:#d8f1e8;border-color:#7cc5ae;color:#176d5e}
+.library-meta .read-badge{display:inline-flex;align-items:center;gap:3px;color:#177e6b;font-weight:700}
+.map-empty-overlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;padding:13px 17px;border:1px solid #5b938c;border-radius:8px;background:#102f39ed;color:#d9f1e9;font-size:11px;text-align:center;line-height:1.6;pointer-events:none;width:min(310px,80%)}
+.read-mark:disabled,.legend button.read-filter:disabled{opacity:.55;cursor:wait}
