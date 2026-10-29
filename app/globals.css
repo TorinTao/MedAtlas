@@ -104,3 +104,10 @@
 .repo-evaluation-evidence{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0}.repo-evaluation-evidence b{font-size:9px;color:#527d75}
 .repo-evaluation-evidence a{display:inline-flex;align-items:center;gap:3px;padding:4px 6px;background:#fff;border:1px solid #d6e9e2;border-radius:4px;color:#2b756d;font-size:9px}
 .repo-evaluation>small,.repo-evaluation-error{display:block;color:#7b9390;font-size:9px;line-height:1.5}
+.library-summary{display:flex;gap:8px;align-items:flex-start;margin:5px 0 11px;padding:9px 10px;background:#f3faf6;border-radius:5px;color:#345e59;font-size:10px;line-height:1.6}
+.library-summary strong{flex:0 0 auto;color:#2b8278;font-size:9px}.library-summary span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.library-summary.pending{background:#f8f9f7;color:#849695}.library-summary.pending strong{color:#849695}
+.library-empty{padding:25px;text-align:center;color:#819595;font-size:11px;background:#fff;border:1px solid #dfe9e5;border-radius:8px}
+.library-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 0 5px;color:#728d8c;font-size:10px}
+.library-pagination>div{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.library-pagination button{min-width:27px;height:28px;padding:0 8px;border:1px solid #d5e4df;border-radius:5px;background:#fff;color:#3c6e69;font-size:10px;cursor:pointer}
+.library-pagination button:hover,.library-pagination button.active{background:#e8f5ef;border-color:#7fc0b2;color:#176f66}.library-pagination button:disabled{opacity:.4;cursor:default}
