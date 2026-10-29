@@ -32,7 +32,7 @@ export async function lexmountExtract(url: string): Promise<{ text: string; titl
 
 export async function readPaper(paper: Paper) {
   const errors: string[] = []; let lexmount: { text: string; title: string; finalUrl: string } | null = null;
-  const target = paper.url || paper.oaUrl;
+  const target = paper.oaUrl && /^(https?:\/\/)(?:www\.)?arxiv\.org\//i.test(paper.oaUrl) ? paper.oaUrl : paper.url || paper.oaUrl;
   if (target) try { lexmount = await lexmountExtract(target); } catch (e) { errors.push((e as Error).message); }
   let open: { text: string; url: string } | null = null;
   try { open = await europePmcText(paper); } catch (e) { errors.push(`Europe PMC: ${(e as Error).message}`); }

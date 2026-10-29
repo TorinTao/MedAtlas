@@ -25,3 +25,9 @@ test("seed corpus preserves source and stable paper identity", () => {
   assert.equal(new Set(seedPapers.map(p => p.id)).size, seedPapers.length);
   assert.ok(seedPapers.every(p => p.title && p.url && p.source));
 });
+
+test("arXiv metadata links are upgraded to HTTPS before Web Fetch", () => {
+  const paper = normalizePaper({ id: "arxiv-2", title: "Clinical Image Agent", url: "http://arxiv.org/abs/2401.00002", oaUrl: "http://arxiv.org/html/2401.00002" });
+  assert.equal(paper.url, "https://arxiv.org/abs/2401.00002");
+  assert.equal(paper.oaUrl, "https://arxiv.org/html/2401.00002");
+});

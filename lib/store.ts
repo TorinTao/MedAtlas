@@ -2,20 +2,20 @@ import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { papers as paperTable } from "../db/schema";
-import { dedupePapers, seedPapers } from "./papers";
+import { dedupePapers, publicPaperUrl, seedPapers } from "./papers";
 import type { Paper } from "./types";
 
 export async function allPapers(): Promise<Paper[]> {
   try {
     const rows = await getDb().select().from(paperTable).limit(500);
-    return dedupePapers([...rows.map(r => JSON.parse(r.data) as Paper), ...seedPapers]);
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]);
   } catch { return seedPapers; }
 }
 
 export async function findPaper(id: string): Promise<Paper | undefined> {
   try {
     const row = await getDb().select().from(paperTable).where(eq(paperTable.id, id)).limit(1);
-    if (row[0]) return JSON.parse(row[0].data) as Paper;
+    if (row[0]) return securePaperUrls(JSON.parse(row[0].data) as Paper);
   } catch { /* initial preview can use the seed corpus */ }
   return seedPapers.find(p => p.id === id);
 }
@@ -24,6 +24,8 @@ export async function putPapers(items: Paper[]) {
   const db = getDb(); const updatedAt = new Date().toISOString();
   for (const paper of items) await db.insert(paperTable).values({ id: paper.id, title: paper.title, data: JSON.stringify(paper), updatedAt }).onConflictDoUpdate({ target: paperTable.id, set: { title: paper.title, data: JSON.stringify(paper), updatedAt } });
 }
+
+function securePaperUrls(paper: Paper): Paper { return { ...paper, url: publicPaperUrl(paper.url), oaUrl: publicPaperUrl(paper.oaUrl) }; }
 
 export async function takeQuota(request: Request, action: string, limit: number, userId?: string): Promise<boolean> {
   if (!env.DB) return false;

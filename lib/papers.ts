@@ -16,6 +16,7 @@ export function classify(title: string, abstract = ""): { paperType: PaperType; 
 }
 
 export function cleanDoi(value: string) { return value.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim().toLowerCase(); }
+export function publicPaperUrl(value: string) { return value.replace(/^http:\/\/(?:www\.)?arxiv\.org\//i, "https://arxiv.org/"); }
 
 export function normalizePaper(raw: RawPaper): Paper {
   const c = classify(raw.title, raw.abstract);
@@ -23,7 +24,7 @@ export function normalizePaper(raw: RawPaper): Paper {
     id: raw.id, title: raw.title, abstract: raw.abstract || "", year: raw.year || 0,
     publishedAt: raw.publishedAt || "", doi: cleanDoi(raw.doi || ""), pmid: raw.pmid || "", arxivId: raw.arxivId || "",
     source: raw.source || "", paperType: raw.paperType === "preprint" ? "预印本" : c.paperType,
-    url: raw.url || "", oaUrl: raw.oaUrl || "", citedByCount: raw.citedByCount || 0,
+    url: publicPaperUrl(raw.url || ""), oaUrl: publicPaperUrl(raw.oaUrl || ""), citedByCount: raw.citedByCount || 0,
     citationPercentile: Math.min(100, Math.max(0, raw.citationPercentile || 0)), authors: raw.authors || [], institutions: raw.institutions || [], repoUrl: raw.repoUrl || "",
     fetchedAt: raw.fetchedAt || new Date().toISOString(), modality: c.modality, clinicalTask: c.clinicalTask, method: c.method,
     relevance: raw.relevance ?? 0.75, fulltextStatus: raw.fulltextStatus || (raw.oaUrl ? "未检查" : "仅摘要"),
