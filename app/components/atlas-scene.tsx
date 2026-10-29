@@ -142,7 +142,5 @@ export default function AtlasScene({ papers, selectedId, onPick, motion }: { pap
       <Plot papers={papers} selectedId={selectedId} onPick={onPick} onHover={setHovered} motion={motion} /><Controls />
     </Canvas>
     {hovered && <div className="scene-tooltip"><span>{hovered.year} · {hovered.paperType}</span><strong>{hovered.title}</strong></div>}
-    <div className="scene-instruction">拖动旋转 <span>·</span> 滚轮缩放 <span>·</span> 点击论文节点</div>
-    <div className="scene-coordinates" aria-label="三维坐标轴说明"><div><b className="coord-x">X</b><strong>发表时间</strong><small>2018—2026</small></div><div><b className="coord-y">Y</b><strong>医学模态</strong><small>影像 · 文本 · 融合</small></div><div><b className="coord-z">Z</b><strong>临床任务</strong><small>诊断 · 报告 · 问答等</small></div></div>
   </div>;
 }
