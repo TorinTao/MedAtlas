@@ -28,7 +28,7 @@ function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
   const nodes = [...groups.values()].flatMap(group => group.sort((a, b) => a.id.localeCompare(b.id)).map((paper, index) => {
     const base = paperPosition(paper);
     const angle = index * 2.399963 + (paper.id.length % 7) * 0.35;
-    const spread = 0.11 + Math.sqrt(index) * 0.13;
+    const spread = 0.12 + Math.sqrt(index) * 0.17;
     return { paper, base, position: [base[0] + Math.sin(angle * 0.73) * spread * 0.7, base[1] + Math.cos(angle) * spread, base[2] + Math.sin(angle) * spread] };
   }));
   // Relax overlaps while keeping every point close to its semantic coordinates.
@@ -38,13 +38,13 @@ function layoutPapers(papers: Paper[]): Map<string, [number, number, number]> {
       if (Math.abs(a.base[0] - b.base[0]) > 1.2 || Math.abs(a.base[1] - b.base[1]) > 1.4 || Math.abs(a.base[2] - b.base[2]) > 1.2) continue;
       const dx = a.position[0] - b.position[0], dy = a.position[1] - b.position[1], dz = a.position[2] - b.position[2];
       const distance = Math.hypot(dx, dy, dz) || 0.001;
-      if (distance >= 0.31) continue;
-      const force = (0.31 - distance) * 0.32 / distance;
+      if (distance >= 0.40) continue;
+      const force = (0.40 - distance) * 0.32 / distance;
       a.position[0] += dx * force; a.position[1] += dy * force; a.position[2] += dz * force;
       b.position[0] -= dx * force; b.position[1] -= dy * force; b.position[2] -= dz * force;
     }
     for (const node of nodes) for (let axis = 0; axis < 3; axis++) {
-      const range = [0.47, 0.55, 0.51][axis];
+      const range = [0.52, 0.69, 0.62][axis];
       node.position[axis] = Math.max(node.base[axis] - range, Math.min(node.base[axis] + range, node.position[axis]));
     }
   }
