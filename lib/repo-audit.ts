@@ -20,7 +20,7 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = ""): Pr
   const check = (label: string, ok: boolean | null, evidence: string): RepoCheck => ({ label, status: ok === null ? "无法确认" : ok ? "有" : "缺失", evidence });
   const checks: RepoCheck[] = [
     check("论文关联", expectedRepoUrl ? expectedRepoUrl.replace(/\/$/, "").toLowerCase() === canonical.toLowerCase() : null, expectedRepoUrl || canonical),
-    check("开源许可证", meta.license?.spdx_id && meta.license.spdx_id !== "NOASSERTION" ? true : filesResponse.ok ? false : null, match(/^(licen[sc]e|copying)(\.|$)/)?.url || `${canonical}?tab=License-1`),
+    check("许可证文件", match(/^(licen[sc]e|copying)(\.|$)/) ? true : filesResponse.ok ? false : null, match(/^(licen[sc]e|copying)(\.|$)/)?.url || `${canonical}?tab=License-1`),
     check("README", filesResponse.ok ? Boolean(match(/^readme(\.|$)/)) : null, match(/^readme(\.|$)/)?.url || canonical),
     check("根目录依赖文件", match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/) ? true : null, match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/)?.url || canonical),
     check("根目录数据说明", match(/^(data|dataset|datasets|data\.md)$/) ? true : null, match(/^(data|dataset|datasets|data\.md)$/)?.url || canonical),
