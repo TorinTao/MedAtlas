@@ -1,0 +1,1291 @@
+[
+  {
+    "id": "W4416035470",
+    "title": "3MDBench: Medical Multimodal Multi-agent Dialogue Benchmark",
+    "abstract": "Though Large Vision-Language Models (LVLMs) are being actively explored in medicine, their ability to conduct complex realworld telemedicine consultations combining accurate diagnosis with professional dialogue remains underexplored.This paper presents 3MDBench (Medical Multimodal Multi-agent Dialogue Benchmark), an open-source framework for simulating and evaluating LVLM-driven telemedical consultations.3MDBench simulates patient variability through temperament-based Patient Agent and evaluates diagnostic accuracy and dialogue quality via Assessor Agent.It includes 2996 cases across 34 diagnoses from real-world telemedicine interactions, combining textual and image-based data.The experimental study compares diagnostic strategies for widely used open and closed-source LVLMs.We demonstrate that multimodal dialogue with internal reasoning improves F1 score by 6.5% over non-dialogue settings, highlighting the importance of context-aware, informationseeking questioning.Moreover, injecting predictions from a diagnostic convolutional neural network into the LVLM's context boosts F1 by up to 20%.",
+    "year": 2025,
+    "publishedAt": "2025-01-01",
+    "doi": "10.18653/v1/2025.emnlp-main.1353",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.18653/v1/2025.emnlp-main.1353",
+    "oaUrl": "https://doi.org/10.18653/v1/2025.emnlp-main.1353",
+    "citedByCount": 2,
+    "citationPercentile": 97,
+    "authors": [
+      {
+        "name": "Ivan Sviridov",
+        "id": "https://openalex.org/A5094018570"
+      },
+      {
+        "name": "Amina Miftakhova",
+        "id": "https://openalex.org/A5017997455"
+      },
+      {
+        "name": "Artemiy Tereshchenko",
+        "id": "https://openalex.org/A5104343589"
+      },
+      {
+        "name": "Galina Zubkova",
+        "id": "https://openalex.org/A5025290667"
+      },
+      {
+        "name": "Pavel Dmitrievich Blinov",
+        "id": "https://openalex.org/A5084906936"
+      },
+      {
+        "name": "А. А. Савченко",
+        "id": "https://openalex.org/A5008998801"
+      }
+    ],
+    "institutions": [],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:19Z"
+  },
+  {
+    "id": "W4407153981",
+    "title": "A Proactive Agent Collaborative Framework for Zero‐Shot Multimodal Medical Reasoning",
+    "abstract": "The adoption of large language models (LLMs) in healthcare has garnered significant research interest, yet their performance remains limited due to a lack of domain-specific knowledge, medical reasoning skills, and their unimodal nature, which restricts them to text-only inputs. To address these limitations, we propose MultiMedRes, a multimodal medical collaborative reasoning framework that simulates human physicians' communication by incorporating a learner agent to proactively acquire information from domain-specific expert models. MultiMedRes addresses medical multimodal reasoning problems through three steps i) Inquire: The learner agent decomposes complex medical reasoning problems into multiple domain-specific sub-problems; ii) Interact: The agent engages in iterative \"ask-answer\" interactions with expert models to obtain domain-specific knowledge; and iii) Integrate: The agent integrates all the acquired domain-specific knowledge to address the medical reasoning problems (e.g., identifying the difference of disease levels and abnormality sizes between medical images). We validate the effectiveness of our method on the task of difference visual question answering for X-ray images. The experiments show that our zero-shot prediction achieves state-of-the-art performance, surpassing fully supervised methods, which demonstrates that MultiMedRes could offer trustworthy and interpretable assistance to physicians in monitoring the treatment progression of patients, paving the way for effective human-AI interaction and collaboration.",
+    "year": 2025,
+    "publishedAt": "2025-02-05",
+    "doi": "10.1002/aisy.202400840",
+    "pmid": "40852092",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1002/aisy.202400840",
+    "oaUrl": "https://doi.org/10.1002/aisy.202400840",
+    "citedByCount": 14,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Zishan Gu",
+        "id": "https://openalex.org/A5114188117"
+      },
+      {
+        "name": "Fenglin Liu",
+        "id": "https://openalex.org/A5100632775"
+      },
+      {
+        "name": "Jiayuan Chen",
+        "id": "https://openalex.org/A5031618552"
+      },
+      {
+        "name": "Changchang Yin",
+        "id": "https://openalex.org/A5036160994"
+      },
+      {
+        "name": "Ping Zhang",
+        "id": "https://openalex.org/A5050360222"
+      }
+    ],
+    "institutions": [
+      "The Ohio State University",
+      "University of Oxford"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:19Z"
+  },
+  {
+    "id": "W4404509535",
+    "title": "Vision-language models for medical report generation and visual question answering: a review",
+    "abstract": "Medical vision-language models (VLMs) combine computer vision (CV) and natural language processing (NLP) to analyze visual and textual medical data. Our paper reviews recent advancements in developing VLMs specialized for healthcare, focusing on publicly available models designed for medical report generation and visual question answering (VQA). We provide background on NLP and CV, explaining how techniques from both fields are integrated into VLMs, with visual and language data often fused using Transformer-based architectures to enable effective learning from multimodal data. Key areas we address include the exploration of 18 public medical vision-language datasets, in-depth analyses of the architectures and pre-training strategies of 16 recent noteworthy medical VLMs, and comprehensive discussion on evaluation metrics for assessing VLMs' performance in medical report generation and VQA. We also highlight current challenges facing medical VLM development, including limited data availability, concerns with data privacy, and lack of proper evaluation metrics, among others, while also proposing future directions to address these obstacles. Overall, our review summarizes the recent progress in developing VLMs to harness multimodal medical data for improved healthcare applications.",
+    "year": 2024,
+    "publishedAt": "2024-11-19",
+    "doi": "10.3389/frai.2024.1430984",
+    "pmid": "39628839",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "review",
+    "url": "https://doi.org/10.3389/frai.2024.1430984",
+    "oaUrl": "https://doi.org/10.3389/frai.2024.1430984",
+    "citedByCount": 238,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Iryna Hartsock",
+        "id": "https://openalex.org/A5082579603"
+      },
+      {
+        "name": "Ghulam Rasool",
+        "id": "https://openalex.org/A5045996251"
+      }
+    ],
+    "institutions": [
+      "Moffitt Cancer Center"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:21Z"
+  },
+  {
+    "id": "W4411095267",
+    "title": "Vision-language foundation models for medical imaging: a review of current practices and innovations",
+    "abstract": "Foundation models, including large language models and vision-language models (VLMs), have revolutionized artificial intelligence by enabling efficient, scalable, and multimodal learning across diverse applications. By leveraging advancements in self-supervised and semi-supervised learning, these models integrate computer vision and natural language processing to address complex tasks, such as disease classification, segmentation, cross-modal retrieval, and automated report generation. Their ability to pretrain on vast, uncurated datasets minimizes reliance on annotated data while improving generalization and adaptability for a wide range of downstream tasks. In the medical domain, foundation models address critical challenges by combining the information from various medical imaging modalities with textual data from radiology reports and clinical notes. This integration has enabled the development of tools that streamline diagnostic workflows, enhance accuracy (ACC), and enable robust decision-making. This review provides a systematic examination of the recent advancements in medical VLMs from 2022 to 2024, focusing on modality-specific approaches and tailored applications in medical imaging. The key contributions include the creation of a structured taxonomy to categorize existing models, an in-depth analysis of datasets essential for training and evaluation, and a review of practical applications. This review also addresses ongoing challenges and proposes future directions for enhancing the accessibility and impact of foundation models in healthcare. Supplementary Information: The online version contains supplementary material available at 10.1007/s13534-025-00484-6.",
+    "year": 2025,
+    "publishedAt": "2025-06-06",
+    "doi": "10.1007/s13534-025-00484-6",
+    "pmid": "40917147",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "review",
+    "url": "https://doi.org/10.1007/s13534-025-00484-6",
+    "oaUrl": "https://doi.org/10.1007/s13534-025-00484-6",
+    "citedByCount": 85,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Ji Seung Ryu",
+        "id": null
+      },
+      {
+        "name": "Hyunyoung Kang",
+        "id": null
+      },
+      {
+        "name": "Yuseong Chu",
+        "id": null
+      },
+      {
+        "name": "Sejung Yang",
+        "id": "https://openalex.org/A5073039234"
+      }
+    ],
+    "institutions": [
+      "Yonsei University",
+      "Yonsei University Mirae Campus"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:21Z"
+  },
+  {
+    "id": "W7165024593",
+    "title": "Vision-Language Models in Medical Applications: A Review",
+    "abstract": "Artificial intelligence is entering a new era with the advent of Large Language Models (LLMs) and Vision-Language Models (VLMs). These models facilitate efficient learning involving varied modalities and tasks such as visual question answering and image captioning. The capability of such models to carry out self-supervised, semi-supervised, and weakly supervised learning methods to integrate computer vision with natural language processing makes them competent to deal with complex tasks such as disease classification and segmentation tasks in images, cross-modal information extraction, and automatic report writing. By means of pretraining on large volumes of data without annotations, such models can work with less labeled data and improve their capacity to generalize to downstream tasks. In the context of the healthcare industry, such models address critical challenges through the integration of data obtained from various medical imaging modalities with external text-based data such as radiology reports. These have led to novel tools that have been optimized to improve detection accuracy and diagnostic processes. This review paper aims to explore the recent advances in the field of medical VLMs spanning from 2021 to 2026. The primary roles include the identification of a taxonomy to classify such models, the analysis of critical data sets essential for the assessment of such models, and the current real-world implementation. This paper also aims to identify challenges and limitations in existing tools to increase their applicability. In addition, this also outlines future pathways to expand the reach and effectiveness of VLMs in medical applications.",
+    "year": 2026,
+    "publishedAt": "2026-01-01",
+    "doi": "10.1109/access.2026.3704901",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1109/access.2026.3704901",
+    "oaUrl": "https://doi.org/10.1109/access.2026.3704901",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Subhram Dasgupta",
+        "id": "https://openalex.org/A5111306239"
+      },
+      {
+        "name": "Pal Dave",
+        "id": "https://openalex.org/A5106105879"
+      },
+      {
+        "name": "Md Tasnim Alam",
+        "id": "https://openalex.org/A5111235330"
+      },
+      {
+        "name": "Kushal Badal",
+        "id": "https://openalex.org/A5091951066"
+      },
+      {
+        "name": "Shaohu Zhang",
+        "id": "https://openalex.org/A5012682606"
+      },
+      {
+        "name": "Hamidreza Moradi",
+        "id": "https://openalex.org/A5075837487"
+      },
+      {
+        "name": "Madhuri Siddula",
+        "id": "https://openalex.org/A5062962146"
+      },
+      {
+        "name": "Kaushik Roy",
+        "id": "https://openalex.org/A5070531407"
+      }
+    ],
+    "institutions": [
+      "North Carolina Agricultural and Technical State University"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:21Z"
+  },
+  {
+    "id": "W7221556801",
+    "title": "Foundation Models and Vision-Language Models in Medical Imaging: A Review",
+    "abstract": "Foundation models (FMs) and vision-language models (VLMs) have emerged as a transformative paradigm in artificial intelligence, reshaping the landscape of medical image analysis and clinical decision support. Building upon large-scale pretraining on heterogeneous datasets, these models exhibit unprecedented generalization and zero-shot transfer capabilities, effectively overcoming the perennial bottleneck of annotated data scarcity that has historically constrained deep learning applications in healthcare. This review paper presents the state of the art in FMs and VLMs applied to medical imaging, encompassing a broad spectrum of modalities including radiography, computed tomography (CT), magnetic resonance imaging (MRI), pathology whole-slide images, ophthalmology, dermatology, and echocardiography. A structured taxonomy of architectures, training strategies, and adaptation mechanisms is provided, covering contrastive learning (CLIP-based), generative, and hybrid paradigms. Also, seminal works are critically analyzed, such as MedCLIP, BioViL, BiomedCLIP, MedSAM, SAM-Med2D, LLaVA-Med, Med-PaLM 2, CONCH, and BiomedGPT, examining their methodological contributions, benchmark performance, and inherent limitations. Additionally, research gaps are discussed, including insufficient 3D volumetric understanding, limited multimodal reasoning in rare disease contexts, translational barriers for clinical deployment, and critical ethical concerns such as algorithmic bias and privacy. Further, emerging trends are presented encompassing instruction-tuned multimodal large language models (LLMs), agent-based systems, federated learning, and FMs for time-series physiological data. Finally, research directions are highlighted for clinically validated, equitable, and deployable AI systems in medical imaging.",
+    "year": 2026,
+    "publishedAt": "2026-10-12",
+    "doi": "10.3390/computers15100707",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.3390/computers15100707",
+    "oaUrl": "https://doi.org/10.3390/computers15100707",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Saeed Mohsen",
+        "id": "https://openalex.org/A5081153578"
+      },
+      {
+        "name": "Leena Mahmoud Lulu",
+        "id": "https://openalex.org/A5158453023"
+      },
+      {
+        "name": "Mohamed Eassa",
+        "id": "https://openalex.org/A5069530300"
+      },
+      {
+        "name": "Raghda Raafat",
+        "id": "https://openalex.org/A5117489317"
+      },
+      {
+        "name": "Maher Ibrahim Tawdrous",
+        "id": "https://openalex.org/A5081717465"
+      },
+      {
+        "name": "Ahmed F. Ibrahim",
+        "id": "https://openalex.org/A5158442225"
+      }
+    ],
+    "institutions": [
+      "Zewail City of Science and Technology",
+      "University of Al Dhaid",
+      "October 6 University",
+      "City University Ajman"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:21Z"
+  },
+  {
+    "id": "W4392245508",
+    "title": "Multimodal risk prediction with physiological signals, medical images and clinical notes",
+    "abstract": "The broad adoption of electronic health record (EHR) systems brings us a tremendous amount of clinical data and thus provides opportunities to conduct data-based healthcare research to solve various clinical problems in the medical domain. Machine learning and deep learning methods are widely used in the medical informatics and healthcare domain due to their power to mine insights from raw data. When adapting deep learning models for EHR data, it is essential to consider its heterogeneous nature: EHR contains patient records from various sources including medical tests (e.g. blood test, microbiology test), medical imaging, diagnosis, medications, procedures, clinical notes, etc. Those modalities together provide a holistic view of patient health status and complement each other. Therefore, combining data from multiple modalities that are intrinsically different is challenging but intuitively promising in deep learning for EHR. To assess the expectations of multimodal data, we introduce a comprehensive fusion framework designed to integrate temporal variables, medical images, and clinical notes in EHR for enhanced performance in clinical risk prediction. Early, joint, and late fusion strategies are employed to combine data from various modalities effectively. We test the model with three predictive tasks: in-hospital mortality, long length of stay, and 30-day readmission. Experimental results show that multimodal models outperform uni-modal models in the tasks involved. Additionally, by training models with different input modality combinations, we calculate the Shapley value for each modality to quantify their contribution to multimodal performance. It is shown that temporal variables tend to be more helpful than CXR images and clinical notes in the three explored predictive tasks.",
+    "year": 2024,
+    "publishedAt": "2024-02-28",
+    "doi": "10.1016/j.heliyon.2024.e26772",
+    "pmid": "37293005",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1016/j.heliyon.2024.e26772",
+    "oaUrl": "https://doi.org/10.1016/j.heliyon.2024.e26772",
+    "citedByCount": 58,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Yuanlong Wang",
+        "id": "https://openalex.org/A5101720890"
+      },
+      {
+        "name": "Changchang Yin",
+        "id": "https://openalex.org/A5036160994"
+      },
+      {
+        "name": "Ping Zhang",
+        "id": "https://openalex.org/A5050360222"
+      }
+    ],
+    "institutions": [
+      "The Ohio State University"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:22Z"
+  },
+  {
+    "id": "W4412197197",
+    "title": "Multimodal Artificial Intelligence in Medical Diagnostics",
+    "abstract": "The integration of artificial intelligence into healthcare has advanced rapidly in recent years, with multimodal approaches emerging as promising tools for improving diagnostic accuracy and clinical decision making. These approaches combine heterogeneous data sources such as medical images, electronic health records, physiological signals, and clinical notes to better capture the complexity of disease processes. Despite this progress, only a limited number of studies offer a unified view of multimodal AI applications in medicine. In this review, we provide a comprehensive and up-to-date analysis of machine learning and deep learning-based multimodal architectures, fusion strategies, and their performance across a range of diagnostic tasks. We begin by summarizing publicly available datasets and examining the preprocessing pipelines required for harmonizing heterogeneous medical data. We then categorize key fusion strategies used to integrate information from multiple modalities and overview representative model architectures, from hybrid designs and transformer-based vision-language models to optimization-driven and EHR-centric frameworks. Finally, we highlight the challenges present in existing works. Our analysis shows that multimodal approaches tend to outperform unimodal systems in diagnostic performance, robustness, and generalization. This review provides a unified view of the field and opens up future research directions aimed at building clinically usable, interpretable, and scalable multimodal diagnostic systems.",
+    "year": 2025,
+    "publishedAt": "2025-07-09",
+    "doi": "10.3390/info16070591",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.3390/info16070591",
+    "oaUrl": "https://doi.org/10.3390/info16070591",
+    "citedByCount": 77,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Bassem Jandoubi",
+        "id": "https://openalex.org/A5117309175"
+      },
+      {
+        "name": "Moulay A. Akhloufi",
+        "id": "https://openalex.org/A5039930829"
+      }
+    ],
+    "institutions": [
+      "Université de Moncton"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:22Z"
+  },
+  {
+    "id": "W7169781816",
+    "title": "Recent Advances In Multimodal Transformers For Medical Image And Clinical Text Analysis",
+    "abstract": "Multimodal transformers, the latest AI models, can understand medical images along with clinical text like reports and patient notes. These models help doctors diagnose diseases more accurately and quickly. This review explains how these models are built and the data they learn from. Here, the challenges such as limited data, privacy concerns and the need for better explainability, are also explained in brief. Finally, the review also highlights future goals such as stronger and better foundation models and better standards for evaluating these systems.",
+    "year": 2026,
+    "publishedAt": "2026-05-22",
+    "doi": "10.67440/ahj.v21i2s.900",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.67440/ahj.v21i2s.900",
+    "oaUrl": "https://doi.org/10.67440/ahj.v21i2s.900",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Sahil Sharma",
+        "id": "https://openalex.org/A5137069067"
+      },
+      {
+        "name": "Dr. Rajinder Kumar",
+        "id": "https://openalex.org/A5140533454"
+      },
+      {
+        "name": "Tarandeep Singh Walia",
+        "id": "https://openalex.org/A5084767757"
+      },
+      {
+        "name": "Deepender",
+        "id": "https://openalex.org/A5045853983"
+      }
+    ],
+    "institutions": [
+      "Guru Kashi University",
+      "Lovely Professional University"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:22Z"
+  },
+  {
+    "id": "W7212117886",
+    "title": "Multimodal Artificial Intelligence for Breast Cancer Detection Using Medical Imaging and Clinical Data",
+    "abstract": "Breast cancer diagnosis typically involves both medical images and clinical text reports, but many existing AI systems analyze only one type of data at a time.This makes it difficult to connect information from scans and clinical notes, which can limit diagnostic accuracy.In this paper, we propose an AI-based multimodal framework for breast cancer detection that integrates both imaging data and textual information.The system supports text-only input, image-only input, or both, which are processed using separate encoders and combined through a fusion mechanism.By learning a shared representation of these data types, the proposed approach improves breast cancer classification, tumor localization, and clinical decision support, making the results more accurate and reliable.",
+    "year": 2026,
+    "publishedAt": "2026-09-01",
+    "doi": "10.55041/ijsrem67159",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.55041/ijsrem67159",
+    "oaUrl": "https://doi.org/10.55041/ijsrem67159",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Thota Pallavi Thota Pallavi",
+        "id": "https://openalex.org/A5151187650"
+      }
+    ],
+    "institutions": [],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:22Z"
+  },
+  {
+    "id": "W2997704374",
+    "title": "When Radiology Report Generation Meets Knowledge Graph",
+    "abstract": "Automatic radiology report generation has been an attracting research problem towards computer-aided diagnosis to alleviate the workload of doctors in recent years. Deep learning techniques for natural image captioning are successfully adapted to generating radiology reports. However, radiology image reporting is different from the natural image captioning task in two aspects: 1) the accuracy of positive disease keyword mentions is critical in radiology image reporting in comparison to the equivalent importance of every single word in a natural image caption; 2) the evaluation of reporting quality should focus more on matching the disease keywords and their associated attributes instead of counting the occurrence of N-gram. Based on these concerns, we propose to utilize a pre-constructed graph embedding module (modeled with a graph convolutional neural network) on multiple disease findings to assist the generation of reports in this work. The incorporation of knowledge graph allows for dedicated feature learning for each disease finding and the relationship modeling between them. In addition, we proposed a new evaluation metric for radiology image reporting with the assistance of the same composed graph. Experimental results demonstrate the superior performance of the methods integrated with the proposed graph embedding module on a publicly accessible dataset (IU-RR) of chest radiographs compared with previous approaches using both the conventional evaluation metrics commonly adopted for image captioning and our proposed ones.",
+    "year": 2020,
+    "publishedAt": "2020-04-03",
+    "doi": "10.1609/aaai.v34i07.6989",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.1609/aaai.v34i07.6989",
+    "oaUrl": "https://doi.org/10.1609/aaai.v34i07.6989",
+    "citedByCount": 348,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Yixiao Zhang",
+        "id": "https://openalex.org/A5100635277"
+      },
+      {
+        "name": "Xiaosong Wang",
+        "id": "https://openalex.org/A5100724911"
+      },
+      {
+        "name": "Ziyue Xu",
+        "id": "https://openalex.org/A5039608149"
+      },
+      {
+        "name": "Qihang Yu",
+        "id": "https://openalex.org/A5091431342"
+      },
+      {
+        "name": "Alan Yuille",
+        "id": "https://openalex.org/A5086706224"
+      },
+      {
+        "name": "Daguang Xu",
+        "id": "https://openalex.org/A5052339079"
+      }
+    ],
+    "institutions": [
+      "Johns Hopkins University",
+      "Nvidia (United Kingdom)",
+      "Nvidia (United States)"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:24Z"
+  },
+  {
+    "id": "W4388713229",
+    "title": "R2GenGPT: Radiology Report Generation with frozen LLMs",
+    "abstract": "Large Language Models (LLMs) have consistently showcased remarkable generalization capa- bilities when applied to various language tasks. Nonetheless, harnessing the full potential of LLMs for Radiology Report Generation (R2Gen) still presents a challenge, stemming from the inherent disparity in modality between LLMs and the R2Gen task. To bridge this gap effectively, we propose R2GenGPT, which is a novel solution that aligns visual features with the word embedding space of LLMs using an efficient visual alignment module. This innovative approach empowers the previously static LLM to seamlessly integrate and process image information, marking a step forward in optimizing R2Gen performance. R2GenGPT offers the following benefits. First, it attains state-of-the-art (SOTA) performance by training only the lightweight visual alignment module while freezing all the parameters of LLM. Second, it exhibits high training efficiency, as it requires the training of an exceptionally minimal number of parameters while achieving rapid convergence. By employing delta tuning, our model only trains 5M parameters (which constitute just 0.07% of the total parameter count) to achieve performance close to the SOTA levels. Our code is available at https://github.com/wang-zhanyu/R2GenGPT.",
+    "year": 2023,
+    "publishedAt": "2023-11-01",
+    "doi": "10.1016/j.metrad.2023.100033",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1016/j.metrad.2023.100033",
+    "oaUrl": "https://doi.org/10.1016/j.metrad.2023.100033",
+    "citedByCount": 197,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Zhanyu Wang",
+        "id": "https://openalex.org/A5100676104"
+      },
+      {
+        "name": "Lingqiao Liu",
+        "id": "https://openalex.org/A5070976480"
+      },
+      {
+        "name": "Lei Wang",
+        "id": "https://openalex.org/A5100435848"
+      },
+      {
+        "name": "Luping Zhou",
+        "id": "https://openalex.org/A5100643784"
+      }
+    ],
+    "institutions": [
+      "The University of Sydney",
+      "The University of Adelaide",
+      "University of Wollongong"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:24Z"
+  },
+  {
+    "id": "W3173688449",
+    "title": "Cross-modal Memory Networks for Radiology Report Generation",
+    "abstract": "Zhihong Chen, Yaling Shen, Yan Song, Xiang Wan. Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers). 2021.",
+    "year": 2021,
+    "publishedAt": "2021-01-01",
+    "doi": "10.18653/v1/2021.acl-long.459",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.18653/v1/2021.acl-long.459",
+    "oaUrl": "https://doi.org/10.18653/v1/2021.acl-long.459",
+    "citedByCount": 357,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Zhihong Chen",
+        "id": "https://openalex.org/A5100430139"
+      },
+      {
+        "name": "Yaling Shen",
+        "id": "https://openalex.org/A5055262831"
+      },
+      {
+        "name": "Yan Song",
+        "id": "https://openalex.org/A5100381754"
+      },
+      {
+        "name": "Xiang Wan",
+        "id": "https://openalex.org/A5030367905"
+      }
+    ],
+    "institutions": [
+      "Shenzhen Research Institute of Big Data",
+      "Chinese University of Hong Kong, Shenzhen"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:24Z"
+  },
+  {
+    "id": "W4285108627",
+    "title": "Reinforced Cross-modal Alignment for Radiology Report Generation",
+    "abstract": "Medical images are widely used in clinical decision-making, where writing radiology reports is a potential application that can be enhanced by automatic solutions to alleviate physicians' workload.In general, radiology report generation is an image-text task, where cross-modal mappings between images and texts play an important role in generating high-quality reports.Although previous studies attempt to facilitate the alignment via the co-attention mechanism under supervised settings, they suffer from lacking valid and accurate correspondences due to no annotation of such alignment.In this paper, we propose an approach with reinforcement learning (RL) over a cross-modal memory (CMM) to better align visual and textual features for radiology report generation.In detail, a shared memory is used to record the mappings between visual and textual information, and the proposed reinforced algorithm is performed to learn the signal from the reports to guide the cross-modal alignment even though such reports are not directly related to how images and texts are mapped.Experimental results on two English radiology report datasets, i.e., IU X-Ray and MIMIC-CXR, show the effectiveness of our approach, where the state-of-the-art results are achieved.We further conduct human evaluation and case study which confirm the validity of the reinforced algorithm in our approach.1",
+    "year": 2022,
+    "publishedAt": "2022-01-01",
+    "doi": "10.18653/v1/2022.findings-acl.38",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.18653/v1/2022.findings-acl.38",
+    "oaUrl": "https://doi.org/10.18653/v1/2022.findings-acl.38",
+    "citedByCount": 131,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Han Qin",
+        "id": null
+      },
+      {
+        "name": "Yan Song",
+        "id": "https://openalex.org/A5100381751"
+      }
+    ],
+    "institutions": [
+      "Chinese University of Hong Kong, Shenzhen"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:24Z"
+  },
+  {
+    "id": "W4226089667",
+    "title": "Medical visual question answering: A survey",
+    "abstract": "",
+    "year": 2023,
+    "publishedAt": "2023-06-08",
+    "doi": "10.1016/j.artmed.2023.102611",
+    "pmid": "37673579",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "review",
+    "url": "https://doi.org/10.1016/j.artmed.2023.102611",
+    "oaUrl": "http://arxiv.org/abs/2111.10056",
+    "citedByCount": 185,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Zhihong Lin",
+        "id": null
+      },
+      {
+        "name": "Donghao Zhang",
+        "id": "https://openalex.org/A5038388335"
+      },
+      {
+        "name": "Qingyi Tao",
+        "id": null
+      },
+      {
+        "name": "Danli Shi",
+        "id": "https://openalex.org/A5027501723"
+      },
+      {
+        "name": "Gholamreza Haffari",
+        "id": "https://openalex.org/A5081525024"
+      },
+      {
+        "name": "Qi Wu",
+        "id": "https://openalex.org/A5104085728"
+      },
+      {
+        "name": "Mingguang He",
+        "id": "https://openalex.org/A5015914756"
+      },
+      {
+        "name": "Zongyuan Ge",
+        "id": "https://openalex.org/A5005014252"
+      }
+    ],
+    "institutions": [
+      "Monash University",
+      "Hong Kong Polytechnic University",
+      "The University of Adelaide"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:25Z"
+  },
+  {
+    "id": "W3094950914",
+    "title": "Medical Visual Question Answering via Conditional Reasoning",
+    "abstract": "Medical visual question answering (Med-VQA) aims to accurately answer a clinical question presented with a medical image. Despite its enormous potential in healthcare industry and services, the technology is still in its infancy and is far from practical use. Med-VQA tasks are highly challenging due to the massive diversity of clinical questions and the disparity of required visual reasoning skills for different types of questions. In this paper, we propose a novel conditional reasoning framework for Med-VQA, aiming to automatically learn effective reasoning skills for various Med-VQA tasks. Particularly, we develop a question-conditioned reasoning module to guide the importance selection over multimodal fusion features. Considering the different nature of closed-ended and open-ended Med-VQA tasks, we further propose a type-conditioned reasoning module to learn a different set of reasoning skills for the two types of tasks separately. Our conditional reasoning framework can be easily applied to existing Med-VQA systems to bring performance gains. In the experiments, we build our system on top of a recent state-of-the-art Med-VQA model and evaluate it on the VQA-RAD benchmark [23]. Remarkably, our system achieves significantly increased accuracy in predicting answers to both closed-ended and open-ended questions, especially for open-ended questions, where a 10.8% increase in absolute accuracy is obtained. The source code can be downloaded from https://github.com/awenbocc/med-vqa.",
+    "year": 2020,
+    "publishedAt": "2020-10-12",
+    "doi": "10.1145/3394171.3413761",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.1145/3394171.3413761",
+    "oaUrl": "",
+    "citedByCount": 166,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Li-Ming Zhan",
+        "id": "https://openalex.org/A5001643829"
+      },
+      {
+        "name": "Bo Liu",
+        "id": "https://openalex.org/A5100461632"
+      },
+      {
+        "name": "Lu Fan",
+        "id": "https://openalex.org/A5077474877"
+      },
+      {
+        "name": "Jiaxin Chen",
+        "id": "https://openalex.org/A5100360558"
+      },
+      {
+        "name": "Xiao-Ming Wu",
+        "id": "https://openalex.org/A5101981128"
+      }
+    ],
+    "institutions": [
+      "Hong Kong Polytechnic University"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:25Z"
+  },
+  {
+    "id": "W2976365868",
+    "title": "Overcoming Data Limitation in Medical Visual Question Answering",
+    "abstract": "",
+    "year": 2019,
+    "publishedAt": "2019-01-01",
+    "doi": "10.1007/978-3-030-32251-9_57",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.1007/978-3-030-32251-9_57",
+    "oaUrl": "http://arxiv.org/abs/1909.11867",
+    "citedByCount": 220,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Binh D. Nguyen",
+        "id": null
+      },
+      {
+        "name": "Thanh-Toan Do",
+        "id": "https://openalex.org/A5025723803"
+      },
+      {
+        "name": "Binh X. Nguyen",
+        "id": "https://openalex.org/A5101910269"
+      },
+      {
+        "name": "Tuong Do",
+        "id": "https://openalex.org/A5144291640"
+      },
+      {
+        "name": "Erman Tjiputra",
+        "id": "https://openalex.org/A5013193056"
+      },
+      {
+        "name": "Quang D. Tran",
+        "id": "https://openalex.org/A5100775266"
+      }
+    ],
+    "institutions": [
+      "University of Liverpool"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:25Z"
+  },
+  {
+    "id": "W3165058054",
+    "title": "Slake: A Semantically-Labeled Knowledge-Enhanced Dataset For Medical Visual Question Answering",
+    "abstract": "Medical visual question answering (Med-VQA) has tremendous potential in healthcare. However, the development of this technology is hindered by the lacking of publicly-available and high-quality labeled datasets for training and evaluation. In this paper, we present a large bilingual dataset, SLAKE, with comprehensive semantic labels annotated by experienced physicians and a new structural medical knowledge base for Med-VQA. Besides, SLAKE includes richer modalities and covers more human body parts than the currently available dataset. We show that SLAKE can be used to facilitate the development and evaluation of Med-VQA systems. The dataset can be downloaded from http://www.med-vqa.com/slake.",
+    "year": 2021,
+    "publishedAt": "2021-04-13",
+    "doi": "10.1109/isbi48211.2021.9434010",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.1109/isbi48211.2021.9434010",
+    "oaUrl": "http://arxiv.org/abs/2102.09542",
+    "citedByCount": 349,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Bo Liu",
+        "id": "https://openalex.org/A5100461632"
+      },
+      {
+        "name": "Li-Ming Zhan",
+        "id": "https://openalex.org/A5001643829"
+      },
+      {
+        "name": "Li Xu",
+        "id": "https://openalex.org/A5101780656"
+      },
+      {
+        "name": "Lin Ma",
+        "id": "https://openalex.org/A5017116858"
+      },
+      {
+        "name": "Yan Yang",
+        "id": null
+      },
+      {
+        "name": "Xiao-Ming Wu",
+        "id": "https://openalex.org/A5101981128"
+      }
+    ],
+    "institutions": [
+      "Hong Kong Polytechnic University",
+      "West China Hospital of Sichuan University",
+      "Sichuan Academy of Medical Sciences & Sichuan Provincial People's Hospital"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:25Z"
+  },
+  {
+    "id": "W7133197087",
+    "title": "LLaVA-Med: Training a Large Language-and-Vision Assistant for Biomedicine in One Day",
+    "abstract": "Conversational generative AI has demonstrated remarkable promise for empowering biomedical practitioners, but current investigations focus on unimodal text. Multimodal conversational AI has seen rapid progress by leveraging billions of image-text pairs from the public web, but such general-domain vision-language models still lack sophistication in understanding and conversing about biomedical images. In this paper, we propose a cost-efficient approach for training a vision-language conversational assistant that can answer open-ended research questions of biomedical images. The key idea is to leverage a large-scale, broad-coverage biomedical figure-caption dataset extracted from PubMed Central, use GPT-4 to self-instruct open-ended instruction-following data from the captions, and then fine-tune a large general-domain vision-language model using a novel curriculum learning method. Specifically, the model first learns to align biomedical vocabulary using the figure-caption pairs as is, then learns to master open-ended conversational semantics using GPT-4 generated instruction-following data, broadly mimicking how a layperson gradually acquires biomedical knowledge. This enables us to train a Large Language and Vision Assistant for BioMedicine (LLaVA-Med) in less than 15 hours (with eight A100s). LLaVA-Med exhibits excellent multimodal conversational capability and can follow open-ended instruction to assist with inquiries about a biomedical image. On three standard biomedical visual question answering datasets, LLaVA-Med outperforms previous supervised state-of-the-art on certain metrics. To facilitate biomedical multimodal research, we will release our instruction-following data and the LLaVA-Med model.",
+    "year": 2023,
+    "publishedAt": "2023-01-01",
+    "doi": "10.52202/075280-1240",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.52202/075280-1240",
+    "oaUrl": "http://arxiv.org/abs/2306.00890",
+    "citedByCount": 586,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Chunyuan Li",
+        "id": "https://openalex.org/A5127857511"
+      },
+      {
+        "name": "Cliff Wong",
+        "id": "https://openalex.org/A5050468243"
+      },
+      {
+        "name": "Sheng Zhang",
+        "id": "https://openalex.org/A5127802347"
+      },
+      {
+        "name": "Naoto Usuyama",
+        "id": "https://openalex.org/A5010756260"
+      },
+      {
+        "name": "Haotian Liu",
+        "id": "https://openalex.org/A5127843043"
+      },
+      {
+        "name": "Jianwei Yang",
+        "id": "https://openalex.org/A5127836593"
+      },
+      {
+        "name": "Tristan Naumann",
+        "id": "https://openalex.org/A5023123863"
+      },
+      {
+        "name": "Hoifung Poon",
+        "id": "https://openalex.org/A5019494985"
+      },
+      {
+        "name": "Jianfeng Gao",
+        "id": "https://openalex.org/A5114910293"
+      }
+    ],
+    "institutions": [],
+    "repoUrl": "https://github.com/microsoft/LLaVA-Med",
+    "fetchedAt": "2026-10-29T11:01:29Z"
+  },
+  {
+    "id": "W2886045141",
+    "title": "Towards an automated multimodal clinical decision support system at the post anesthesia care unit",
+    "abstract": "",
+    "year": 2018,
+    "publishedAt": "2018-07-31",
+    "doi": "10.1016/j.compbiomed.2018.07.018",
+    "pmid": "30092398",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1016/j.compbiomed.2018.07.018",
+    "oaUrl": "",
+    "citedByCount": 32,
+    "citationPercentile": 99,
+    "authors": [
+      {
+        "name": "Rasmus Munch Olsen",
+        "id": "https://openalex.org/A5040089868"
+      },
+      {
+        "name": "Eske Kvanner Aasvang",
+        "id": "https://openalex.org/A5014139265"
+      },
+      {
+        "name": "Christian Sylvest Meyhoff",
+        "id": "https://openalex.org/A5039712212"
+      },
+      {
+        "name": "Helge B. D. Sørensen",
+        "id": "https://openalex.org/A5057912258"
+      }
+    ],
+    "institutions": [
+      "Technical University of Denmark",
+      "University of Copenhagen",
+      "Rigshospitalet",
+      "Frederiksberg Hospital"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:31Z"
+  },
+  {
+    "id": "W4416236451",
+    "title": "EyeAgent: An Agentic AI System for Multimodal Clinical Decision Support in Ophthalmology",
+    "abstract": "Artificial intelligence has shown promise in medical imaging, yet most existing systems lack flexibility, interpretability, and adaptability - challenges especially pronounced in ophthalmology, where diverse imaging modalities are essential. We present EyeAgent, the first agentic AI framework for comprehensive and interpretable clinical decision support in ophthalmology. Using a large language model (DeepSeek-V3) as its central reasoning engine, EyeAgent interprets user queries and dynamically orchestrates 53 validated ophthalmic tools across 23 imaging modalities for diverse tasks including classification, segmentation, detection, image/report generation, and quantitative analysis. Stepwise ablation analysis demonstrated a progressive improvement in diagnostic accuracy, rising from a baseline of 69.71% (using only 5 general tools) to 80.79% when the full suite of 53 specialized tools was integrated. In an expert rating study on 200 real-world clinical cases, EyeAgent achieved 93.7% tool selection accuracy and received expert ratings of more than 88% across accuracy, completeness, safety, reasoning, and interpretability. In human-AI collaboration, EyeAgent matched or exceeded the performance of senior ophthalmologists and, when used as an assistant, improved overall diagnostic accuracy by 18.51% and report quality scores by 19%, with the greatest benefit observed among junior ophthalmologists. These findings establish EyeAgent as a scalable and trustworthy AI framework for ophthalmology and provide a blueprint for modular, multimodal, and clinically aligned next-generation AI systems.",
+    "year": 2025,
+    "publishedAt": "2025-11-12",
+    "doi": "10.48550/arxiv.2511.09394",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "preprint",
+    "url": "http://arxiv.org/abs/2511.09394",
+    "oaUrl": "http://arxiv.org/abs/2511.09394",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Danli Shi",
+        "id": "https://openalex.org/A5027501723"
+      },
+      {
+        "name": "Xiaolan Chen",
+        "id": "https://openalex.org/A5100754217"
+      },
+      {
+        "name": "Yan, Bingjie",
+        "id": null
+      },
+      {
+        "name": "Weiyi Zhang",
+        "id": "https://openalex.org/A5100718235"
+      },
+      {
+        "name": "Pusheng Xu",
+        "id": "https://openalex.org/A5115393940"
+      },
+      {
+        "name": "Jiancheng Yang",
+        "id": "https://openalex.org/A5020501435"
+      },
+      {
+        "name": "Ruoyu Chen",
+        "id": "https://openalex.org/A5019102073"
+      },
+      {
+        "name": "Siyu Huang",
+        "id": "https://openalex.org/A5082547392"
+      },
+      {
+        "name": "Bowen Liu",
+        "id": "https://openalex.org/A5100427699"
+      },
+      {
+        "name": "Wu, Xinyuan",
+        "id": null
+      },
+      {
+        "name": "Xie, Meng",
+        "id": null
+      },
+      {
+        "name": "Gao, Ziyu",
+        "id": null
+      }
+    ],
+    "institutions": [
+      "Hong Kong Polytechnic University",
+      "École Polytechnique Fédérale de Lausanne",
+      "Beijing Tongren Hospital",
+      "Capital Medical University",
+      "Ministry of Industry and Information Technology"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:31Z"
+  },
+  {
+    "id": "W7221158615",
+    "title": "BioStatusIA: A Multi-Agent Architecture for Multimodal Clinical Decision Support",
+    "abstract": "—Clinical Decision Support Systems (CDSS) increasingly rely on artificial intelligence to assist healthcare professionals in interpreting heterogeneous biomedical data. AlthoughLarge Language Models (LLMs) have expanded the capabilitiesof these systems, most existing solutions target a single biomedicalmodality, requiring independent analytical pipelines and limitinginteroperability across clinical domains. This paper presentsBioStatusIA, a multi-agent architecture designed for multimodalclinical decision support. The proposed framework integratesspecialized autonomous agents orchestrated through CrewAIwith a locally deployed LLM executed using Ollama. A unifiednormalization layer enables the processing of one-dimensionalphysiological signals, two-dimensional medical images, threedimensional volumetric examinations, and structured clinicaldatasets within a common analytical workflow. The architecturewas evaluated on ten real public biomedical datasets spanningthese families, with an automatically selected classifier averagingAUROC 0.86±0.12 (versus 0.85±0.13 for the best fixed candidate), and feature-extraction and inference latency below 2 ms.These findings indicate that BioStatusIA provides a practical,low-overhead, and scalable framework for multimodal clinicaldecision support.",
+    "year": 2026,
+    "publishedAt": "2026-09-28",
+    "doi": "10.5281/zenodo.22839282",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "conference-paper",
+    "url": "https://doi.org/10.5281/zenodo.22839282",
+    "oaUrl": "https://doi.org/10.5281/zenodo.22839282",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Francisco Soares da Silva Junior",
+        "id": "https://openalex.org/A5158067592"
+      },
+      {
+        "name": "KAIO EMANUEL LIMA DE MATOS",
+        "id": "https://openalex.org/A5114555325"
+      },
+      {
+        "name": "Daniel Santos da silva",
+        "id": "https://openalex.org/A5158090152"
+      },
+      {
+        "name": "Victor Hugo C. de Albuquerque",
+        "id": "https://openalex.org/A5045093520"
+      }
+    ],
+    "institutions": [],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:31Z"
+  },
+  {
+    "id": "W7123340630",
+    "title": "The MAESTRIA demonstrator: AI-driven multimodal clinical decision support for cardiovascular risk prediction",
+    "abstract": "Abstract Background Personalised cardiovascular risk prediction remains limited by fragmented data and lack of clinical interpretability. The MAESTRIA project aims to overcome these limitations by developing an AI-powered, multimodal Clinical Decision Support Demonstrator for stroke and atrial fibrillation (AF) risk stratification. Purpose To develop and validate an interoperable demonstrator integrating imaging, electrophysiology, clinical and omics data using explainable AI to support personalised cardiovascular care. Methods We harmonised multimodal datasets across several European centers, including clinical variables, ECG, echocardiography, cardiac-MRI, CT, wearable-datasets and omics. Predictive models were developed using ensemble machine learning algorithms (e.g., RandomForest, Logistic Regression, CatBoost, XGBoost), deep learning approaches for imaging segmentation, and multi-block data integration frameworks. Model interpretability was addressed through SHAP value analysis and partial dependence plots. The demonstrator was built as a GDPR-compliant, decision support tool with clinician-friendly interfaces. Results The demonstrator integrates validated models predicting AF recurrence, stroke risk, and atrial cardiomyopathy. By integrating ECG, echo, MRI, CT, and omics data, it significantly outperforms standard clinical scores, boosting prediction accuracy (AUC increase up to 0.15). External validation across multiple cohorts confirmed generalisability and clinical usability. Conclusion The MAESTRIA Demonstrator, built on a robust multimodal AI framework, promises to be a powerful clinical tool enabling clinicians to predict, visualize, and interpret cardiovascular risk, particularly atrial fibrillation, through the integration of clinical, imaging, and biological data.",
+    "year": 2026,
+    "publishedAt": "2026-01-01",
+    "doi": "10.1093/ehjdh/ztaf143.152",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1093/ehjdh/ztaf143.152",
+    "oaUrl": "https://doi.org/10.1093/ehjdh/ztaf143.152",
+    "citedByCount": 0,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Maharajah Ponnaiah",
+        "id": "https://openalex.org/A5024202032"
+      },
+      {
+        "name": "P Van Hille",
+        "id": "https://openalex.org/A5139339734"
+      },
+      {
+        "name": "A Gotte",
+        "id": "https://openalex.org/A5146724123"
+      },
+      {
+        "name": "Nadjia Kachenoura",
+        "id": "https://openalex.org/A5019742391"
+      },
+      {
+        "name": "S Zemmering",
+        "id": "https://openalex.org/A5146928692"
+      },
+      {
+        "name": "Ulrich Schotten",
+        "id": "https://openalex.org/A5046773983"
+      },
+      {
+        "name": "Maud Decraene",
+        "id": "https://openalex.org/A5005588471"
+      },
+      {
+        "name": "Laurie Soulat-Dufour",
+        "id": "https://openalex.org/A5018100890"
+      },
+      {
+        "name": "S Commans",
+        "id": "https://openalex.org/A5123426355"
+      },
+      {
+        "name": "Nicolas Badenco",
+        "id": "https://openalex.org/A5064468149"
+      },
+      {
+        "name": "Charalambos Antoniades",
+        "id": "https://openalex.org/A5123400612"
+      },
+      {
+        "name": "Larissa Fabritz",
+        "id": "https://openalex.org/A5053843507"
+      }
+    ],
+    "institutions": [
+      "Fondation pour l’innovation en Cadiométabolisme et Nutrition",
+      "Atrial Fibrillation NETwork",
+      "Maastricht University",
+      "Hôpital Saint-Antoine",
+      "Assistance Publique – Hôpitaux de Paris",
+      "Pitié-Salpêtrière Hospital",
+      "University of Oxford",
+      "University of Birmingham"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:01:31Z"
+  },
+  {
+    "id": "W4296027312",
+    "title": "Expert-level detection of pathologies from unannotated chest X-ray images via self-supervised learning",
+    "abstract": "In tasks involving the interpretation of medical images, suitably trained machine-learning models often exceed the performance of medical experts. Yet such a high-level of performance typically requires that the models be trained with relevant datasets that have been painstakingly annotated by experts. Here we show that a self-supervised model trained on chest X-ray images that lack explicit annotations performs pathology-classification tasks with accuracies comparable to those of radiologists. On an external validation dataset of chest X-rays, the self-supervised model outperformed a fully supervised model in the detection of three pathologies (out of eight), and the performance generalized to pathologies that were not explicitly annotated for model training, to multiple image-interpretation tasks and to datasets from multiple institutions.",
+    "year": 2022,
+    "publishedAt": "2022-09-15",
+    "doi": "10.1038/s41551-022-00936-9",
+    "pmid": "36109605",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1038/s41551-022-00936-9",
+    "oaUrl": "https://doi.org/10.1038/s41551-022-00936-9",
+    "citedByCount": 441,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Ekin Tiu",
+        "id": "https://openalex.org/A5002379090"
+      },
+      {
+        "name": "Ellie Talius",
+        "id": "https://openalex.org/A5066190386"
+      },
+      {
+        "name": "Pujan R. Patel",
+        "id": "https://openalex.org/A5022539881"
+      },
+      {
+        "name": "Curtis P. Langlotz",
+        "id": "https://openalex.org/A5087710258"
+      },
+      {
+        "name": "Andrew Y. Ng",
+        "id": "https://openalex.org/A5102617494"
+      },
+      {
+        "name": "Pranav Rajpurkar",
+        "id": "https://openalex.org/A5001094226"
+      }
+    ],
+    "institutions": [
+      "Harvard University",
+      "Stanford University"
+    ],
+    "repoUrl": "https://github.com/rajpurkarlab/chexzero",
+    "fetchedAt": "2026-10-29T11:04:01Z"
+  },
+  {
+    "id": "W4323066559",
+    "title": "BiomedCLIP: a multimodal biomedical foundation model pretrained from fifteen million scientific image-text pairs",
+    "abstract": "Biomedical data is inherently multimodal, comprising physical measurements and natural language narratives. A generalist biomedical AI model needs to simultaneously process different modalities of data, including text and images. Therefore, training an effective generalist biomedical model requires high-quality multimodal data, such as parallel image-text pairs. Here, we present PMC-15M, a novel dataset that is two orders of magnitude larger than existing biomedical multimodal datasets such as MIMIC-CXR, and spans a diverse range of biomedical image types. PMC-15M contains 15 million biomedical image-text pairs collected from 4.4 million scientific articles. Based on PMC-15M, we have pretrained BiomedCLIP, a multimodal foundation model, with domain-specific adaptations tailored to biomedical vision-language processing. We conducted extensive experiments and ablation studies on standard biomedical imaging tasks from retrieval to classification to visual question-answering (VQA). BiomedCLIP achieved new state-of-the-art results in a wide range of standard datasets, substantially outperforming prior approaches. Intriguingly, by large-scale pretraining on diverse biomedical image types, BiomedCLIP even outperforms state-of-the-art radiology-specific models such as BioViL in radiology-specific tasks such as RSNA pneumonia detection. In summary, BiomedCLIP is a fully open-access foundation model that achieves state-of-the-art performance on various biomedical tasks, paving the way for transformative multimodal biomedical discovery and applications. We release our models at https://aka.ms/biomedclip to facilitate future research in multimodal biomedical AI.",
+    "year": 2023,
+    "publishedAt": "2023-03-02",
+    "doi": "10.48550/arxiv.2303.00915",
+    "pmid": "",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "preprint",
+    "url": "http://arxiv.org/abs/2303.00915",
+    "oaUrl": "http://arxiv.org/abs/2303.00915",
+    "citedByCount": 102,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Sheng Zhang",
+        "id": "https://openalex.org/A5100394046"
+      },
+      {
+        "name": "Yanbo Xu",
+        "id": "https://openalex.org/A5100518720"
+      },
+      {
+        "name": "Naoto Usuyama",
+        "id": "https://openalex.org/A5010756260"
+      },
+      {
+        "name": "Xu, Hanwen",
+        "id": null
+      },
+      {
+        "name": "Jaspreet Bagga",
+        "id": "https://openalex.org/A5074442659"
+      },
+      {
+        "name": "Robert Tinn",
+        "id": "https://openalex.org/A5073496354"
+      },
+      {
+        "name": "Sam Preston",
+        "id": "https://openalex.org/A5011177274"
+      },
+      {
+        "name": "Rajesh P. N. Rao",
+        "id": "https://openalex.org/A5002759219"
+      },
+      {
+        "name": "Wei, Mu",
+        "id": null
+      },
+      {
+        "name": "Naveen Valluri",
+        "id": "https://openalex.org/A5037383835"
+      },
+      {
+        "name": "Cliff Wong",
+        "id": "https://openalex.org/A5050468243"
+      },
+      {
+        "name": "Tupini, Andrea",
+        "id": null
+      }
+    ],
+    "institutions": [],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:04:02Z"
+  },
+  {
+    "id": "W4392044798",
+    "title": "Towards Generalist Biomedical AI",
+    "abstract": "BACKGROUND: Medicine is inherently multimodal, requiring the simultaneous interpretation and integration of insights between many data modalities spanning text, imaging, genomics, and more. Generalist biomedical artificial intelligence systems that flexibly encode, integrate, and interpret these data might better enable impactful applications ranging from scientific discovery to care delivery. METHODS: To catalyze development of these models, we curated MultiMedBench, a new multimodal biomedical benchmark. MultiMedBench encompasses 14 diverse tasks, such as medical question answering, mammography and dermatology image interpretation, radiology report generation and summarization, and genomic variant calling. We then introduced Med-PaLM Multimodal (Med-PaLM M), our proof of concept for a generalist biomedical AI system that flexibly encodes and interprets biomedical data including clinical language, imaging, and genomics with the same set of model weights. To further probe the capabilities and limitations of Med-PaLM M, we conducted a radiologist evaluation of model-generated (and human) chest x-ray reports. RESULTS: We observed encouraging performance across model scales. Med-PaLM M reached performance competitive with or exceeding the state of the art on all MultiMedBench tasks, often surpassing specialist models by a wide margin. In a side-by-side ranking on 246 retrospective chest x-rays, clinicians expressed a pairwise preference for Med-PaLM Multimodal reports over those produced by radiologists in up to 40.50% of cases, suggesting potential clinical utility. CONCLUSIONS: Although considerable work is needed to validate these models in real-world cases and understand if cross-modality generalization is possible, our results represent a milestone toward the development of generalist biomedical artificial intelligence systems. (Funded by Alphabet Inc. and/or a subsidiary thereof.).",
+    "year": 2024,
+    "publishedAt": "2024-02-22",
+    "doi": "10.1056/aioa2300138",
+    "pmid": "42932741",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "article",
+    "url": "https://doi.org/10.1056/aioa2300138",
+    "oaUrl": "http://arxiv.org/abs/2307.14334",
+    "citedByCount": 482,
+    "citationPercentile": 100,
+    "authors": [
+      {
+        "name": "Tao Tu",
+        "id": "https://openalex.org/A5014724876"
+      },
+      {
+        "name": "Shekoofeh Azizi",
+        "id": "https://openalex.org/A5047463591"
+      },
+      {
+        "name": "Danny Driess",
+        "id": "https://openalex.org/A5080239685"
+      },
+      {
+        "name": "Mike Schaekermann",
+        "id": "https://openalex.org/A5025626087"
+      },
+      {
+        "name": "Mohamed Amin",
+        "id": "https://openalex.org/A5102999001"
+      },
+      {
+        "name": "Pi-Chuan Chang",
+        "id": "https://openalex.org/A5056695196"
+      },
+      {
+        "name": "Andrew W. Carroll",
+        "id": "https://openalex.org/A5071154269"
+      },
+      {
+        "name": "Charles T. Lau",
+        "id": "https://openalex.org/A5051570440"
+      },
+      {
+        "name": "Ryutaro Tanno",
+        "id": "https://openalex.org/A5064157732"
+      },
+      {
+        "name": "Sofia Ira Ktena",
+        "id": "https://openalex.org/A5074861404"
+      },
+      {
+        "name": "Anil K. Palepu",
+        "id": "https://openalex.org/A5039928151"
+      },
+      {
+        "name": "Basil Mustafa",
+        "id": "https://openalex.org/A5072796087"
+      }
+    ],
+    "institutions": [
+      "Google (United States)",
+      "Google DeepMind (United Kingdom)"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:04:03Z"
+  },
+  {
+    "id": "W2995225687",
+    "title": "MIMIC-CXR, a de-identified publicly available database of chest radiographs with free-text reports",
+    "abstract": "Chest radiography is an extremely powerful imaging modality, allowing for a detailed inspection of a patient's chest, but requires specialized training for proper interpretation. With the advent of high performance general purpose computer vision algorithms, the accurate automated analysis of chest radiographs is becoming increasingly of interest to researchers. Here we describe MIMIC-CXR, a large dataset of 227,835 imaging studies for 65,379 patients presenting to the Beth Israel Deaconess Medical Center Emergency Department between 2011-2016. Each imaging study can contain one or more images, usually a frontal view and a lateral view. A total of 377,110 images are available in the dataset. Studies are made available with a semi-structured free-text radiology report that describes the radiological findings of the images, written by a practicing radiologist contemporaneously during routine clinical care. All images and reports have been de-identified to protect patient privacy. The dataset is made freely available to facilitate and encourage a wide range of research in computer vision, natural language processing, and clinical data mining.",
+    "year": 2019,
+    "publishedAt": "2019-12-12",
+    "doi": "10.1038/s41597-019-0322-0",
+    "pmid": "31831740",
+    "arxivId": "",
+    "source": "OpenAlex",
+    "paperType": "data-paper",
+    "url": "https://doi.org/10.1038/s41597-019-0322-0",
+    "oaUrl": "https://doi.org/10.1038/s41597-019-0322-0",
+    "citedByCount": 1815,
+    "citationPercentile": 0,
+    "authors": [
+      {
+        "name": "Alistair E. W. Johnson",
+        "id": "https://openalex.org/A5003528274"
+      },
+      {
+        "name": "Tom Pollard",
+        "id": "https://openalex.org/A5086791063"
+      },
+      {
+        "name": "Seth J. Berkowitz",
+        "id": "https://openalex.org/A5047159105"
+      },
+      {
+        "name": "Nathaniel R. Greenbaum",
+        "id": "https://openalex.org/A5066192398"
+      },
+      {
+        "name": "Matthew P. Lungren",
+        "id": "https://openalex.org/A5038969629"
+      },
+      {
+        "name": "Chih-Ying Deng",
+        "id": "https://openalex.org/A5007136664"
+      },
+      {
+        "name": "Roger G. Mark",
+        "id": "https://openalex.org/A5074887163"
+      },
+      {
+        "name": "Steven Horng",
+        "id": "https://openalex.org/A5076012713"
+      }
+    ],
+    "institutions": [
+      "Massachusetts Institute of Technology",
+      "Beth Israel Deaconess Medical Center",
+      "Stanford University",
+      "Harvard University"
+    ],
+    "repoUrl": "",
+    "fetchedAt": "2026-10-29T11:04:04Z"
+  }
+]

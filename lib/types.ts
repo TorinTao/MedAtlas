@@ -1,0 +1,10 @@
+export type PaperType = "综述" | "预印本" | "研究论文" | "数据集";
+export type Modality = "影像+文本" | "影像" | "病历文本" | "多模态";
+export type ClinicalTask = "诊断决策" | "报告生成" | "医学问答" | "风险预测" | "基础模型";
+export type Method = "视觉语言模型" | "Agent 协作" | "检索增强" | "表征学习" | "其他方法";
+export type Author = { name: string; id?: string };
+export type PaperAnalysis = { question: string; method: string; datasets: string[]; findings: string[]; limitations: string[]; evidence: { claim: string; location: string; excerpt: string }[]; depth: "全文" | "摘要"; sourceUrl: string; analyzedAt: string };
+export type Paper = { id: string; title: string; abstract: string; year: number; publishedAt: string; doi: string; pmid: string; arxivId: string; source: string; paperType: PaperType; url: string; oaUrl: string; citedByCount: number; citationPercentile: number; authors: Author[]; institutions: string[]; repoUrl: string; fetchedAt: string; modality: Modality; clinicalTask: ClinicalTask; method: Method; relevance: number; fulltextStatus: "全文可用" | "仅摘要" | "未检查"; analysis?: PaperAnalysis };
+export type ResearchIdea = { id: string; title: string; gap: string; hypothesis: string; supportingEvidence: string; counterEvidence: string; datasets: string[]; baselines: string[]; metrics: string[]; challenges: string[]; paperIds: string[]; query: string; createdAt: string };
+export type RepoCheck = { label: string; status: "有" | "缺失" | "无法确认"; evidence: string };
+export type RepoAudit = { repoUrl: string; checkedAt: string; checks: RepoCheck[]; disclaimer: string };
