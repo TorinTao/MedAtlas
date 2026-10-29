@@ -4,7 +4,7 @@ import { evaluateRepository } from "./repo-evaluation";
 import { lexmountExtract, readPaper } from "./reading";
 import { runtime } from "./runtime";
 import { allPapers, putPapers } from "./store";
-import { summarizePaperZh, translateReviewAbstractZh } from "./summary";
+import { summarizePaperZh, translateAbstractZh } from "./summary";
 import type { Paper } from "./types";
 
 type JobRow = { id: string; status: string; updated_at: string };
@@ -46,7 +46,7 @@ export async function enrichMissingPapers(limit = 2) {
   const papers = await allPapers();
   const jobs = await env.DB.prepare("SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'").all<JobRow>();
   const byId = new Map((jobs.results || []).map(job => [job.id, job]));
-  const pending = papers.filter(paper => !paper.summaryZh || !paper.analysis || (paper.paperType === "综述" && paper.abstract.trim() && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit?.evaluation))
+  const pending = papers.filter(paper => !paper.summaryZh || !paper.analysis || (paper.abstract.trim() && !paper.abstractZh && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit?.evaluation))
     .sort((a, b) => Number(Boolean(byId.get(`enrich:${a.id}`))) - Number(Boolean(byId.get(`enrich:${b.id}`))) || b.citedByCount - a.citedByCount || b.year - a.year);
   const results: { id: string; status: string; summary: boolean; analysis: boolean; reviewTranslated: boolean; repo: string; errors: string[] }[] = [];
 
@@ -64,7 +64,7 @@ export async function enrichMissingPapers(limit = 2) {
       const [summary, reading, translation] = await Promise.allSettled([
         paper.summaryZh ? Promise.resolve(null) : summarizePaperZh(paper, { text: page.text, url: page.finalUrl }),
         paper.analysis ? Promise.resolve(null) : readPaper(paper, page),
-        paper.paperType !== "综述" || !paper.abstract.trim() || paper.reviewAbstractZh ? Promise.resolve(null) : translateReviewAbstractZh(paper),
+        !paper.abstract.trim() || paper.abstractZh || paper.reviewAbstractZh ? Promise.resolve(null) : translateAbstractZh(paper),
       ]);
       if (summary.status === "fulfilled" && summary.value) updated = { ...updated, ...summary.value };
       else if (summary.status === "rejected") errors.push(`概述：${summary.reason?.message || "生成失败"}`);
@@ -74,7 +74,7 @@ export async function enrichMissingPapers(limit = 2) {
         errors.push(...value.errors);
       } else if (reading.status === "rejected") errors.push(`精读：${reading.reason?.message || "生成失败"}`);
       if (translation.status === "fulfilled" && translation.value) updated = { ...updated, ...translation.value };
-      else if (translation.status === "rejected") errors.push(`综述译文：${translation.reason?.message || "翻译失败"}`);
+      else if (translation.status === "rejected") errors.push(`摘要译文：${translation.reason?.message || "翻译失败"}`);
 
       const linkedRepo = chooseRepo(paper, page.text);
       const repoUrl = linkedRepo || paper.repoUrl;
@@ -86,14 +86,14 @@ export async function enrichMissingPapers(limit = 2) {
         } catch (error) { errors.push(`仓库：${(error as Error).message}`); }
       }
       await putPapers([updated]);
-      const reviewTranslated = updated.paperType !== "综述" || !updated.abstract.trim() || Boolean(updated.reviewAbstractZh);
+      const reviewTranslated = !updated.abstract.trim() || Boolean(updated.abstractZh || updated.reviewAbstractZh);
       const done = Boolean(updated.summaryZh && updated.analysis && reviewTranslated && (!repoUrl || updated.repoAudit?.evaluation));
       await finish(jobId, done ? "done" : "partial", { sourceUrl: page.finalUrl, repoUrl: updated.repoUrl || "", errors });
       results.push({ id: paper.id, status: done ? "done" : "partial", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated, repo: updated.repoUrl || "", errors });
     } catch (error) {
       errors.push((error as Error).message);
       await finish(jobId, "failed", { errors });
-      results.push({ id: paper.id, status: "failed", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated: Boolean(updated.reviewAbstractZh), repo: updated.repoUrl || "", errors });
+      results.push({ id: paper.id, status: "failed", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated: Boolean(updated.abstractZh || updated.reviewAbstractZh), repo: updated.repoUrl || "", errors });
     }
   }
   return { processed: results.length, remaining: pending.length - results.filter(result => result.status === "done").length, results };

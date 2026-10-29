@@ -64,6 +64,8 @@ export function dedupePapers(items: Paper[]): Paper[] {
         summaryZh: paper.summaryZh || prior.summaryZh,
         summaryBasis: paper.summaryBasis || prior.summaryBasis,
         summarySourceUrl: paper.summarySourceUrl || prior.summarySourceUrl,
+        abstractZh: paper.abstractZh || prior.abstractZh,
+        abstractSourceUrl: paper.abstractSourceUrl || prior.abstractSourceUrl,
         reviewAbstractZh: paper.reviewAbstractZh || prior.reviewAbstractZh,
         reviewAbstractSourceUrl: paper.reviewAbstractSourceUrl || prior.reviewAbstractSourceUrl,
         analysis: paper.analysis || prior.analysis,
