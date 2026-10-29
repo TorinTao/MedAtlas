@@ -18,7 +18,7 @@
 
 将 `.env.example` 列出的键配置到 Sites 的运行环境。必需项：`DEEPSEEK_API_KEY`、`LEXMOUNT_API_KEY`、`LEXMOUNT_PROJECT_ID`；`REFRESH_TOKEN` 用于每日更新接口。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。公开检索无需以上密钥，但精读与选题生成需要它们。OpenAlex 与 GitHub 的 key 可选。
 
-每日任务调用 `POST /api/admin/refresh` 并使用 `Authorization: Bearer <REFRESH_TOKEN>`；接口按 UTC 日期幂等，更新 D1，不重新部署。应由具备独立安全凭据的云端任务执行，不把 token 写入调度提示词。
+每日任务可通过站点 MCP 工具 `refresh_literature` 更新语料；该工具要求已登录的站点所有者身份，按 UTC 日期幂等，更新 D1，不重新部署。`MCP_OWNER_EMAIL` 为服务端所有者身份绑定。`POST /api/admin/refresh` 仍可作为其他受控调度器的接口，需要 `Authorization: Bearer <REFRESH_TOKEN>`，不把 token 写入调度提示词。
 
 ## 验证与边界
 

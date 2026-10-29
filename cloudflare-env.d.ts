@@ -9,5 +9,6 @@ declare namespace Cloudflare {
     OPENALEX_API_KEY?: string;
     GITHUB_TOKEN?: string;
     REFRESH_TOKEN?: string;
+    MCP_OWNER_EMAIL?: string;
   }
 }
