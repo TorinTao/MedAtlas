@@ -8,12 +8,16 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = ""): Pr
   const headers: Record<string, string> = { Accept: "application/vnd.github+json", "User-Agent": "MedAtlas-Research/1.0", "X-GitHub-Api-Version": "2022-11-28" };
   if (runtime("GITHUB_TOKEN")) headers.Authorization = `Bearer ${runtime("GITHUB_TOKEN")}`;
   const [metaResponse, filesResponse] = await Promise.all([fetch(base, { headers, signal: AbortSignal.timeout(10000) }), fetch(`${base}/contents`, { headers, signal: AbortSignal.timeout(10000) })]);
+  const canonical = `https://github.com/${owner}/${repo}`;
+  if (metaResponse.status === 403 || metaResponse.status === 429) {
+    const labels = ["论文关联", "开源许可证", "README", "根目录依赖文件", "根目录数据说明", "根目录权重说明", "根目录训练/推理入口", "近期维护"];
+    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks: labels.map(label => ({ label, status: "无法确认" as const, evidence: canonical })), disclaimer: `GitHub API 返回 ${metaResponse.status}，未能取得仓库元数据；请打开证据链接人工检查。未经实际运行复现。` };
+  }
   if (!metaResponse.ok) throw new Error(`GitHub HTTP ${metaResponse.status}`);
   const meta = await metaResponse.json() as any; const files = filesResponse.ok ? await filesResponse.json() as any[] : [];
   const rootFiles = Array.isArray(files) ? files.map(f => ({ name: String(f.name || "").toLowerCase(), url: String(f.html_url || "") })) : [];
   const match = (pattern: RegExp) => rootFiles.find(f => pattern.test(f.name));
   const check = (label: string, ok: boolean | null, evidence: string): RepoCheck => ({ label, status: ok === null ? "无法确认" : ok ? "有" : "缺失", evidence });
-  const canonical = `https://github.com/${owner}/${repo}`;
   const checks: RepoCheck[] = [
     check("论文关联", expectedRepoUrl ? expectedRepoUrl.replace(/\/$/, "").toLowerCase() === canonical.toLowerCase() : null, expectedRepoUrl || canonical),
     check("开源许可证", meta.license?.spdx_id && meta.license.spdx_id !== "NOASSERTION" ? true : filesResponse.ok ? false : null, match(/^(licen[sc]e|copying)(\.|$)/)?.url || `${canonical}?tab=License-1`),
