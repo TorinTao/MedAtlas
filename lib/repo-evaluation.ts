@@ -24,7 +24,10 @@ async function publicReadme(repoUrl: string): Promise<{ text: string; url: strin
 }
 
 export async function evaluateRepository(audit: RepoAudit, paper?: Paper): Promise<RepoEvaluation> {
-  const [page, apiReadme] = await Promise.all([lexmountExtract(audit.repoUrl), publicReadme(audit.repoUrl)]);
+  const [page, apiReadme] = await Promise.all([
+    lexmountExtract(audit.repoUrl).catch(error => String((error as Error).message).includes("HTTP 502") ? lexmountExtract(audit.repoUrl) : Promise.reject(error)),
+    publicReadme(audit.repoUrl),
+  ]);
   let readme = apiReadme;
   if (!readme) {
     try {

@@ -24,7 +24,8 @@ export async function inspectPaperRepository(paper: Paper, force = false): Promi
     try { audit.evaluation = await evaluateRepository(audit, updated); delete audit.evaluationError; }
     catch (error) { audit.evaluationError = (error as Error).message; }
   }
-  updated = { ...updated, repoAudit: audit };
+  // A temporary upstream failure must not erase a previously saved, evidenced evaluation.
+  updated = { ...updated, repoAudit: !audit.evaluation && paper.repoAudit?.evaluation ? paper.repoAudit : audit };
   await putPapers([updated]);
   return updated;
 }

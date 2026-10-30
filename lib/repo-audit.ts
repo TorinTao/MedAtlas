@@ -13,7 +13,7 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
   const canonical = `https://github.com/${owner}/${repo}`;
   if (metaResponse.status === 403 || metaResponse.status === 404 || metaResponse.status === 429) {
     let files: { name: string; url: string }[] = []; let readme = "";
-    try { const page = await lexmountDumpDom(canonical); if (new URL(page.finalUrl).hostname === "github.com") ({ files, readme } = githubDomEvidence(page.html, canonical)); } catch { /* preserve an explicit unknown result */ }
+    try { const page = await lexmountDumpDom(canonical).catch(error => String((error as Error).message).includes("HTTP 502") ? lexmountDumpDom(canonical) : Promise.reject(error)); if (new URL(page.finalUrl).hostname === "github.com") ({ files, readme } = githubDomEvidence(page.html, canonical)); } catch { /* preserve an explicit unknown result */ }
     const match = (pattern: RegExp) => files.find(file => pattern.test(file.name));
     const check = (label: string, file: { url: string } | undefined): RepoCheck => ({ label, status: file ? "有" : "无法确认", evidence: file?.url || canonical });
     const checks: RepoCheck[] = [
