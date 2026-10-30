@@ -42,7 +42,7 @@ function selectEvidence(query: string, corpus: Paper[], preferredIds: string[], 
 export async function POST(request: Request) {
   const body: any = await request.json().catch(() => ({}));
   const action = body.action === "draw" ? "draw" : "prepare";
-  if (!await hasDeepSeekKey()) return jsonError("DeepSeek API 尚未配置，请在 AI 设置中添加个人 Key", 503);
+  if (!await hasDeepSeekKey()) return jsonError("DeepSeek API 尚未配置，请在系统设置中添加个人 Key", 503);
   if (!env.DB) return jsonError("文献数据库不可用", 503);
   const user = await getChatGPTUser(), owner = await ownerOf(request, user?.userId);
   if (action === "prepare") {
@@ -110,8 +110,8 @@ export async function POST(request: Request) {
     const papers = (await Promise.all(prepared.paperIds.map(findPaper))).filter(Boolean) as Paper[];
     if (papers.length < 6) return jsonError("调研论文暂不可用，请重新调研", 503);
     const excludedTitles = (Array.isArray(body.excludedTitles) ? body.excludedTitles : []).filter((title: unknown): title is string => typeof title === "string").map((title: string) => title.slice(0, 180)).slice(0, 10);
-    const idea = await makeIdea(prepared.query, papers, prepared.brief, drawIndex, excludedTitles);
+    const idea = { ...await makeIdea(prepared.query, papers, prepared.brief, drawIndex, excludedTitles), favorite: false };
     if (user) await getDb().insert(ideaTable).values({ id: idea.id, userId: user.userId, query: prepared.query, data: JSON.stringify(idea), createdAt: idea.createdAt });
-    return Response.json({ idea, saved: Boolean(user) });
+    return Response.json({ idea, recorded: Boolean(user), saved: false });
   } catch (error) { return jsonError((error as Error).message, 503); }
 }
