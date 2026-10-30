@@ -4,6 +4,12 @@ import type { ClinicalTask, Method, Modality, Paper, PaperType } from "./types";
 
 type RawPaper = Omit<Partial<Paper>, "paperType"> & { id: string; title: string; paperType?: string };
 
+export function relevantMedicalAiPaper(title: string, abstract: string): boolean {
+  const text = `${title} ${abstract}`;
+  return /medical|clinical|radiolog|healthcare|diagnos|patholog|patient|dental|imaging|chest|oncolog|cancer|biomed/i.test(text)
+    && /\bAI\b|artificial intelligence|machine learning|deep learning|vision.language|large language model|\bLLMs?\b|multimodal foundation|neural network|\bagentic\b|\bmulti-agent\b|\b(?:autonomous |health |medical |clinical )agents?\b|AgentClinic/i.test(text);
+}
+
 export function classify(title: string, abstract = ""): { paperType: PaperType; modality: Modality; clinicalTask: ClinicalTask; method: Method } {
   const t = `${title} ${abstract}`.toLowerCase();
   const tl = title.toLowerCase();

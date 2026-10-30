@@ -2,13 +2,13 @@ import { env } from "cloudflare:workers";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { papers as paperTable } from "../db/schema";
-import { classify, dedupePapers, publicPaperUrl, seedPapers } from "./papers";
+import { classify, dedupePapers, publicPaperUrl, relevantMedicalAiPaper, seedPapers } from "./papers";
 import type { Paper } from "./types";
 
 export async function allPapers(): Promise<Paper[]> {
   try {
     const rows = await getDb().select().from(paperTable).orderBy(desc(paperTable.updatedAt)).limit(500);
-    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear()).slice(0, 500);
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear() && (!paper.discovery || relevantMedicalAiPaper(paper.title, paper.abstract))).slice(0, 500);
   } catch { return seedPapers; }
 }
 

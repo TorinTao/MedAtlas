@@ -1,12 +1,9 @@
-import { normalizePaper } from "./papers";
+import { normalizePaper, relevantMedicalAiPaper } from "./papers";
 import { lexmountExtract } from "./reading";
 import type { Paper } from "./types";
 
-const medical = /medical|clinical|radiolog|healthcare|diagnos|patholog|patient|dental|imaging|chest|oncolog|cancer|biomed/i;
-const ai = /\bagent\b|\bAI\b|artificial intelligence|machine learning|deep learning|vision.language|large language model|\bLLM\b|multimodal foundation|neural network/i;
 const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 const currentYear = () => new Date().getUTCFullYear();
-function relevant(title: string, abstract: string) { const text = `${title} ${abstract}`; return medical.test(text) && ai.test(text); }
 
 export function natureCandidates(text: string, query: string): { title: string; url: string; score: number }[] {
   if (!/Showing\s+\d+[–-]\d+\s+of\s+\d+\s+results/i.test(text)) return [];
@@ -14,7 +11,7 @@ export function natureCandidates(text: string, query: string): { title: string; 
   return text.split(/\n(?=\d{1,3}\.\s)/).flatMap(block => {
     const title = block.match(/^\d{1,3}\.\s+([^\n]+)/)?.[1]?.trim() || "";
     const url = block.match(/https:\/\/www\.nature\.com\/articles\/(s[\w-]+)/)?.[0] || "";
-    if (!title || !url || !relevant(title, block)) return [];
+    if (!title || !url || !relevantMedicalAiPaper(title, block)) return [];
     const lower = `${title} ${block}`.toLowerCase();
     const score = terms.filter(term => title.toLowerCase().includes(term)).length * 2 + terms.filter(term => lower.includes(term)).length;
     return [{ title, url, score }];
@@ -22,7 +19,7 @@ export function natureCandidates(text: string, query: string): { title: string; 
 }
 
 export async function searchNatureViaLex(query: string, limit = 4): Promise<Paper[]> {
-  const searchUrl = `https://www.nature.com/search?q=${encodeURIComponent(query)}&order=relevance`;
+  const searchUrl = `https://www.nature.com/search?q=${encodeURIComponent(query)}`;
   const search = await lexmountExtract(searchUrl, 22000);
   const candidates = natureCandidates(search.text, query).slice(0, limit);
   if (!candidates.length) throw new Error("Nature 公开搜索页未返回可核验的医学 AI 论文链接");
@@ -32,7 +29,7 @@ export async function searchNatureViaLex(query: string, limit = 4): Promise<Pape
     const slug = url.pathname.match(/^\/articles\/(s[\w-]+)\/?$/)?.[1];
     const abstract = stripTags(page.description);
     const year = Number(page.publishTime.slice(0, 4));
-    if (url.hostname !== "www.nature.com" || !slug || abstract.length < 100 || !relevant(candidate.title, abstract) || !Number.isInteger(year) || year < 2010 || year > currentYear()) return null;
+    if (url.hostname !== "www.nature.com" || !slug || abstract.length < 100 || !relevantMedicalAiPaper(candidate.title, abstract) || !Number.isInteger(year) || year < 2010 || year > currentYear()) return null;
     const paper = normalizePaper({
       id: `nature-${slug}`, title: candidate.title, abstract, year, publishedAt: page.publishTime,
       doi: `10.1038/${slug}`, source: "Nature · Lexmount", url: page.finalUrl,
@@ -59,7 +56,7 @@ export async function searchEuropePmcViaLex(query: string, limit = 10): Promise<
   if (!response.ok) throw new Error(`Europe PMC 元数据 HTTP ${response.status}`);
   const data = await response.json() as any;
   const results = (data.resultList?.result || []) as any[];
-  return results.filter(item => visiblePmids.has(String(item.pmid || "")) && relevant(String(item.title || ""), String(item.abstractText || ""))).slice(0, limit).flatMap(item => {
+  return results.filter(item => visiblePmids.has(String(item.pmid || "")) && relevantMedicalAiPaper(String(item.title || ""), String(item.abstractText || ""))).slice(0, limit).flatMap(item => {
     const pmid = String(item.pmid || ""), abstract = stripTags(String(item.abstractText || ""));
     const year = Number(item.pubYear || String(item.firstPublicationDate || "").slice(0, 4));
     if (!pmid || abstract.length < 100 || !Number.isInteger(year) || year < 2010 || year > currentYear()) return [];
