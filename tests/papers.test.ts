@@ -13,6 +13,8 @@ test("publication venue stays separate from retrieval source and prefers formal 
   assert.deepEqual(conference, { name: "Proceedings of EMNLP", type: "会议", evidenceUrl: "https://openalex.org/W123" });
   assert.equal(pubMedVenue({ fulljournalname: "Radiology" }, "123")?.name, "Radiology");
   assert.equal(crossrefVenue({ DOI: "10.18653/v1/2021.acl-long.459", type: "proceedings-article", "container-title": ["Proceedings of ACL"] })?.type, "会议");
+  const longVenue = "Proceedings of the " + "International Conference on Medical Natural Language Processing ".repeat(4);
+  assert.equal(crossrefVenue({ DOI: "10.1000/long", type: "proceedings-article", "container-title": [longVenue] })?.name, longVenue.trim());
   const preprint = normalizePaper({ id: "arxiv-123", title: "Medical Agent", source: "arXiv", arxivId: "2401.12345", paperType: "preprint", publicationVenue: arxivVenue("2401.12345") });
   const published = normalizePaper({ id: "pmid-123", title: "Medical Agent", source: "PubMed", pmid: "123", publicationVenue: pubMedVenue({ fulljournalname: "Radiology" }, "123") });
   const merged = dedupePapers([preprint, published])[0];

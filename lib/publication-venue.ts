@@ -4,7 +4,7 @@ type OpenAlexSource = { display_name?: string; type?: string };
 type OpenAlexLocation = { source?: OpenAlexSource | null };
 type OpenAlexWork = { id?: string; type?: string; primary_location?: OpenAlexLocation | null; locations?: OpenAlexLocation[] };
 
-const clean = (value: unknown) => String(value || "").replace(/\s+/g, " ").trim().slice(0, 180);
+const clean = (value: unknown) => String(value || "").replace(/\s+/g, " ").trim().slice(0, 500);
 
 export function openAlexVenue(work: OpenAlexWork): PublicationVenue | undefined {
   const candidates = [work.primary_location, ...(work.locations || [])].filter(Boolean) as OpenAlexLocation[];
@@ -56,7 +56,7 @@ export function withVenueFallback(paper: Paper): Paper {
 
 export function needsVenueLookup(paper: Paper, now = Date.now()): boolean {
   const venue = paper.publicationVenue;
-  return !venue || (venue.type === "待核验" && (!venue.checkedAt || now - Date.parse(venue.checkedAt) > 7 * 86400000));
+  return !venue || venue.name.length === 180 || (venue.type === "待核验" && (!venue.checkedAt || now - Date.parse(venue.checkedAt) > 7 * 86400000));
 }
 
 export function unknownVenue(paper: Paper): PublicationVenue {
