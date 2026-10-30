@@ -16,7 +16,7 @@
 
 ## 服务端配置
 
-将 `.env.example` 列出的键配置到 Sites 的运行环境。站点默认 AI 服务使用 `DEEPSEEK_API_KEY`；`LEXMOUNT_API_KEY` 与 `LEXMOUNT_PROJECT_ID` 用于公开论文页面读取；`REFRESH_TOKEN` 用于每日更新接口。登录用户可在 AI 设置页提交自己的 DeepSeek API Key，服务端经官方余额接口验证后，用 AES-GCM 按用户加密保存到 D1，并在该用户的 AI 请求中优先使用。此功能要求 Sites Secret `USER_API_KEY_ENCRYPTION_KEY`（32 字节随机值的 Base64）；不要轮换该值而不重新加密已有记录。删除个人 Key 后恢复站点默认配置。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。OpenAlex 与 GitHub 的 key 可选。
+将 `.env.example` 列出的键配置到 Sites 的运行环境。站点默认 AI 服务使用 `DEEPSEEK_API_KEY`；`LEXMOUNT_API_KEY` 与 `LEXMOUNT_PROJECT_ID` 用于公开论文页面读取；`REFRESH_TOKEN` 用于每日更新接口，`SUMMARY_BACKFILL_TOKEN` 仅用于管理员批量补全中文概述。登录用户可在 AI 设置页提交自己的 DeepSeek API Key，服务端经官方余额接口验证后，用 AES-GCM 按用户加密保存到 D1，并在该用户的 AI 请求中优先使用。此功能要求 Sites Secret `USER_API_KEY_ENCRYPTION_KEY`（32 字节随机值的 Base64）；不要轮换该值而不重新加密已有记录。删除个人 Key 后恢复站点默认配置。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。OpenAlex 与 GitHub 的 key 可选。
 
 每日任务通过站点 MCP 工具 `refresh_literature` 扩充语料至 200–500 篇；三组 PubMed、arXiv、OpenAlex 交叉检索加五组 OpenAlex 与 PubMed 专题检索，按 DOI、PMID、arXiv ID 与标题去重。请求按批次限速，OpenAlex 限流时仍可由 PubMed 补充。该工具要求已登录的站点所有者身份，按 UTC 日期幂等，分批更新 D1，不重新部署。总量不足 200 篇时标记 partial，后续可重试。`MCP_OWNER_EMAIL` 为服务端所有者身份绑定。`POST /api/admin/refresh` 仍可作为其他受控调度器的接口，需要 `Authorization: Bearer <REFRESH_TOKEN>`，不把 token 写入调度提示词。
 
@@ -29,6 +29,8 @@
 后台补全工具 `enrich_missing_papers` 每次最多处理两篇缺少中文概述或精读结果的论文：先用 Lexmount Web Fetch 读取公开页面，再用 DeepSeek 生成概述和可追溯解读。该工具每次还独立处理一篇缺少代码仓库评价的论文；`enrich_missing_repositories` 可单独处理最多两篇。代码链接先从论文英文摘要提取，再由 Lexmount Web Fetch 核对公开论文页；仅在候选唯一或与已知仓库一致时关联。GitHub 静态检查逐项记录许可证、README、依赖、数据、权重、代码入口与维护证据，DeepSeek 生成中文评价。没有找到链接、多个候选、页面失败分别记录，不把“未找到”解释为“没有开源”。论文页面提及仓库不证明代码已复现。结果保存到 D1；失败或不完整任务六小时后可重试。已有的 `refresh_literature` 继续负责每日元数据更新，补全工具只更新数据，无需重新发布网站。
 
 文献库打开一篇尚无结构化精读的论文时，会按需生成研究问题、方法与实验、主要发现和局限。后台补全优先使用 Lexmount 公开页面；页面暂时抓取失败但已有英文摘要时，继续基于摘要生成并标记为“仅摘要”。证据摘录必须逐字出自摘要或许可明确的开放全文。没有摘要或开放全文时，界面说明无法可靠生成，不根据标题猜测实验结果。公开自动精读受每日用量限制，用户可在详情页手动重试。
+
+每篇公开论文在文献库加载时都有中文概述。尚未完成模型概述的论文先显示明确标注的元数据临时提示，`backfill_paper_summaries` 每次用 DeepSeek Flash 从标题与摘要批量生成最多 16 篇正式概述并保存到 D1；管理员也可通过受 `SUMMARY_BACKFILL_TOKEN` 保护的接口批量补全。新论文同样立即有临时提示，随后自动替换。没有摘要的论文只根据标题概括主题，不猜测实验结果。
 
 综述类论文若有英文摘要，后台补全还会用 DeepSeek 生成中文译文；网站同时保留英文原文及来源链接。论文概述和精读解释性字段使用中文，证据摘录保留原文。
 

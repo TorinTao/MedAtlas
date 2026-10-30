@@ -6,6 +6,7 @@ import { lexmountExtract, readPaper } from "./reading";
 import { runtime } from "./runtime";
 import { allPapers, putPapers } from "./store";
 import { summarizePaperZh, translateAbstractZh } from "./summary";
+import { needsGeneratedSummary } from "./summary-fallback";
 import type { Paper } from "./types";
 
 type JobRow = { id: string; status: string; updated_at: string };
@@ -47,7 +48,7 @@ export async function enrichMissingPapers(limit = 2) {
   const papers = await allPapers();
   const jobs = await env.DB.prepare("SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'").all<JobRow>();
   const byId = new Map((jobs.results || []).map(job => [job.id, job]));
-  const pending = papers.filter(paper => !paper.summaryZh || !paper.analysis || (paper.abstract.trim() && !paper.abstractZh && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit?.evaluation))
+  const pending = papers.filter(paper => needsGeneratedSummary(paper) || !paper.analysis || (paper.abstract.trim() && !paper.abstractZh && !paper.reviewAbstractZh) || (paper.repoUrl && !paper.repoAudit?.evaluation))
     .sort((a, b) => Number(Boolean(byId.get(`enrich:${a.id}`))) - Number(Boolean(byId.get(`enrich:${b.id}`))) || Number(Boolean(a.analysis)) - Number(Boolean(b.analysis)) || Number(Boolean(b.abstract.trim())) - Number(Boolean(a.abstract.trim())) || b.citedByCount - a.citedByCount || b.year - a.year);
   const results: { id: string; status: string; summary: boolean; analysis: boolean; reviewTranslated: boolean; repo: string; errors: string[] }[] = [];
 
@@ -62,7 +63,7 @@ export async function enrichMissingPapers(limit = 2) {
       const page = target ? await lexmountExtract(target).catch(error => { errors.push(`公开页面：${(error as Error).message}`); return null; }) : null;
       if (!page && !paper.abstract.trim()) errors.push("论文暂无可分析的公开摘要或页面文字");
       const [summary, reading, translation] = await Promise.allSettled([
-        paper.summaryZh ? Promise.resolve(null) : summarizePaperZh(paper, page ? { text: page.text, url: page.finalUrl } : undefined),
+        !needsGeneratedSummary(paper) ? Promise.resolve(null) : summarizePaperZh(paper, page ? { text: page.text, url: page.finalUrl } : undefined),
         paper.analysis ? Promise.resolve(null) : readPaper(paper, page || undefined, !page),
         !paper.abstract.trim() || paper.abstractZh || paper.reviewAbstractZh ? Promise.resolve(null) : translateAbstractZh(paper),
       ]);
@@ -87,7 +88,7 @@ export async function enrichMissingPapers(limit = 2) {
       }
       await putPapers([updated]);
       const reviewTranslated = !updated.abstract.trim() || Boolean(updated.abstractZh || updated.reviewAbstractZh);
-      const done = Boolean(updated.summaryZh && updated.analysis && reviewTranslated && (!repoUrl || updated.repoAudit?.evaluation));
+      const done = Boolean(!needsGeneratedSummary(updated) && updated.analysis && reviewTranslated && (!repoUrl || updated.repoAudit?.evaluation));
       await finish(jobId, done ? "done" : "partial", { sourceUrl: page?.finalUrl || target || "", repoUrl: updated.repoUrl || "", errors });
       results.push({ id: paper.id, status: done ? "done" : "partial", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated, repo: updated.repoUrl || "", errors });
     } catch (error) {

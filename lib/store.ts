@@ -4,20 +4,22 @@ import { getDb } from "../db";
 import { papers as paperTable } from "../db/schema";
 import { classify, dedupePapers, publicPaperUrl, relevantMedicalAiPaper, seedPapers } from "./papers";
 import type { Paper } from "./types";
+import { withSummaryFallback } from "./summary-fallback";
 
 export async function allPapers(): Promise<Paper[]> {
   try {
     const rows = await getDb().select().from(paperTable).orderBy(desc(paperTable.updatedAt)).limit(500);
-    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear() && (!paper.discovery || relevantMedicalAiPaper(paper.title, paper.abstract))).slice(0, 500);
-  } catch { return seedPapers; }
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear() && (!paper.discovery || relevantMedicalAiPaper(paper.title, paper.abstract))).slice(0, 500).map(withSummaryFallback);
+  } catch { return seedPapers.map(withSummaryFallback); }
 }
 
 export async function findPaper(id: string): Promise<Paper | undefined> {
   try {
     const row = await getDb().select().from(paperTable).where(eq(paperTable.id, id)).limit(1);
-    if (row[0]) return securePaperUrls(JSON.parse(row[0].data) as Paper);
+    if (row[0]) return withSummaryFallback(securePaperUrls(JSON.parse(row[0].data) as Paper));
   } catch { /* initial preview can use the seed corpus */ }
-  return seedPapers.find(p => p.id === id);
+  const seed = seedPapers.find(p => p.id === id);
+  return seed ? withSummaryFallback(seed) : undefined;
 }
 
 export async function putPapers(items: Paper[]) {

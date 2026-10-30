@@ -5,6 +5,18 @@ import { safePublicUrl } from "../lib/url";
 import { coreTimeline, relatedPapers } from "../lib/relations";
 import { githubRepositories } from "../lib/repo-links";
 import { githubDomEvidence } from "../lib/repo-dom";
+import { needsGeneratedSummary, withSummaryFallback } from "../lib/summary-fallback";
+
+test("every visible paper has a Chinese overview before AI backfill", () => {
+  const missing = normalizePaper({ id: "pending-summary", title: "Medical Image Reasoning", abstract: "We investigate medical image reasoning." });
+  const visible = withSummaryFallback(missing);
+  assert.match(visible.summaryZh || "", /[\u3400-\u9fff]/);
+  assert.equal(visible.summaryBasis, "元数据");
+  assert.equal(needsGeneratedSummary(visible), true);
+  const generated = { ...visible, summaryZh: "研究医学图像推理。", summaryBasis: "摘要" as const };
+  assert.equal(withSummaryFallback(generated).summaryZh, generated.summaryZh);
+  assert.equal(needsGeneratedSummary(generated), false);
+});
 
 test("paper code links are normalized without guessing from multiple candidates", () => {
   assert.deepEqual(githubRepositories("Code: https://github.com/wang-zhanyu/R2GenGPT. See https://github.com/wang-zhanyu/R2GenGPT/tree/main"), ["https://github.com/wang-zhanyu/R2GenGPT"]);
