@@ -5,21 +5,22 @@ import { papers as paperTable } from "../db/schema";
 import { classify, dedupePapers, publicPaperUrl, relevantMedicalAiPaper, seedPapers } from "./papers";
 import type { Paper } from "./types";
 import { withSummaryFallback } from "./summary-fallback";
+import { withVenueFallback } from "./publication-venue";
 
 export async function allPapers(): Promise<Paper[]> {
   try {
     const rows = await getDb().select().from(paperTable).orderBy(desc(paperTable.updatedAt)).limit(500);
-    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear() && (!paper.discovery || relevantMedicalAiPaper(paper.title, paper.abstract))).slice(0, 500).map(withSummaryFallback);
-  } catch { return seedPapers.map(withSummaryFallback); }
+    return dedupePapers([...rows.map(r => securePaperUrls(JSON.parse(r.data) as Paper)), ...seedPapers]).filter(paper => paper.year <= new Date().getUTCFullYear() && (!paper.discovery || relevantMedicalAiPaper(paper.title, paper.abstract))).slice(0, 500).map(withVenueFallback).map(withSummaryFallback);
+  } catch { return seedPapers.map(withVenueFallback).map(withSummaryFallback); }
 }
 
 export async function findPaper(id: string): Promise<Paper | undefined> {
   try {
     const row = await getDb().select().from(paperTable).where(eq(paperTable.id, id)).limit(1);
-    if (row[0]) return withSummaryFallback(securePaperUrls(JSON.parse(row[0].data) as Paper));
+    if (row[0]) return withSummaryFallback(withVenueFallback(securePaperUrls(JSON.parse(row[0].data) as Paper)));
   } catch { /* initial preview can use the seed corpus */ }
   const seed = seedPapers.find(p => p.id === id);
-  return seed ? withSummaryFallback(seed) : undefined;
+  return seed ? withSummaryFallback(withVenueFallback(seed)) : undefined;
 }
 
 export async function putPapers(items: Paper[]) {
@@ -34,6 +35,7 @@ export async function putPapers(items: Paper[]) {
       '$.summaryZh',coalesce(json_extract(excluded.data,'$.summaryZh'),json_extract(papers.data,'$.summaryZh')),
       '$.summaryBasis',coalesce(json_extract(excluded.data,'$.summaryBasis'),json_extract(papers.data,'$.summaryBasis')),
       '$.summarySourceUrl',coalesce(json_extract(excluded.data,'$.summarySourceUrl'),json_extract(papers.data,'$.summarySourceUrl')),
+      '$.publicationVenue',json(coalesce(json_extract(excluded.data,'$.publicationVenue'),json_extract(papers.data,'$.publicationVenue'),'null')),
       '$.abstractZh',coalesce(json_extract(excluded.data,'$.abstractZh'),json_extract(papers.data,'$.abstractZh')),
       '$.abstractSourceUrl',coalesce(json_extract(excluded.data,'$.abstractSourceUrl'),json_extract(papers.data,'$.abstractSourceUrl')),
       '$.reviewAbstractZh',coalesce(json_extract(excluded.data,'$.reviewAbstractZh'),json_extract(papers.data,'$.reviewAbstractZh')),

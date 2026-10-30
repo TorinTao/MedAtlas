@@ -145,6 +145,7 @@
 .legend button{font-size:11px}.legend button small{font-size:10px}.map-footnote{font-size:10px;line-height:1.6}
 .library-row h3{font-size:14px;line-height:1.5}.library-row p,.library-summary{font-size:11px}.library-meta{font-size:10px}
 .paper-detail>h2{font-size:21px;line-height:1.45}.detail-author{font-size:11px}.detail-chips span{font-size:10px}
+.library-row .library-venue{margin:7px 0;color:#226f6d;font-size:10px;font-weight:650;line-height:1.45}.rail-card.featured .rail-venue{margin:7px 0 11px;color:#2b7773;font-size:10px;font-weight:700;line-height:1.5}.publication-venue{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap;margin:13px 0 14px;padding:10px 12px;border:1px solid #dcebe6;border-radius:7px;background:#f4faf7;font-size:11px;line-height:1.5;color:#2b6263}.publication-venue strong{color:#456567;white-space:nowrap}.publication-venue span{flex:1;min-width:140px;font-weight:650}.publication-venue a{display:inline-flex;align-items:center;gap:3px;color:#177f78;text-decoration:underline;white-space:nowrap}
 .detail-section h4{font-size:12px}.detail-section p,.detail-section li,.detail-section blockquote{font-size:12px;line-height:1.7}.translated-abstract p{font-size:12px;line-height:1.75}
 .detail-actions{flex-wrap:wrap}.detail-actions a,.detail-actions button{font-size:11px;min-height:36px}
 .library-summary span{display:block;overflow:visible;-webkit-line-clamp:unset}

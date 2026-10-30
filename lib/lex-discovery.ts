@@ -1,6 +1,7 @@
 import { normalizePaper, relevantMedicalAiPaper } from "./papers";
 import { lexmountExtract } from "./reading";
 import type { Paper } from "./types";
+import { europePmcVenue } from "./publication-venue";
 
 const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 const currentYear = () => new Date().getUTCFullYear();
@@ -63,7 +64,7 @@ export async function searchEuropePmcViaLex(query: string, limit = 10): Promise<
     const paper = normalizePaper({
       id: `pmid-${pmid}`, title: stripTags(String(item.title || "")), abstract, year,
       publishedAt: String(item.firstPublicationDate || year), doi: String(item.doi || ""), pmid,
-      source: "Europe PMC · Lexmount", paperType: /review/i.test(JSON.stringify(item.pubTypeList || "")) ? "review" : "article",
+      source: "Europe PMC · Lexmount", publicationVenue: europePmcVenue(item, pmid), paperType: /review/i.test(JSON.stringify(item.pubTypeList || "")) ? "review" : "article",
       url: `https://europepmc.org/article/MED/${pmid}`,
       oaUrl: item.isOpenAccess === "Y" && item.pmcid ? `https://europepmc.org/articles/${encodeURIComponent(String(item.pmcid))}` : "",
       citedByCount: Number(item.citedByCount || 0), authors: String(item.authorString || "").split(/,\s*/).filter(Boolean).slice(0, 12).map(name => ({ name })),

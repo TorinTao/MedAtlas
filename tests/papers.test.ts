@@ -6,6 +6,19 @@ import { coreTimeline, relatedPapers } from "../lib/relations";
 import { githubRepositories } from "../lib/repo-links";
 import { githubDomEvidence } from "../lib/repo-dom";
 import { needsGeneratedSummary, withSummaryFallback } from "../lib/summary-fallback";
+import { arxivVenue, openAlexVenue, pubMedVenue } from "../lib/publication-venue";
+
+test("publication venue stays separate from retrieval source and prefers formal publication", () => {
+  const conference = openAlexVenue({ id: "https://openalex.org/W123", type: "conference-paper", primary_location: { source: { display_name: "Proceedings of EMNLP", type: "conference" } } });
+  assert.deepEqual(conference, { name: "Proceedings of EMNLP", type: "会议", evidenceUrl: "https://openalex.org/W123" });
+  assert.equal(pubMedVenue({ fulljournalname: "Radiology" }, "123")?.name, "Radiology");
+  const preprint = normalizePaper({ id: "arxiv-123", title: "Medical Agent", source: "arXiv", arxivId: "2401.12345", paperType: "preprint", publicationVenue: arxivVenue("2401.12345") });
+  const published = normalizePaper({ id: "pmid-123", title: "Medical Agent", source: "PubMed", pmid: "123", publicationVenue: pubMedVenue({ fulljournalname: "Radiology" }, "123") });
+  const merged = dedupePapers([preprint, published])[0];
+  assert.equal(merged.source, "PubMed");
+  assert.equal(merged.publicationVenue?.type, "期刊");
+  assert.equal(merged.publicationVenue?.name, "Radiology");
+});
 
 test("every visible paper has a Chinese overview before AI backfill", () => {
   const missing = normalizePaper({ id: "pending-summary", title: "Medical Image Reasoning", abstract: "We investigate medical image reasoning." });
