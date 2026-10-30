@@ -6,12 +6,13 @@ import { coreTimeline, relatedPapers } from "../lib/relations";
 import { githubRepositories } from "../lib/repo-links";
 import { githubDomEvidence } from "../lib/repo-dom";
 import { needsGeneratedSummary, withSummaryFallback } from "../lib/summary-fallback";
-import { arxivVenue, openAlexVenue, pubMedVenue } from "../lib/publication-venue";
+import { arxivVenue, crossrefVenue, openAlexVenue, pubMedVenue } from "../lib/publication-venue";
 
 test("publication venue stays separate from retrieval source and prefers formal publication", () => {
   const conference = openAlexVenue({ id: "https://openalex.org/W123", type: "conference-paper", primary_location: { source: { display_name: "Proceedings of EMNLP", type: "conference" } } });
   assert.deepEqual(conference, { name: "Proceedings of EMNLP", type: "会议", evidenceUrl: "https://openalex.org/W123" });
   assert.equal(pubMedVenue({ fulljournalname: "Radiology" }, "123")?.name, "Radiology");
+  assert.equal(crossrefVenue({ DOI: "10.18653/v1/2021.acl-long.459", type: "proceedings-article", "container-title": ["Proceedings of ACL"] })?.type, "会议");
   const preprint = normalizePaper({ id: "arxiv-123", title: "Medical Agent", source: "arXiv", arxivId: "2401.12345", paperType: "preprint", publicationVenue: arxivVenue("2401.12345") });
   const published = normalizePaper({ id: "pmid-123", title: "Medical Agent", source: "PubMed", pmid: "123", publicationVenue: pubMedVenue({ fulljournalname: "Radiology" }, "123") });
   const merged = dedupePapers([preprint, published])[0];

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { runtime } from "./runtime";
 import { allPapers, putPapers } from "./store";
-import { needsVenueLookup, openAlexVenue, pubMedVenue, unknownVenue } from "./publication-venue";
+import { crossrefVenue, needsVenueLookup, openAlexVenue, pubMedVenue, unknownVenue } from "./publication-venue";
 import type { Paper, PublicationVenue } from "./types";
 
 async function getJson(url: string): Promise<any> {
@@ -23,6 +23,12 @@ async function openAlexLookup(paper: Paper): Promise<PublicationVenue | undefine
   params.set("per-page", "1");
   const data = await getJson(`https://api.openalex.org/works?${params}`);
   return data.results?.[0] ? openAlexVenue(data.results[0]) : undefined;
+}
+
+async function crossrefLookup(paper: Paper): Promise<PublicationVenue | undefined> {
+  if (!paper.doi) return;
+  const data = await getJson(`https://api.crossref.org/works/${encodeURIComponent(paper.doi)}`);
+  return crossrefVenue(data.message || {});
 }
 
 export async function backfillPublicationVenues(limit = 40) {
@@ -50,7 +56,7 @@ export async function backfillPublicationVenues(limit = 40) {
     }
   }
   const openAlexPapers = selected.filter(paper => !found.has(paper.id) && (paper.doi || /^W\d+$/.test(paper.id)));
-  let openAlexFailed = false;
+  const failedIds = new Set<string>();
   for (let offset = 0; offset < openAlexPapers.length; offset += 3) {
     const results = await Promise.allSettled(openAlexPapers.slice(offset, offset + 3).map(openAlexLookup));
     results.forEach((result, index) => {
@@ -58,15 +64,28 @@ export async function backfillPublicationVenues(limit = 40) {
       if (result.status === "fulfilled") {
         if (result.value) found.set(paper.id, result.value);
       } else {
-        openAlexFailed = true;
+        failedIds.add(paper.id);
         if (errors.length < 4) errors.push(`OpenAlex ${paper.id}：${result.reason?.message || "请求失败"}`);
+      }
+    });
+  }
+  const crossrefPapers = selected.filter(paper => !found.has(paper.id) && paper.doi);
+  for (let offset = 0; offset < crossrefPapers.length; offset += 3) {
+    const results = await Promise.allSettled(crossrefPapers.slice(offset, offset + 3).map(crossrefLookup));
+    results.forEach((result, index) => {
+      const paper = crossrefPapers[offset + index];
+      if (result.status === "fulfilled") {
+        if (result.value) { found.set(paper.id, result.value); failedIds.delete(paper.id); }
+      } else {
+        failedIds.add(paper.id);
+        if (errors.length < 4) errors.push(`Crossref ${paper.id}：${result.reason?.message || "请求失败"}`);
       }
     });
   }
   const updated = selected.flatMap(paper => {
     const venue = found.get(paper.id);
     if (venue) return [{ ...paper, publicationVenue: venue }];
-    if ((paper.pmid && pubmedFailed) || ((paper.doi || /^W\d+$/.test(paper.id)) && openAlexFailed)) return [];
+    if (failedIds.has(paper.id) || (paper.pmid && pubmedFailed && !paper.doi)) return [];
     return [{ ...paper, publicationVenue: unknownVenue(paper) }];
   });
   if (updated.length) await putPapers(updated);
