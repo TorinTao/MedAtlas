@@ -70,6 +70,7 @@ export function dedupePapers(items: Paper[]): Paper[] {
         reviewAbstractZh: paper.reviewAbstractZh || prior.reviewAbstractZh,
         reviewAbstractSourceUrl: paper.reviewAbstractSourceUrl || prior.reviewAbstractSourceUrl,
         analysis: paper.analysis || prior.analysis,
+        discovery: paper.discovery || prior.discovery,
         paperType: prior.paperType === "预印本" && paper.paperType !== "预印本" ? paper.paperType : prior.paperType });
     } else { map.set(key, paper); titles.set(titleKey, key); }
   }

@@ -4,7 +4,7 @@
 
 ## 数据流
 
-1. `/api/research` 根据自然语言方向查询 PubMed、arXiv 和 OpenAlex，按 DOI、PMID、arXiv ID 与标准化标题去重；初始界面还有带来源的种子文献。用户查询写入 D1。
+1. `/api/research` 根据自然语言方向查询 PubMed、arXiv 和 OpenAlex；同时调用 Lexmount Web Fetch 读取 Nature 与 Europe PMC 的公开搜索页。Nature 结果需要再次读取公开论文页并取得摘要；Europe PMC 结果须在页面上找到 PMID，再用官方 REST 元数据核对。通过这些检查的论文才写入 D1，按 DOI、PMID、arXiv ID 与标准化标题去重。论文详情显示 Lexmount 的公开搜索页、论文页、抓取时间和请求 ID。平台若返回限流、登录页或空内容，本次检索会显示警告。
 2. `/api/papers/[id]/read` 使用 Lexmount Web Fetch 读取公开论文落地页，并优先用 Europe PMC 开放全文。没有开放全文时将分析标为“摘要”；阅读结果保存到 D1，保留来源 URL 与分析时间，接口返回是否成功使用 Lexmount。
 3. `/api/ideas` 先检索并筛选文献，再用 DeepSeek `deepseek-flash` 深度思考。工作台支持 1、3、5、10 张独立选题；每张须包含 5–8 项改进工作、完整方案和可追溯证据链。返回的引用 ID 必须属于已检索论文；缺少足够引用或核心字段时拒绝结果。
 4. 登录用户可收藏论文、上传 PDF、生成并保存选题。PDF 客户端解析，原件及解析文字写入用户隔离的 R2 路径；PDF 精读只调用 DeepSeek，不传给 Lexmount。

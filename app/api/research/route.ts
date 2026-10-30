@@ -14,5 +14,5 @@ export async function POST(request: Request) {
     const matched = terms.filter(term => text.includes(term)).length;
     return { ...paper, relevance: Math.min(1, 0.18 + 0.82 * matched / Math.max(terms.length, 1)) };
   });
-  return Response.json({ query, papers, matchingCount: result.papers.length, sources: result.sources, warnings: result.errors, fetchedAt: new Date().toISOString() });
+  return Response.json({ query, papers, matchingCount: result.papers.length, lexmountCount: result.papers.filter(paper => paper.discovery?.method === "Lexmount Web Fetch").length, sources: result.sources, warnings: result.errors, fetchedAt: new Date().toISOString() });
 }

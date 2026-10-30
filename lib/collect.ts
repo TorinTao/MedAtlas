@@ -1,6 +1,7 @@
 import { cleanDoi, dedupePapers, normalizePaper } from "./papers";
 import type { Paper } from "./types";
 import { runtime } from "./runtime";
+import { searchEuropePmcViaLex, searchNatureViaLex } from "./lex-discovery";
 
 const NOW = () => new Date().toISOString();
 const xmlText = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
@@ -78,11 +79,17 @@ export async function searchArxiv(query: string, limit = 8): Promise<Paper[]> {
 
 export async function collectPapers(input: string, breadth: "query" | "corpus" = "query"): Promise<{ papers: Paper[]; sources: string[]; errors: string[] }> {
   const query = englishQuery(input);
-  const names = ["OpenAlex", "PubMed", "arXiv"];
+  const names = ["OpenAlex", "PubMed", "arXiv", "Nature · Lexmount", "Europe PMC · Lexmount"];
   const wide = breadth === "corpus";
-  const results = await Promise.allSettled([searchOpenAlex(query, wide ? 50 : 20), searchPubMed(query, wide ? 15 : 8), searchArxiv(query, wide ? 10 : 8)]);
+  const lexReady = Boolean(runtime("LEXMOUNT_API_KEY") && runtime("LEXMOUNT_PROJECT_ID"));
+  const results = await Promise.allSettled([
+    searchOpenAlex(query, wide ? 50 : 20), searchPubMed(query, wide ? 15 : 8), searchArxiv(query, wide ? 10 : 8),
+    lexReady ? searchNatureViaLex(query, wide ? 5 : 3) : Promise.resolve([] as Paper[]),
+    lexReady ? searchEuropePmcViaLex(query, wide ? 12 : 8) : Promise.resolve([] as Paper[]),
+  ]);
   const papers: Paper[] = []; const sources: string[] = []; const errors: string[] = [];
-  results.forEach((r, i) => { if (r.status === "fulfilled") { papers.push(...r.value); sources.push(names[i]); } else errors.push(`${names[i]}: ${r.reason?.message || "请求失败"}`); });
+  results.forEach((r, i) => { if (r.status === "fulfilled") { papers.push(...r.value); if (r.value.length) sources.push(names[i]); } else errors.push(`${names[i]}: ${r.reason?.message || "请求失败"}`); });
+  if (!lexReady) errors.push("Lexmount Web Fetch 尚未配置，本次只使用结构化接口");
   const terms = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
   return { papers: dedupePapers(papers).map(p => ({ ...p, relevance: Math.min(1, 0.3 + terms.filter(w => `${p.title} ${p.abstract}`.toLowerCase().includes(w)).length / Math.max(terms.length, 1) * 0.7) })).filter(p => p.year >= (wide ? 2010 : 2016)).sort((a, b) => b.relevance - a.relevance || b.year - a.year).slice(0, wide ? 65 : 35), sources, errors };
 }
