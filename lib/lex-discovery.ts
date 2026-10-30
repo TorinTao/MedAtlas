@@ -51,7 +51,7 @@ export async function searchNatureViaLex(query: string, limit = 4): Promise<Pape
 export async function searchEuropePmcViaLex(query: string, limit = 10): Promise<Paper[]> {
   const searchUrl = `https://europepmc.org/search?query=${encodeURIComponent(query)}`;
   const page = await lexmountExtract(searchUrl, 22000);
-  if (!/Search results\s+\d+[–-]\d+\s+of\s+[\d,]+\s+results/i.test(page.text)) throw new Error("Europe PMC 搜索页未返回可核验的结果");
+  if (!/Search results/i.test(page.text) || !/\b\d+[–-]\d+\s+of\s+[\d,]+\s+results/i.test(page.text)) throw new Error("Europe PMC 搜索页未返回可核验的结果");
   const visiblePmids = new Set([...page.text.matchAll(/PMID:\s*(\d{6,9})/g)].map(match => match[1]));
   if (!visiblePmids.size) throw new Error("Europe PMC 搜索页未提供 PMID");
   const params = new URLSearchParams({ query, format: "json", resultType: "core", pageSize: "50" });

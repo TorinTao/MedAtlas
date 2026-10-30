@@ -39,7 +39,8 @@ export async function putPapers(items: Paper[]) {
       '$.analysis',json(coalesce(json_extract(excluded.data,'$.analysis'),json_extract(papers.data,'$.analysis'),'null')),
       '$.repoUrl',coalesce(nullif(json_extract(excluded.data,'$.repoUrl'),''),json_extract(papers.data,'$.repoUrl'),''),
       '$.repoEvidenceUrl',coalesce(json_extract(excluded.data,'$.repoEvidenceUrl'),json_extract(papers.data,'$.repoEvidenceUrl')),
-      '$.repoAudit',json(coalesce(json_extract(excluded.data,'$.repoAudit'),json_extract(papers.data,'$.repoAudit'),'null'))),
+      '$.repoAudit',json(coalesce(json_extract(excluded.data,'$.repoAudit'),json_extract(papers.data,'$.repoAudit'),'null')),
+      '$.discovery',json(coalesce(json_extract(excluded.data,'$.discovery'),json_extract(papers.data,'$.discovery'),'null'))),
     updated_at=excluded.updated_at`;
   for (let offset = 0; offset < items.length; offset += 50) {
     const batch = items.slice(offset, offset + 50).map(paper => storage.prepare(sql).bind(paper.id, paper.title, JSON.stringify(paper), updatedAt));
