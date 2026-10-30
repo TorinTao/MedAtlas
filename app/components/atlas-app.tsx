@@ -2,15 +2,22 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, Bookmark, Check, ChevronDown, CircleHelp, Compass, Database, ExternalLink, FileText, Filter, GitBranch, Globe2, Lightbulb, LoaderCircle, LockKeyhole, Menu, Microscope, Play, Plus, Search, Settings2, Sparkles, UploadCloud, X } from "lucide-react";
+import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, Bookmark, Check, ChevronDown, CircleHelp, Compass, Copy, Database, ExternalLink, FileText, Filter, GitBranch, Globe2, Lightbulb, LoaderCircle, LockKeyhole, Menu, Microscope, Play, Plus, Search, Settings2, Sparkles, UploadCloud, X } from "lucide-react";
 import type { IdeasResearch, Method, Paper, PaperAnalysis, RepoAudit, ResearchIdea } from "../../lib/types";
 import { relatedPapers } from "../../lib/relations";
+import { formatIdeaForDiscussion } from "../../lib/idea-export";
 
 const AtlasScene = dynamic(() => import("./atlas-scene"), { ssr: false, loading: () => <div className="scene-loading" role="status"><div className="scene-loading-content"><span className="scene-loading-mark"><LoaderCircle className="spin" size={23} /></span><strong>正在载入文献星图</strong><small>发表时间 · 医学模态 · 临床任务</small></div><div className="scene-loading-timeline" aria-hidden="true"><span>2018</span><span>2020</span><span>2022</span><span>2024</span><span>2026</span></div></div> });
 const methodColors: Record<Method, string> = { "视觉语言模型": "#16bfa8", "Agent 协作": "#d98b1c", "检索增强": "#9256de", "表征学习": "#397fd4", "多模态融合": "#829e24", "生成式模型": "#d64f86", "预测与分类": "#d8664d", "评测与资源": "#b79516", "综述与趋势": "#388bae", "待核验": "#84939c" };
 const sections = [{ id: "atlas", label: "研究星图", icon: Compass }, { id: "library", label: "文献库", icon: BookOpen }, { id: "ideas", label: "Ideas 工作台", icon: Lightbulb }, { id: "workspace", label: "我的工作区", icon: Bookmark }, { id: "settings", label: "AI 设置", icon: Settings2 }] as const;
 type Section = typeof sections[number]["id"];
 const LIBRARY_PAGE_SIZE = 12;
+const discussionModels = [
+  { name: "ChatGPT", url: "https://chatgpt.com/" },
+  { name: "Claude", url: "https://claude.ai/" },
+  { name: "Gemini", url: "https://gemini.google.com/" },
+  { name: "Kimi K3", url: "https://www.kimi.com/" },
+] as const;
 type Workspace = { savedPapers: Paper[]; ideas: ResearchIdea[]; uploads: { id: string; fileName: string; fileSize: number; pageCount: number; createdAt: string }[] };
 type AiSettings = { configured: boolean; updatedAt: string | null; siteFallback: boolean; model: string };
 
@@ -237,11 +244,30 @@ function RepoEvaluationView({ audit }: { audit: RepoAudit }) {
 }
 
 function IdeaCard({ idea, index, papers, onPaper }: { idea: ResearchIdea; index: number; papers: Paper[]; onPaper: (p: Paper) => void }) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const refs = idea.paperIds.map(id => papers.find(p => p.id === id)).filter(Boolean) as Paper[];
   const plan = idea.fullPlan;
   const planRows = plan ? [["数据与使用边界", plan.data], ["队列与数据划分", plan.cohortAndSplit], ["方法与实现", plan.method], ["对照基线", plan.baselines], ["评测指标", plan.evaluation], ["消融与控制", plan.controls], ["伦理与风险", plan.ethics]] : [];
+  async function copyFullIdea() {
+    try {
+      const content = formatIdeaForDiscussion(idea, papers);
+      let copied = false;
+      if (navigator.clipboard?.writeText) {
+        try { await navigator.clipboard.writeText(content); copied = true; } catch { /* Try the browser selection fallback. */ }
+      }
+      if (!copied) {
+        const textarea = document.createElement("textarea");
+        textarea.value = content; textarea.style.position = "fixed"; textarea.style.opacity = "0";
+        document.body.appendChild(textarea); textarea.select();
+        copied = document.execCommand("copy"); textarea.remove();
+        if (!copied) throw new Error("Clipboard unavailable");
+      }
+      setCopyState("copied");
+    } catch { setCopyState("error"); }
+  }
   return <article className="idea-card"><div className="idea-card-head"><div className="idea-number">{String(index + 1).padStart(2, "0")}</div><div><span>RESEARCH OPPORTUNITY / 研究机会</span><h3>{idea.title}</h3></div><Sparkles size={20} /></div>
     <div className="idea-summary"><div><small>研究空白</small><p>{idea.gap}</p></div><div><small>核心假设</small><p>{idea.hypothesis}</p></div></div>
+    <div className="idea-share"><button type="button" className="idea-copy" onClick={copyFullIdea}>{copyState === "copied" ? <Check size={14} /> : <Copy size={14} />}{copyState === "copied" ? "已复制完整方案" : "复制完整方案与证据"}</button><div className="idea-model-links"><span>复制后继续讨论</span>{discussionModels.map(model => <a key={model.name} href={model.url} target="_blank" rel="noopener noreferrer" title={model.name === "Kimi K3" ? "打开 Kimi 后选择 K3 模型" : `打开 ${model.name}`}>{model.name === "Kimi K3" ? "Kimi（选 K3）" : model.name}<ArrowUpRight size={12} /></a>)}</div>{copyState === "error" && <small role="alert">复制失败，请允许浏览器使用剪贴板后重试。</small>}</div>
     <details className="idea-expanded"><summary><span className="idea-expand-closed">展开完整方案、可行性与证据</span><span className="idea-expand-open">收起详细内容</span><ChevronDown size={16} /></summary><div className="idea-expanded-body">
     <section className="idea-block"><h4>改进工作 <small>{idea.improvements?.length || 0} 项 · 含失败预案</small></h4><ol className="improvement-list">{idea.improvements?.map((item, i) => <li key={i}><strong>{item.title}</strong><p>{item.action}</p><div><span>可能不奏效：{item.risk}</span><span>回退方案：{item.fallback}</span></div></li>)}</ol></section>
     <section className="idea-block"><h4>完整研究方案</h4><div className="idea-plan">{planRows.map(([label, value]) => <div key={label}><b>{label}</b><p>{value}</p></div>)}</div></section>
