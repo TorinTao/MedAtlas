@@ -90,11 +90,12 @@ export default function AtlasApp({ user, signInPath, signOutPath }: { user: { na
     const local = readGuestIdeaHistory().map(idea => historyItem(idea, true));
     if (!user) { setIdeaHistory(local); return; }
     let active = true;
+    const startedAt = new Date().toISOString();
     api<{ history: IdeaHistoryItem[] }>("/api/ideas/history").then(result => {
       if (!active) return;
       setIdeaHistory(current => {
         const merged = new Map<string, IdeaHistoryItem>();
-        [...result.history, ...local, ...current].forEach(item => { if (!merged.has(item.id)) merged.set(item.id, item); });
+        [...result.history, ...local, ...current.filter(item => item.createdAt >= startedAt)].forEach(item => { if (!merged.has(item.id)) merged.set(item.id, item); });
         return [...merged.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 150);
       });
     }).catch(error => { if (active) { setIdeaHistory(local); setMessage(`抽卡历史加载失败：${(error as Error).message}`); } });
