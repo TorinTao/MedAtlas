@@ -7,6 +7,15 @@ import { githubRepositories } from "../lib/repo-links";
 import { githubDomEvidence } from "../lib/repo-dom";
 import { needsGeneratedSummary, withSummaryFallback } from "../lib/summary-fallback";
 import { arxivVenue, crossrefVenue, openAlexVenue, pubMedVenue } from "../lib/publication-venue";
+import { normalizeFollowupQueries } from "../lib/followup-queries";
+
+test("follow-up research queries reject URLs and duplicates", () => {
+  assert.deepEqual(normalizeFollowupQueries([
+    { query: "radiology report generation retrieval augmented baseline", purpose: "相近方法" },
+    { query: "radiology report generation retrieval augmented baseline", purpose: "重复" },
+    { query: "https://private.example/path", purpose: "不应访问" },
+  ]), [{ query: "radiology report generation retrieval augmented baseline", purpose: "相近方法" }]);
+});
 
 test("publication venue stays separate from retrieval source and prefers formal publication", () => {
   const conference = openAlexVenue({ id: "https://openalex.org/W123", type: "conference-paper", primary_location: { source: { display_name: "Proceedings of EMNLP", type: "conference" } } });

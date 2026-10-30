@@ -2,8 +2,8 @@ import { env } from "cloudflare:workers";
 import { getChatGPTUser } from "../../chatgpt-auth";
 import { getDb } from "../../../db";
 import { ideas as ideaTable } from "../../../db/schema";
-import { collectPapers, englishQuery, searchOpenAlex } from "../../../lib/collect";
-import { makeIdea, makeResearchBrief, type ResearchBrief } from "../../../lib/ideas";
+import { collectPapers, englishQuery, searchArxiv, searchOpenAlex, searchPubMed } from "../../../lib/collect";
+import { makeFollowupQueries, makeIdea, makeResearchBrief, type ResearchBrief } from "../../../lib/ideas";
 import { dedupePapers } from "../../../lib/papers";
 import { allPapers, findPaper, jsonError, putPapers, takeQuota } from "../../../lib/store";
 import type { IdeasResearch, Paper } from "../../../lib/types";
@@ -15,22 +15,26 @@ async function ownerOf(request: Request, userId?: string) {
   const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId ? `user:${userId}` : `guest:${address}`)));
   return [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
-function selectEvidence(query: string, corpus: Paper[], preferredIds: string[]): Paper[] {
+function selectEvidence(query: string, corpus: Paper[], preferredIds: string[], followupPapers: Paper[] = []): Paper[] {
   const terms = [...new Set((englishQuery(query).toLowerCase().match(/[a-z0-9]+/g) || []).filter(term => term.length > 2 && !["medical", "clinical", "agent"].includes(term)))];
   const preferred = new Set(preferredIds);
+  const followed = new Set(followupPapers.map(paper => paper.id));
+  const followedTitles = new Set(followupPapers.map(paper => paper.title.toLowerCase().replace(/[^a-z0-9]+/g, "")));
+  const isFollowed = (paper: Paper) => followed.has(paper.id) || followedTitles.has(paper.title.toLowerCase().replace(/[^a-z0-9]+/g, ""));
   const scored = corpus.filter(p => p.abstract.length >= 100 && p.year >= 2010 && p.year <= new Date().getUTCFullYear()).map(p => {
     const title = p.title.toLowerCase(), body = p.abstract.toLowerCase();
     const matches = terms.filter(term => title.includes(term) || body.includes(term)).length;
     const topical = terms.length ? matches / terms.length : p.relevance;
-    const score = topical * 10 + terms.filter(term => title.includes(term)).length * 1.8 + (preferred.has(p.id) ? 4 : 0) + (p.paperType === "综述" ? 1.5 : 0) + (p.paperType === "数据集" ? 0.8 : 0) + (p.year >= 2024 ? 0.5 : 0) + Math.min(1, Math.log1p(p.citedByCount) / 8);
+    const score = topical * 10 + terms.filter(term => title.includes(term)).length * 1.8 + (preferred.has(p.id) ? 4 : 0) + (isFollowed(p) ? 2 : 0) + (p.paperType === "综述" ? 1.5 : 0) + (p.paperType === "数据集" ? 0.8 : 0) + (p.year >= 2024 ? 0.5 : 0) + Math.min(1, Math.log1p(p.citedByCount) / 8);
     return { paper: p, score, topical };
-  }).filter(item => item.topical >= 0.25 || preferred.has(item.paper.id)).sort((a, b) => b.score - a.score);
+  }).filter(item => item.topical >= 0.25 || preferred.has(item.paper.id) || isFollowed(item.paper)).sort((a, b) => b.score - a.score);
   const selected = new Map<string, Paper>();
   const add = (list: typeof scored, count: number) => list.slice(0, count).forEach(item => selected.set(item.paper.id, item.paper));
   add(scored.filter(item => item.paper.paperType === "综述"), 4);
   add(scored.filter(item => item.paper.paperType === "数据集" || item.paper.method === "评测与资源"), 3);
   add([...scored].sort((a, b) => a.paper.year - b.paper.year || b.score - a.score), 3);
   add(scored.filter(item => item.paper.year >= 2024), 7);
+  add(scored.filter(item => isFollowed(item.paper)), 5);
   for (const item of scored) { if (selected.size >= 24) break; selected.set(item.paper.id, item.paper); }
   return [...selected.values()].slice(0, 24);
 }
@@ -52,18 +56,42 @@ export async function POST(request: Request) {
         searchOpenAlex(`${englishQuery(query)} review survey systematic`, 25).then(papers => ({ papers, error: "" })).catch(error => ({ papers: [] as Paper[], error: `综述补充检索：${(error as Error).message}` })),
         allPapers(),
       ]);
-      const newPapers = dedupePapers([...live.papers, ...review.papers]);
+      const initial = dedupePapers([...live.papers, ...review.papers, ...stored]);
+      const initialEvidence = selectEvidence(query, initial, preferredIds);
+      const followupWarnings: string[] = [];
+      const followupQueries = await makeFollowupQueries(query, initialEvidence).catch(error => {
+        followupWarnings.push(`相近研究检索规划：${(error as Error).message}`);
+        return [];
+      });
+      const requests = followupQueries.flatMap((item, queryIndex) => [
+        { source: "OpenAlex", queryIndex, run: () => searchOpenAlex(item.query, 16) },
+        { source: "PubMed", queryIndex, run: () => searchPubMed(item.query, 8) },
+        { source: "arXiv", queryIndex, run: () => searchArxiv(item.query, 6) },
+      ]);
+      const followupResults = await Promise.allSettled(requests.map(item => item.run()));
+      const followupPapers: Paper[] = [];
+      const followupSources = new Set<string>();
+      const foundByQuery = followupQueries.map(() => [] as Paper[]);
+      followupResults.forEach((result, index) => {
+        const request = requests[index];
+        if (result.status === "fulfilled") {
+          followupPapers.push(...result.value);
+          foundByQuery[request.queryIndex].push(...result.value);
+          if (result.value.length) followupSources.add(request.source);
+        } else followupWarnings.push(`${request.source} 相近研究检索：${result.reason?.message || "请求失败"}`);
+      });
+      const newPapers = dedupePapers([...live.papers, ...review.papers, ...followupPapers]);
       if (newPapers.length) await putPapers(newPapers);
       const corpus = dedupePapers([...newPapers, ...stored]);
-      const selected = selectEvidence(query, corpus, preferredIds);
+      const selected = selectEvidence(query, corpus, preferredIds, followupPapers);
       if (selected.length < 6) return jsonError("相关且有摘要的论文不足 6 篇，请调整研究方向", 422);
       const brief = await makeResearchBrief(query, selected);
       const preparedAt = new Date().toISOString(), expiresAt = new Date(Date.now() + 3600000).toISOString(), jobId = `ideas:${crypto.randomUUID()}`;
-      const sources = [...new Set([...live.sources, ...(review.papers.length ? ["OpenAlex 综述补充"] : []), "站内文献库"])];
-      const warnings = [...live.errors, ...(review.error ? [review.error] : [])];
+      const sources = [...new Set([...live.sources, ...(review.papers.length ? ["OpenAlex 综述补充"] : []), ...[...followupSources].map(source => `${source} 相近研究补充`), "站内文献库"])];
+      const warnings = [...live.errors, ...(review.error ? [review.error] : []), ...followupWarnings];
       const prepared: Prepared = { query, paperIds: selected.map(p => p.id), brief, owner, sources, warnings, scannedCount: corpus.length, preparedAt, expiresAt };
       await env.DB.prepare("INSERT INTO jobs (id,status,updated_at,detail) VALUES (?,?,?,?)").bind(jobId, "ready", preparedAt, JSON.stringify(prepared)).run();
-      const research: IdeasResearch = { jobId, query, scannedCount: corpus.length, selectedCount: selected.length, sources, warnings, preparedAt, expiresAt, brief, papers: selected.map(p => ({ id: p.id, title: p.title, year: p.year, paperType: p.paperType })) };
+      const research: IdeasResearch = { jobId, query, scannedCount: corpus.length, selectedCount: selected.length, sources, warnings, preparedAt, expiresAt, brief, followupQueries: followupQueries.map((item, index) => ({ ...item, foundCount: dedupePapers(foundByQuery[index]).length })), papers: selected.map(p => ({ id: p.id, title: p.title, year: p.year, paperType: p.paperType })) };
       return Response.json({ research, evidencePapers: selected });
     } catch (error) { return jsonError((error as Error).message, 503); }
   }
