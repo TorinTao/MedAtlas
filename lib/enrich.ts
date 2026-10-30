@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { auditRepository } from "./repo-audit";
 import { evaluateRepository } from "./repo-evaluation";
+import { inspectPaperRepository } from "./repo-workflow";
 import { lexmountExtract, readPaper } from "./reading";
 import { runtime } from "./runtime";
 import { allPapers, putPapers } from "./store";
@@ -96,5 +97,35 @@ export async function enrichMissingPapers(limit = 2) {
       results.push({ id: paper.id, status: "failed", summary: Boolean(updated.summaryZh), analysis: Boolean(updated.analysis), reviewTranslated: Boolean(updated.abstractZh || updated.reviewAbstractZh), repo: updated.repoUrl || "", errors });
     }
   }
-  return { processed: results.length, remaining: pending.length - results.filter(result => result.status === "done").length, results };
+  const repository = await enrichMissingRepositories(1).catch(error => ({ processed: 0, error: (error as Error).message }));
+  return { processed: results.length, remaining: pending.length - results.filter(result => result.status === "done").length, results, repository };
+}
+
+export async function enrichMissingRepositories(limit = 2) {
+  if (!env.DB) throw new Error("文献数据库不可用");
+  if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID")) throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
+  const papers = await allPapers();
+  const jobs = await env.DB.prepare("SELECT id,status,updated_at FROM jobs WHERE id LIKE 'repo:%'").all<JobRow>();
+  const byId = new Map((jobs.results || []).map(job => [job.id, job]));
+  const pending = papers.filter(paper => {
+    const discoveryStale = !paper.repoDiscovery || Date.now() - Date.parse(paper.repoDiscovery.checkedAt) > 7 * 86400000;
+    return discoveryStale || Boolean(paper.repoUrl && !paper.repoAudit?.evaluation);
+  }).sort((a, b) => Number(Boolean(b.repoUrl)) - Number(Boolean(a.repoUrl)) || b.citedByCount - a.citedByCount || b.year - a.year);
+  const results: { id: string; status: string; repoUrl: string; discovery: string; evaluated: boolean; error?: string }[] = [];
+  for (const paper of pending) {
+    if (results.length >= Math.max(1, Math.min(limit, 2))) break;
+    const jobId = `repo:${paper.id}`;
+    if (!await claim(jobId, byId.get(jobId))) continue;
+    try {
+      const updated = await inspectPaperRepository(paper);
+      const status = updated.repoAudit?.evaluation ? "done" : updated.repoUrl ? "partial" : updated.repoDiscovery?.status || "none";
+      await finish(jobId, status, { repoUrl: updated.repoUrl, discovery: updated.repoDiscovery?.status || "", evaluationError: updated.repoAudit?.evaluationError || "" });
+      results.push({ id: paper.id, status, repoUrl: updated.repoUrl, discovery: updated.repoDiscovery?.status || "", evaluated: Boolean(updated.repoAudit?.evaluation), ...(updated.repoAudit?.evaluationError ? { error: updated.repoAudit.evaluationError } : {}) });
+    } catch (error) {
+      const message = (error as Error).message;
+      await finish(jobId, "failed", { error: message });
+      results.push({ id: paper.id, status: "failed", repoUrl: paper.repoUrl, discovery: paper.repoDiscovery?.status || "", evaluated: false, error: message });
+    }
+  }
+  return { processed: results.length, pending: pending.length, results };
 }

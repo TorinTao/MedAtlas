@@ -9,9 +9,9 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
   if (runtime("GITHUB_TOKEN")) headers.Authorization = `Bearer ${runtime("GITHUB_TOKEN")}`;
   const [metaResponse, filesResponse] = await Promise.all([fetch(base, { headers, signal: AbortSignal.timeout(10000) }), fetch(`${base}/contents`, { headers, signal: AbortSignal.timeout(10000) })]);
   const canonical = `https://github.com/${owner}/${repo}`;
-  if (metaResponse.status === 403 || metaResponse.status === 429) {
+  if (metaResponse.status === 403 || metaResponse.status === 404 || metaResponse.status === 429) {
     const labels = ["论文页面链接", "开源许可证", "README", "根目录依赖文件", "根目录数据说明", "根目录权重说明", "根目录训练/推理入口", "近期维护"];
-    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks: labels.map(label => ({ label, status: "无法确认" as const, evidence: canonical })), disclaimer: `GitHub API 返回 ${metaResponse.status}，未能取得仓库元数据；请打开证据链接人工检查。未经实际运行复现。` };
+    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks: labels.map(label => ({ label, status: "无法确认" as const, evidence: canonical })), disclaimer: `GitHub API 返回 ${metaResponse.status}，未能取得仓库元数据；请打开证据链接人工检查。未经实际运行复现。`, ...(metaResponse.status === 404 ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
   }
   if (!metaResponse.ok) throw new Error(`GitHub HTTP ${metaResponse.status}`);
   const meta = await metaResponse.json() as any; const files = filesResponse.ok ? await filesResponse.json() as any[] : [];

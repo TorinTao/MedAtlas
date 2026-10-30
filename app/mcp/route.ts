@@ -1,5 +1,5 @@
 import { refreshLiterature } from "../../lib/refresh";
-import { enrichMissingPapers } from "../../lib/enrich";
+import { enrichMissingPapers, enrichMissingRepositories } from "../../lib/enrich";
 import { runtime } from "../../lib/runtime";
 
 const refreshTool = {
@@ -12,6 +12,11 @@ const enrichTool = {
   description: "Enrich up to two papers missing a Chinese overview or detailed reading, translate review abstracts, and evaluate linked GitHub repositories. Lexmount Web Fetch reads public paper and repository pages; DeepSeek produces evidence-aware Chinese explanations. Persists results and retries incomplete work later.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
 };
+const repoTool = {
+  name: "enrich_missing_repositories",
+  description: "Discover GitHub links from public paper pages with Lexmount Web Fetch, inspect repository files and metadata, and produce a Chinese evidence-based completeness evaluation for up to two papers. Persist no-link and ambiguous findings without claiming code is absent.",
+  inputSchema: { type: "object", properties: {}, additionalProperties: false },
+};
 
 export async function POST(request: Request) {
   const rpc: any = await request.json().catch(() => ({}));
@@ -19,13 +24,13 @@ export async function POST(request: Request) {
   const result = (value: unknown) => Response.json({ jsonrpc: "2.0", id, result: value });
   const error = (code: number, message: string) => Response.json({ jsonrpc: "2.0", id, error: { code, message } });
   if (rpc.method === "server/discover") return result({ supportedVersions: ["2026-07-28"], capabilities: { tools: {} } });
-  if (rpc.method === "tools/list") return result({ tools: [refreshTool, enrichTool] });
-  if (rpc.method !== "tools/call" || ![refreshTool.name, enrichTool.name].includes(rpc.params?.name)) return error(-32601, "Method not found");
+  if (rpc.method === "tools/list") return result({ tools: [refreshTool, enrichTool, repoTool] });
+  if (rpc.method !== "tools/call" || ![refreshTool.name, enrichTool.name, repoTool.name].includes(rpc.params?.name)) return error(-32601, "Method not found");
   const owner = runtime("MCP_OWNER_EMAIL")?.toLowerCase();
   const caller = request.headers.get("oai-authenticated-user-email")?.toLowerCase();
   if (!owner || !caller || caller !== owner) return result({ content: [{ type: "text", text: "只有站点所有者可以更新文献语料" }], isError: true });
   try {
-    const updated = rpc.params.name === refreshTool.name ? await refreshLiterature() : await enrichMissingPapers();
+    const updated = rpc.params.name === refreshTool.name ? await refreshLiterature() : rpc.params.name === enrichTool.name ? await enrichMissingPapers() : await enrichMissingRepositories();
     return result({ content: [{ type: "text", text: JSON.stringify(updated) }] });
   } catch (cause) {
     return result({ content: [{ type: "text", text: (cause as Error).message }], isError: true });

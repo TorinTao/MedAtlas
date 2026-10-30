@@ -1,6 +1,7 @@
 import seed from "../data/seed-papers.json";
 import pubmedBackfill from "../data/pubmed-backfill.json";
 import type { ClinicalTask, Method, Modality, Paper, PaperType } from "./types";
+import { githubRepositories } from "./repo-links";
 
 type RawPaper = Omit<Partial<Paper>, "paperType"> & { id: string; title: string; paperType?: string };
 
@@ -39,12 +40,13 @@ export function publicPaperUrl(value: string) { return value.replace(/^http:\/\/
 
 export function normalizePaper(raw: RawPaper): Paper {
   const c = classify(raw.title, raw.abstract);
+  const abstractRepos = githubRepositories(raw.abstract || "");
   return {
     id: raw.id, title: raw.title, abstract: raw.abstract || "", year: raw.year || 0,
     publishedAt: raw.publishedAt || "", doi: cleanDoi(raw.doi || ""), pmid: raw.pmid || "", arxivId: raw.arxivId || "",
     source: raw.source || "", paperType: raw.paperType === "preprint" ? "预印本" : /review/i.test(raw.paperType || "") ? "综述" : c.paperType,
     url: publicPaperUrl(raw.url || ""), oaUrl: publicPaperUrl(raw.oaUrl || ""), citedByCount: raw.citedByCount || 0,
-    citationPercentile: Math.min(100, Math.max(0, raw.citationPercentile || 0)), authors: raw.authors || [], institutions: raw.institutions || [], repoUrl: raw.repoUrl || "",
+    citationPercentile: Math.min(100, Math.max(0, raw.citationPercentile || 0)), authors: raw.authors || [], institutions: raw.institutions || [], repoUrl: raw.repoUrl || (abstractRepos.length === 1 ? abstractRepos[0] : ""),
     fetchedAt: raw.fetchedAt || new Date().toISOString(), modality: c.modality, clinicalTask: c.clinicalTask, method: c.method,
     relevance: raw.relevance ?? 0.75, fulltextStatus: raw.fulltextStatus || (raw.oaUrl ? "未检查" : "仅摘要"),
     ...(raw.analysis ? { analysis: raw.analysis } : {}),
@@ -65,8 +67,9 @@ export function dedupePapers(items: Paper[]): Paper[] {
         doi: paper.doi || prior.doi, pmid: paper.pmid || prior.pmid, arxivId: paper.arxivId || prior.arxivId,
         authors: paper.authors.length > prior.authors.length ? paper.authors : prior.authors,
         institutions: [...new Set([...prior.institutions, ...paper.institutions])],
-        repoUrl: paper.repoUrl || prior.repoUrl,
+        repoUrl: prior.repoEvidenceUrl ? prior.repoUrl : paper.repoUrl || prior.repoUrl,
         repoEvidenceUrl: paper.repoEvidenceUrl || prior.repoEvidenceUrl,
+        repoDiscovery: paper.repoDiscovery || prior.repoDiscovery,
         repoAudit: paper.repoAudit || prior.repoAudit,
         summaryZh: paper.summaryZh || prior.summaryZh,
         summaryBasis: paper.summaryBasis || prior.summaryBasis,

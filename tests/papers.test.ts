@@ -3,6 +3,15 @@ import test from "node:test";
 import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
 import { safePublicUrl } from "../lib/url";
 import { coreTimeline, relatedPapers } from "../lib/relations";
+import { githubRepositories } from "../lib/repo-links";
+
+test("paper code links are normalized without guessing from multiple candidates", () => {
+  assert.deepEqual(githubRepositories("Code: https://github.com/wang-zhanyu/R2GenGPT. See https://github.com/wang-zhanyu/R2GenGPT/tree/main"), ["https://github.com/wang-zhanyu/R2GenGPT"]);
+  assert.deepEqual(githubRepositories("https://github.com/features/actions"), []);
+  const paper = normalizePaper({ id: "code-link", title: "Medical Image Report Agent", abstract: "Code available at https://github.com/example/medical-agent." });
+  assert.equal(paper.repoUrl, "https://github.com/example/medical-agent");
+  assert.equal(normalizePaper({ id: "ambiguous", title: "Medical Image Report Agent", abstract: "https://github.com/a/one and https://github.com/b/two" }).repoUrl, "");
+});
 
 test("method legend recognizes common medical Agent and VLM terminology", () => {
   assert.equal(classify("AgentClinic: a benchmark for tool-using clinical AI agents").method, "Agent 协作");
