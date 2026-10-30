@@ -21,9 +21,9 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
       check("许可证文件", match(/^(licen[sc]e|copying)(\.|$)/)),
       { label: "README", status: readme || match(/^readme(\.|$)/) ? "有" : "无法确认", evidence: match(/^readme(\.|$)/)?.url || `${canonical}#readme` },
       check("依赖文件", match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/)),
-      check("数据说明", match(/^(data|dataset|datasets|data\.md)$/)),
-      check("权重说明", match(/^(weights|checkpoints|models|model_card\.md)$/)),
-      check("训练/推理入口", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)),
+      check("数据目录或说明文件", match(/^(data|dataset|datasets|data\.md)$/)),
+      check("模型目录或权重说明文件", match(/^(weights|checkpoints|models|model_card\.md)$/)),
+      check("训练/推理文件或目录", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)),
       { label: "近期维护", status: "无法确认", evidence: `${canonical}/activity` },
     ];
     return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks, disclaimer: `GitHub API 返回 ${metaResponse.status}；已尝试用 Lexmount DOM 核对可见文件，未见项仍标记为无法确认。未经实际运行复现。`, ...(metaResponse.status === 404 && !files.length ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
@@ -38,9 +38,9 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
     check("许可证文件", match(/^(licen[sc]e|copying)(\.|$)/) ? true : filesResponse.ok ? false : null, match(/^(licen[sc]e|copying)(\.|$)/)?.url || `${canonical}?tab=License-1`),
     check("README", filesResponse.ok ? Boolean(match(/^readme(\.|$)/)) : null, match(/^readme(\.|$)/)?.url || canonical),
     check("根目录依赖文件", match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/) ? true : null, match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/)?.url || canonical),
-    check("根目录数据说明", match(/^(data|dataset|datasets|data\.md)$/) ? true : null, match(/^(data|dataset|datasets|data\.md)$/)?.url || canonical),
-    check("根目录权重说明", match(/^(weights|checkpoints|models|model_card\.md)$/) ? true : null, match(/^(weights|checkpoints|models|model_card\.md)$/)?.url || canonical),
-    check("根目录训练/推理入口", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/) ? true : null, match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)?.url || canonical),
+    check("数据目录或说明文件", match(/^(data|dataset|datasets|data\.md)$/) ? true : null, match(/^(data|dataset|datasets|data\.md)$/)?.url || canonical),
+    check("模型目录或权重说明文件", match(/^(weights|checkpoints|models|model_card\.md)$/) ? true : null, match(/^(weights|checkpoints|models|model_card\.md)$/)?.url || canonical),
+    check("训练/推理文件或目录", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/) ? true : null, match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)?.url || canonical),
     check("近期维护", meta.pushed_at ? Date.now() - new Date(meta.pushed_at).getTime() < 365 * 86400000 : null, `${canonical}/activity`),
   ];
   return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks, disclaimer: "仅检查公开元数据和仓库根目录；未安装、运行或复现实验。缺失项不等于仓库完全没有该内容。" };
