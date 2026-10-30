@@ -1,6 +1,6 @@
 import { runtime } from "./runtime";
 import { lexmountDumpDom } from "./reading";
-import { githubDomEvidence } from "./repo-dom";
+import { fetchGithubPublicDom, githubDomEvidence } from "./repo-dom";
 import type { RepoAudit, RepoCheck } from "./types";
 
 export async function auditRepository(repoUrl: string, expectedRepoUrl = "", paperPageUrl = ""): Promise<RepoAudit> {
@@ -13,7 +13,11 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
   const canonical = `https://github.com/${owner}/${repo}`;
   if (metaResponse.status === 403 || metaResponse.status === 404 || metaResponse.status === 429) {
     let files: { name: string; url: string }[] = []; let readme = "";
-    try { const page = await lexmountDumpDom(canonical).catch(error => String((error as Error).message).includes("HTTP 502") ? lexmountDumpDom(canonical) : Promise.reject(error)); if (new URL(page.finalUrl).hostname === "github.com") ({ files, readme } = githubDomEvidence(page.html, canonical)); } catch { /* preserve an explicit unknown result */ }
+    let domSource = "Lexmount DOM";
+    try {
+      const page = await lexmountDumpDom(canonical).catch(() => { domSource = "GitHub 公开页面"; return fetchGithubPublicDom(canonical); });
+      if (new URL(page.finalUrl).hostname === "github.com") ({ files, readme } = githubDomEvidence(page.html, canonical));
+    } catch { /* preserve an explicit unknown result */ }
     const match = (pattern: RegExp) => files.find(file => pattern.test(file.name));
     const check = (label: string, file: { url: string } | undefined): RepoCheck => ({ label, status: file ? "有" : "无法确认", evidence: file?.url || canonical });
     const checks: RepoCheck[] = [
@@ -26,7 +30,7 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
       check("训练/推理文件或目录", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)),
       { label: "近期维护", status: "无法确认", evidence: `${canonical}/activity` },
     ];
-    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks, disclaimer: `GitHub API 返回 ${metaResponse.status}；已尝试用 Lexmount DOM 核对可见文件，未见项仍标记为无法确认。未经实际运行复现。`, ...(metaResponse.status === 404 && !files.length ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
+    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks, disclaimer: `GitHub API 返回 ${metaResponse.status}；已尝试用${domSource}核对可见文件，未见项仍标记为无法确认。未经实际运行复现。`, ...(metaResponse.status === 404 && !files.length ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
   }
   if (!metaResponse.ok) throw new Error(`GitHub HTTP ${metaResponse.status}`);
   const meta = await metaResponse.json() as any; const files = filesResponse.ok ? await filesResponse.json() as any[] : [];

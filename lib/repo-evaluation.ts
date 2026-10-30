@@ -1,6 +1,6 @@
 import { deepseekJson } from "./deepseek";
 import { lexmountDumpDom, lexmountExtract } from "./reading";
-import { githubDomEvidence } from "./repo-dom";
+import { fetchGithubPublicDom, githubDomEvidence } from "./repo-dom";
 import { runtime } from "./runtime";
 import type { Paper, RepoAudit, RepoEvaluation } from "./types";
 
@@ -24,19 +24,23 @@ async function publicReadme(repoUrl: string): Promise<{ text: string; url: strin
 }
 
 export async function evaluateRepository(audit: RepoAudit, paper?: Paper): Promise<RepoEvaluation> {
-  const [page, apiReadme] = await Promise.all([
-    lexmountExtract(audit.repoUrl).catch(error => String((error as Error).message).includes("HTTP 502") ? lexmountExtract(audit.repoUrl) : Promise.reject(error)),
+  const [lexPage, apiReadme] = await Promise.all([
+    lexmountExtract(audit.repoUrl).catch(() => null),
     publicReadme(audit.repoUrl),
   ]);
   let readme = apiReadme;
-  if (!readme) {
+  let page = lexPage;
+  let fallbackSource = "Lexmount DOM";
+  if (!readme || !page) {
     try {
-      const dom = await lexmountDumpDom(audit.repoUrl);
-      const extracted = githubDomEvidence(dom.html, audit.repoUrl).readme;
+      const dom = await lexmountDumpDom(audit.repoUrl).catch(() => { fallbackSource = "GitHub 公开页面"; return fetchGithubPublicDom(audit.repoUrl); });
+      const evidence = githubDomEvidence(dom.html, audit.repoUrl);
+      const extracted = evidence.readme;
       if (extracted) readme = { text: extracted, url: `${audit.repoUrl}#readme` };
+      if (!page && (extracted || evidence.files.length)) page = { text: [extracted, `可见文件：${evidence.files.map(file => file.name).join("、")}`].filter(Boolean).join("\n"), title: "", finalUrl: dom.finalUrl, description: "", author: "", publishTime: "", requestId: "" };
     } catch { /* static checks still support an information-limited evaluation */ }
   }
-  if (!page.text.trim()) throw new Error("Lexmount 未取得仓库公开页面文字");
+  if (!page?.text.trim()) throw new Error("未取得仓库公开页面文字");
   if (new URL(page.finalUrl).hostname !== "github.com") throw new Error("仓库页面跳转到了 GitHub 以外的地址，无法评价");
   const checks = audit.checks.map(check => ({ label: check.label, status: check.status, evidence: check.evidence }));
   const paperPageEvidence = paper?.repoUrl.replace(/\/$/, "").toLowerCase() === audit.repoUrl.toLowerCase() ? paper.repoEvidenceUrl || "未核验" : "未核验";
@@ -54,6 +58,6 @@ export async function evaluateRepository(audit: RepoAudit, paper?: Paper): Promi
     readiness: readiness as RepoEvaluation["readiness"], summaryZh,
     strengths: strings(raw.strengths), gaps: strings(raw.gaps), nextSteps: strings(raw.nextSteps), evidenceLabels,
     sourceUrl: page.finalUrl, ...(readme ? { readmeSourceUrl: readme.url } : {}), evaluatedAt: new Date().toISOString(), model: "deepseek-flash",
-    disclaimer: `基于 Lexmount 获取的公开仓库页、GitHub 静态检查${readme ? "及公开 README" : "（README 正文未取得）"}，由 DeepSeek 生成；未经安装、运行或复现。`,
+    disclaimer: `基于${lexPage ? "Lexmount 获取的公开仓库页" : fallbackSource || "公开 GitHub 页面"}、GitHub 静态检查${readme ? "及公开 README" : "（README 正文未取得）"}，由 DeepSeek 生成；未经安装、运行或复现。`,
   };
 }
