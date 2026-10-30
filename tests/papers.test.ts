@@ -4,6 +4,7 @@ import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/paper
 import { safePublicUrl } from "../lib/url";
 import { coreTimeline, relatedPapers } from "../lib/relations";
 import { githubRepositories } from "../lib/repo-links";
+import { githubDomEvidence } from "../lib/repo-dom";
 
 test("paper code links are normalized without guessing from multiple candidates", () => {
   assert.deepEqual(githubRepositories("Code: https://github.com/wang-zhanyu/R2GenGPT. See https://github.com/wang-zhanyu/R2GenGPT/tree/main"), ["https://github.com/wang-zhanyu/R2GenGPT"]);
@@ -11,6 +12,14 @@ test("paper code links are normalized without guessing from multiple candidates"
   const paper = normalizePaper({ id: "code-link", title: "Medical Image Report Agent", abstract: "Code available at https://github.com/example/medical-agent." });
   assert.equal(paper.repoUrl, "https://github.com/example/medical-agent");
   assert.equal(normalizePaper({ id: "ambiguous", title: "Medical Image Report Agent", abstract: "https://github.com/a/one and https://github.com/b/two" }).repoUrl, "");
+});
+
+test("GitHub DOM fallback exposes file and README evidence without inventing absent files", () => {
+  const html = '<a href="/lab/model/blob/main/LICENSE">LICENSE</a><a href="/lab/model/blob/main/train.py">train.py</a><article class="markdown-body"><h1>Model</h1><p>Run training</p></article>';
+  const evidence = githubDomEvidence(html, "https://github.com/lab/model");
+  assert.deepEqual(evidence.files.map(file => file.name), ["license", "train.py"]);
+  assert.equal(evidence.files[0].url, "https://github.com/lab/model/blob/main/LICENSE");
+  assert.equal(evidence.readme, "Model Run training");
 });
 
 test("method legend recognizes common medical Agent and VLM terminology", () => {

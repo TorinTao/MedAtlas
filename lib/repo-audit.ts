@@ -1,4 +1,6 @@
 import { runtime } from "./runtime";
+import { lexmountDumpDom } from "./reading";
+import { githubDomEvidence } from "./repo-dom";
 import type { RepoAudit, RepoCheck } from "./types";
 
 export async function auditRepository(repoUrl: string, expectedRepoUrl = "", paperPageUrl = ""): Promise<RepoAudit> {
@@ -10,8 +12,21 @@ export async function auditRepository(repoUrl: string, expectedRepoUrl = "", pap
   const [metaResponse, filesResponse] = await Promise.all([fetch(base, { headers, signal: AbortSignal.timeout(10000) }), fetch(`${base}/contents`, { headers, signal: AbortSignal.timeout(10000) })]);
   const canonical = `https://github.com/${owner}/${repo}`;
   if (metaResponse.status === 403 || metaResponse.status === 404 || metaResponse.status === 429) {
-    const labels = ["论文页面链接", "开源许可证", "README", "根目录依赖文件", "根目录数据说明", "根目录权重说明", "根目录训练/推理入口", "近期维护"];
-    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks: labels.map(label => ({ label, status: "无法确认" as const, evidence: canonical })), disclaimer: `GitHub API 返回 ${metaResponse.status}，未能取得仓库元数据；请打开证据链接人工检查。未经实际运行复现。`, ...(metaResponse.status === 404 ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
+    let files: { name: string; url: string }[] = []; let readme = "";
+    try { const page = await lexmountDumpDom(canonical); if (new URL(page.finalUrl).hostname === "github.com") ({ files, readme } = githubDomEvidence(page.html, canonical)); } catch { /* preserve an explicit unknown result */ }
+    const match = (pattern: RegExp) => files.find(file => pattern.test(file.name));
+    const check = (label: string, file: { url: string } | undefined): RepoCheck => ({ label, status: file ? "有" : "无法确认", evidence: file?.url || canonical });
+    const checks: RepoCheck[] = [
+      { label: "论文页面链接", status: paperPageUrl && expectedRepoUrl.replace(/\/$/, "").toLowerCase() === canonical.toLowerCase() ? "有" : "无法确认", evidence: paperPageUrl || canonical },
+      check("许可证文件", match(/^(licen[sc]e|copying)(\.|$)/)),
+      { label: "README", status: readme || match(/^readme(\.|$)/) ? "有" : "无法确认", evidence: match(/^readme(\.|$)/)?.url || `${canonical}#readme` },
+      check("依赖文件", match(/^(requirements.*\.txt|pyproject\.toml|environment\.ya?ml|package\.json|setup\.py|poetry\.lock)$/)),
+      check("数据说明", match(/^(data|dataset|datasets|data\.md)$/)),
+      check("权重说明", match(/^(weights|checkpoints|models|model_card\.md)$/)),
+      check("训练/推理入口", match(/^(train|training|infer|inference|predict|scripts|src)(\.|$)/)),
+      { label: "近期维护", status: "无法确认", evidence: `${canonical}/activity` },
+    ];
+    return { repoUrl: canonical, checkedAt: new Date().toISOString(), checks, disclaimer: `GitHub API 返回 ${metaResponse.status}；已尝试用 Lexmount DOM 核对可见文件，未见项仍标记为无法确认。未经实际运行复现。`, ...(metaResponse.status === 404 && !files.length ? { evaluationError: "仓库链接返回 404，可能已迁移或未公开" } : {}) };
   }
   if (!metaResponse.ok) throw new Error(`GitHub HTTP ${metaResponse.status}`);
   const meta = await metaResponse.json() as any; const files = filesResponse.ok ? await filesResponse.json() as any[] : [];

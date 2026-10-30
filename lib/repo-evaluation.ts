@@ -1,5 +1,6 @@
 import { deepseekJson } from "./deepseek";
-import { lexmountExtract } from "./reading";
+import { lexmountDumpDom, lexmountExtract } from "./reading";
+import { githubDomEvidence } from "./repo-dom";
 import { runtime } from "./runtime";
 import type { Paper, RepoAudit, RepoEvaluation } from "./types";
 
@@ -23,7 +24,15 @@ async function publicReadme(repoUrl: string): Promise<{ text: string; url: strin
 }
 
 export async function evaluateRepository(audit: RepoAudit, paper?: Paper): Promise<RepoEvaluation> {
-  const [page, readme] = await Promise.all([lexmountExtract(audit.repoUrl), publicReadme(audit.repoUrl)]);
+  const [page, apiReadme] = await Promise.all([lexmountExtract(audit.repoUrl), publicReadme(audit.repoUrl)]);
+  let readme = apiReadme;
+  if (!readme) {
+    try {
+      const dom = await lexmountDumpDom(audit.repoUrl);
+      const extracted = githubDomEvidence(dom.html, audit.repoUrl).readme;
+      if (extracted) readme = { text: extracted, url: `${audit.repoUrl}#readme` };
+    } catch { /* static checks still support an information-limited evaluation */ }
+  }
   if (!page.text.trim()) throw new Error("Lexmount 未取得仓库公开页面文字");
   if (new URL(page.finalUrl).hostname !== "github.com") throw new Error("仓库页面跳转到了 GitHub 以外的地址，无法评价");
   const checks = audit.checks.map(check => ({ label: check.label, status: check.status, evidence: check.evidence }));
