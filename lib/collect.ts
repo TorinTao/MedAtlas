@@ -10,8 +10,9 @@ const tag = (s: string, name: string) => xmlText((s.match(new RegExp(`<${name}(?
 async function getJson(url: string): Promise<any> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
-    if (response.status === 429 && attempt === 0 && response.headers.get("X-RateLimit-Remaining") !== "0") {
-      await new Promise(resolve => setTimeout(resolve, 1200));
+    if (response.status === 429 && attempt === 0) {
+      const retryAfter = Number(response.headers.get("Retry-After"));
+      await new Promise(resolve => setTimeout(resolve, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 5000) : 1600));
       continue;
     }
     if (!response.ok) throw new Error(`Source HTTP ${response.status}`);

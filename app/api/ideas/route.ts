@@ -63,23 +63,27 @@ export async function POST(request: Request) {
         followupWarnings.push(`相近研究检索规划：${(error as Error).message}`);
         return [];
       });
-      const requests = followupQueries.flatMap((item, queryIndex) => [
-        { source: "OpenAlex", queryIndex, run: () => searchOpenAlex(item.query, 16) },
-        { source: "PubMed", queryIndex, run: () => searchPubMed(item.query, 8) },
-        { source: "arXiv", queryIndex, run: () => searchArxiv(item.query, 6) },
-      ]);
-      const followupResults = await Promise.allSettled(requests.map(item => item.run()));
       const followupPapers: Paper[] = [];
       const followupSources = new Set<string>();
       const foundByQuery = followupQueries.map(() => [] as Paper[]);
-      followupResults.forEach((result, index) => {
-        const request = requests[index];
-        if (result.status === "fulfilled") {
-          followupPapers.push(...result.value);
-          foundByQuery[request.queryIndex].push(...result.value);
-          if (result.value.length) followupSources.add(request.source);
-        } else followupWarnings.push(`${request.source} 相近研究检索：${result.reason?.message || "请求失败"}`);
-      });
+      for (let queryIndex = 0; queryIndex < followupQueries.length; queryIndex++) {
+        const item = followupQueries[queryIndex];
+        const requests = [
+          { source: "OpenAlex", run: () => searchOpenAlex(item.query, 16) },
+          { source: "PubMed", run: () => searchPubMed(item.query, 8) },
+          { source: "arXiv", run: () => searchArxiv(item.query, 6) },
+        ];
+        const results = await Promise.allSettled(requests.map(request => request.run()));
+        results.forEach((result, index) => {
+          const source = requests[index].source;
+          if (result.status === "fulfilled") {
+            followupPapers.push(...result.value);
+            foundByQuery[queryIndex].push(...result.value);
+            if (result.value.length) followupSources.add(source);
+          } else followupWarnings.push(`${source} 相近研究检索：${result.reason?.message || "请求失败"}`);
+        });
+        if (queryIndex + 1 < followupQueries.length) await new Promise(resolve => setTimeout(resolve, 700));
+      }
       const newPapers = dedupePapers([...live.papers, ...review.papers, ...followupPapers]);
       if (newPapers.length) await putPapers(newPapers);
       const corpus = dedupePapers([...newPapers, ...stored]);
