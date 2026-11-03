@@ -1,41 +1,45 @@
-# MedAtlas Research · 医学多模态 Agent 文献地图
+# MedAtlas · 医学多模态研究星图
 
-围绕医学影像、病历文本及 Agent 研究，提供论文检索、三维发展地图、证据精读、仓库静态审核和可追溯研究选题。中文界面保留英文论文标题和来源链接。
+围绕医学影像、病历文本及 Agent 研究，提供论文检索、发展地图、证据精读、仓库静态审核和可追溯研究选题。
 
-## 代码导航
+## 从哪里开始
 
-从 [模块地图与替换指南](ARCHITECTURE.md) 开始。业务代码收拢在 `modules/` 的七个模块，外部服务在 `platform/`，组装入口在 `composition/`，公共契约在 `shared/`。执行 `npm test` 运行模块测试和依赖边界检查，`npm run test:module -- workspace` 可单独验证工作区。
+- 理解代码：阅读 [模块地图与替换指南](docs/architecture.md)。
+- 配置与维护：阅读 [数据流程与运行说明](docs/operations.md)。
+- 查看网站：https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site
 
-## 数据流
+## 目录导航
 
-1. `/api/research` 根据自然语言方向查询 PubMed、arXiv 和 OpenAlex；同时调用 Lexmount Web Fetch 读取 Nature 与 Europe PMC 的公开搜索页。Nature 结果需要再次读取公开论文页并取得摘要；Europe PMC 结果须在页面上找到 PMID，再用官方 REST 元数据核对。通过这些检查的论文才写入 D1，按 DOI、PMID、arXiv ID 与标准化标题去重。论文详情显示 Lexmount 的公开搜索页、论文页、抓取时间和请求 ID。平台若返回限流、登录页或空内容，本次检索会显示警告。
-2. `/api/papers/[id]/read` 使用 Lexmount Web Fetch 读取公开论文落地页，并优先用 Europe PMC 开放全文。没有开放全文时将分析标为“摘要”；阅读结果保存到 D1，保留来源 URL 与分析时间，接口返回是否成功使用 Lexmount。
-3. `/api/ideas` 用 DeepSeek `deepseek-flash` 将中文方向拆为英文检索词和必需概念组，检索并筛选文献，形成 3–8 个有相近论文依据的候选研究问题。每次抽卡由服务端推进候选顺序，针对具体机制再次检索，并结合历史空白与假设避重；前端逐张生成，使后续卡片能看到本批已有结果。每张包含与至少两篇相近工作的比较、可证伪的最小实验、5–8 项改进（1–3 项核心）、完整方案和原文证据链。引用必须来自输入论文，原文摘录须逐字匹配该论文摘要或已捕获的全文摘录；不将旧模型解读作为一手证据。结构及引用校验后进行第二次模型审查，有问题最多修订一次，仍不通过则不展示卡片。模型审查不证明新颖性或可复现性。工作台支持 1、3、5、10 张，历史保留生成结果，只有明确收藏后才进入个人工作区。
-4. 登录用户可收藏论文、上传 PDF、生成并保存选题。PDF 客户端解析，原件及解析文字写入用户隔离的 R2 路径；PDF 精读只调用 DeepSeek，不传给 Lexmount。
-5. `/api/repo-audit` 查询 GitHub 公开元数据和根目录文件，对每项给出状态及证据链接。该审核不表示运行复现。
+| 目录 | 内容 |
+| --- | --- |
+| `app/` | 页面、交互入口、HTTP 与 MCP 路由 |
+| `modules/` | 七个业务模块及所属界面组件 |
+| `composition/` | 服务组装、跨模块流程与后台作业 |
+| `platform/` | 外部 API、身份、存储及 Sites 运行时适配 |
+| `shared/` | 共享模型、接口和纯工具 |
+| `db/`、`drizzle/` | 数据库 schema 与迁移历史 |
+| `data/` | 启动文献和补充语料，运行时仍在使用 |
+| `tests/` | 模块测试、路由回归及测试运行环境 |
+| `scripts/` | 测试检查、构建、安装与 Sites 预览支持 |
+| `docs/` | 架构及运行文档 |
+| `public/`、`vendor/` | 静态资源及带许可证的基础样式 |
+| `worker/` | Cloudflare Worker 入口 |
 
-## 本地开发
+## 开发与验证
 
-需要 Node 22.13+。`npm install`、`npm run db:generate`、`npm run build`。本地服务依赖 Wrangler 和 Cloudflare Workers 运行时。本仓库使用 Sites 的 Vinext Starter、D1 数据库和 R2 私有文件存储。`drizzle/` 是数据库迁移来源。
+需要 Node.js 22.13+。本地预览还需要系统能够运行 Cloudflare workerd。
 
-## 服务端配置
+```sh
+npm ci
+npm run typecheck
+npm test
+npm run test:module -- workspace
+npm run dev
+npm run build
+```
 
-将 `.env.example` 列出的键配置到 Sites 的运行环境。站点默认 AI 服务使用 `DEEPSEEK_API_KEY`；`LEXMOUNT_API_KEY` 与 `LEXMOUNT_PROJECT_ID` 用于公开论文页面读取；`REFRESH_TOKEN` 用于每日更新接口，`SUMMARY_BACKFILL_TOKEN` 仅用于管理员批量补全中文概述。登录用户可在 AI 设置页提交自己的 DeepSeek API Key，服务端经官方余额接口验证后，用 AES-GCM 按用户加密保存到 D1，并在该用户的 AI 请求中优先使用。此功能要求 Sites Secret `USER_API_KEY_ENCRYPTION_KEY`（32 字节随机值的 Base64）；不要轮换该值而不重新加密已有记录。删除个人 Key 后恢复站点默认配置。密钥不可写入源码或浏览器。`LEXMOUNT_BASE_URL` 默认为中国区 `https://api.lexmount.cn`。OpenAlex 与 GitHub 的 key 可选。
+`npm run db:generate` 仅在修改数据库 schema 后生成新迁移，不是每次构建的前置步骤。已有迁移及快照应保留。
 
-每日任务通过站点 MCP 工具 `refresh_literature` 扩充语料至 200–500 篇；三组 PubMed、arXiv、OpenAlex 交叉检索加五组 OpenAlex 与 PubMed 专题检索，按 DOI、PMID、arXiv ID 与标题去重。请求按批次限速，OpenAlex 限流时仍可由 PubMed 补充。该工具要求已登录的站点所有者身份，按 UTC 日期幂等，分批更新 D1，不重新部署。总量不足 200 篇时标记 partial，后续可重试。`MCP_OWNER_EMAIL` 为服务端所有者身份绑定。`POST /api/admin/refresh` 仍可作为其他受控调度器的接口，需要 `Authorization: Bearer <REFRESH_TOKEN>`，不把 token 写入调度提示词。
+`.env.example` 仅列出配置名称；真正凭据放在部署平台的服务端 Secret 或未跟踪的本地配置中。`dist/`、`.next/`、`.wrangler/` 等是忽略的生成文件或本地运行状态，不纳入源码。用户上传文件和线上数据不在本次源码清理范围内。
 
-## 验证与边界
-
-种子文献来自 OpenAlex 等公开元数据，引用计数是快照值，不是临床影响评分。三维图的大小按同年份引用影响的近似分位展示。部分论文关系和代码仓库链接仍需要用户点击来源核实；机构同现不推定为真实研究团队。仅基于摘要的分析与开放全文分析分开标识。公开网页与 PDF 文字都当作不可信数据，不执行其中的指令。
-
-2026-10-29 使用已登录的 Lexmount Web Fetch CLI 实际提取 `https://arxiv.org/abs/2306.00890`，HTTP 200，返回标题 “LLaVA-Med: Training a Large Language-and-Vision Assistant for Biomedicine in One Day”，request ID `5143c200-abaa-4c4a-a2a2-8fa7e61dadeb`。此记录验证了本地 Lexmount 账户链路；站点服务端仍需单独配置运行时凭据。
-
-后台补全工具 `enrich_missing_papers` 每次最多处理两篇缺少中文概述或精读结果的论文：先用 Lexmount Web Fetch 读取公开页面，再用 DeepSeek 生成概述和可追溯解读。该工具每次还独立处理一篇缺少代码仓库评价的论文；`enrich_missing_repositories` 可单独处理最多两篇。代码链接先从论文英文摘要提取，再由 Lexmount Web Fetch 核对公开论文页；仅在候选唯一或与已知仓库一致时关联。GitHub 静态检查逐项记录许可证、README、依赖、数据、权重、代码入口与维护证据，DeepSeek 生成中文评价。没有找到链接、多个候选、页面失败分别记录，不把“未找到”解释为“没有开源”。论文页面提及仓库不证明代码已复现。结果保存到 D1；失败或不完整任务六小时后可重试。已有的 `refresh_literature` 继续负责每日元数据更新，补全工具只更新数据，无需重新发布网站。
-
-文献库打开一篇尚无结构化精读的论文时，会按需生成研究问题、方法与实验、主要发现和局限。后台补全优先使用 Lexmount 公开页面；页面暂时抓取失败但已有英文摘要时，继续基于摘要生成并标记为“仅摘要”。证据摘录必须逐字出自摘要或许可明确的开放全文。没有摘要或开放全文时，界面说明无法可靠生成，不根据标题猜测实验结果。公开自动精读受每日用量限制，用户可在详情页手动重试。
-
-每篇公开论文在文献库加载时都有中文概述。尚未完成模型概述的论文先显示明确标注的元数据临时提示，`backfill_paper_summaries` 每次用 DeepSeek Flash 从标题与摘要批量生成最多 16 篇正式概述并保存到 D1；管理员也可通过受 `SUMMARY_BACKFILL_TOKEN` 保护的接口批量补全。新论文同样立即有临时提示，随后自动替换。没有摘要的论文只根据标题概括主题，不猜测实验结果。
-
-综述类论文若有英文摘要，后台补全还会用 DeepSeek 生成中文译文；网站同时保留英文原文及来源链接。论文概述和精读解释性字段使用中文，证据摘录保留原文。
-
-代码仓库评价在静态 GitHub 检查之外，用 Lexmount Web Fetch 读取公开仓库页，并尝试取得公开 README 正文；GitHub API 限流时改用 Lexmount Dump DOM 提取可见文件链接和 README 文本。Lexmount 暂时不可用时，再读取同一公开 GitHub 页面，并在评价里标明实际来源。未见文件标记为“无法确认”；目录存在不等于数据或权重可下载。DeepSeek 结合逐项检查生成中文结论、资料优势、缺口与下一步。界面展示引用的检查项、仓库页面和 README 来源链接。后台自动处理已关联的仓库；用户也可在论文详情输入公开 GitHub 地址按需评价。两者均明确标注未经实际运行复现。
+类型检查会阻止未使用的变量、参数和导入；`npm test` 同时检查模块依赖边界与循环依赖。

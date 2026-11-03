@@ -30,7 +30,9 @@
     "types": [
       "node",
       "@cloudflare/workers-types"
-    ]
+    ],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": [
     "next-env.d.ts",
@@ -42,7 +44,6 @@
   ],
   "exclude": [
     "node_modules",
-    "examples",
     "dist",
     ".vinext",
     ".wrangler",
