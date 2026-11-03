@@ -166,3 +166,13 @@
 .idea-source-quote { margin: 12px 0; padding: 10px 14px; border-left: 2px solid var(--accent, #16bfa8); background: rgba(22, 191, 168, .04); overflow-wrap: anywhere; }
 .idea-source-quote p { font-size: 12px; line-height: 1.7; }
 .idea-source-quote a { font-size: 11px; }
+
+/* Keep paper actions and related recommendations compact in two equal columns. */
+.rail-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px;align-items:stretch}
+.rail-action-grid .rail-actions{margin-top:0;min-width:0}
+.rail-action-grid .rail-actions>button:first-child{min-width:0}
+.rail-action-grid>.read-mark{width:100%;min-width:0;margin:0}
+.rail-action-grid .icon-button{height:auto;min-height:36px;flex-shrink:0}
+.rail-related{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.rail-related>strong{grid-column:1/-1}
+.rail-related>button{min-width:0;overflow-wrap:anywhere}
