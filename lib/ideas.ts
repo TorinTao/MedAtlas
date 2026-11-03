@@ -28,22 +28,30 @@ export async function makeFollowupQueries(query: string, initial: Paper[]): Prom
 }
 
 export async function makeResearchBrief(query: string, papers: Paper[]): Promise<ResearchBrief> {
+  let feedback = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
   const raw = await deepseekJson(
     `${untrusted}你是医学AI文献调研员。比较已有方法、评测和反证，形成3到8个机制明显不同且有证据的候选问题。不要硬凑8个，不按固定领域模板生成。每个候选写出已有能力留下的具体空白、只改变哪个关键机制、最相近至少两篇论文ID和用于核查该机制是否已有的英文检索式。空白是待验证命题，未报告不等于不存在，不宣称首次或临床有效。只有摘要时明确证据范围。仅输出JSON {"landscape":"中文研究现状","cautions":["检索或证据局限，至少两项"],"opportunities":[{"gap":"待验证空白","mechanism":"核心干预及为何可能起作用","nearestPaperIds":["输入论文ID"],"searchQuery":"具体任务与机制的英文关键词"}]}。`,
-    JSON.stringify({ query, papers: sourcePapers(papers) }),
+    JSON.stringify({ query, papers: sourcePapers(papers), revisionFeedback: feedback }),
     { thinking: true, reasoningEffort: "high", maxTokens: 10000, timeoutMs: 135000 },
   ) as Record<string, unknown>;
+  try {
   const valid = new Set(papers.map(p => p.id));
   const opportunities = (Array.isArray(raw.opportunities) ? raw.opportunities : []).slice(0, 8).map((item, index) => {
     const value = item || {};
     const ids = strings(value.nearestPaperIds, 4);
     const searchQuery = normalizeFollowupQueries([{ query: value.searchQuery }])[0]?.query;
-    if (new Set(ids).size < 2 || ids.some(id => !valid.has(id)) || !searchQuery || !content(value.gap) || !content(value.mechanism)) throw new Error("候选问题缺少相近论文或有效检索式，请重新调研");
+    if (new Set(ids).size < 2 || ids.some(id => !valid.has(id))) throw new Error(`候选${index + 1}必须原样使用至少两个输入论文ID；不能使用标题或自编编号。`);
+    if (!searchQuery) throw new Error(`候选${index + 1}的searchQuery必须为12到140字符英文关键词，不含URL，须置于该候选对象内。`);
+    if (!content(value.gap) || !content(value.mechanism)) throw new Error(`候选${index + 1}缺少gap或mechanism。`);
     return { id: `opportunity-${index + 1}`, gap: content(value.gap), mechanism: content(value.mechanism), nearestPaperIds: [...new Set(ids)], searchQuery };
   });
   const brief = { landscape: content(raw.landscape, 800), gaps: opportunities.map(item => item.gap), cautions: strings(raw.cautions, 5), opportunities };
   if (!brief.landscape || opportunities.length < 3 || brief.cautions.length < 2) throw new Error("证据不足以形成三个不同的候选问题，请调整方向或补充论文");
   return brief;
+  } catch (error) { feedback = (error as Error).message; }
+  }
+  throw new Error(`调研候选修订后仍不完整：${feedback}`);
 }
 
 const ideaContract = `仅输出JSON {"idea":{
