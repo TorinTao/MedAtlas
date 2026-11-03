@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   let body: any;
   try { body = JSON.parse(raw || "{}"); } catch { return jsonError("选题内容不是有效 JSON"); }
   const idea = body.idea as ResearchIdea | undefined;
-  if (!idea || !validId(String(idea.id || "")) || typeof idea.title !== "string" || idea.title.length > 180 || !idea.title.trim() || typeof idea.gap !== "string" || idea.gap.length > 1000 || typeof idea.hypothesis !== "string" || idea.hypothesis.length > 1000 || !Array.isArray(idea.paperIds) || idea.paperIds.length < 2 || idea.paperIds.length > 24 || idea.paperIds.some(id => typeof id !== "string" || !/^[\w-]{3,80}$/.test(id))) return jsonError("抽卡历史内容无效");
+  if (!idea || !validId(String(idea.id || "")) || typeof idea.title !== "string" || idea.title.length > 180 || !idea.title.trim() || typeof idea.gap !== "string" || idea.gap.length > 1000 || typeof idea.hypothesis !== "string" || idea.hypothesis.length > 1000 || !Array.isArray(idea.paperIds) || idea.paperIds.length < 2 || idea.paperIds.length > 24 || idea.paperIds.some(id => typeof id !== "string" || !/^[\w.-]{3,80}$/.test(id))) return jsonError("抽卡历史内容无效");
   if (!await takeQuota(request, "ideas-import", 30, user.userId)) return jsonError("今日历史同步次数已用完", 429);
   const found = await Promise.all(idea.paperIds.map(findPaper));
   if (found.some(paper => !paper)) return jsonError("相关论文已不可用，请重新抽卡", 422);
