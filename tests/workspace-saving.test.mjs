@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const temp=await mkdtemp(path.join(tmpdir(),'medatlas-saving-'));
+try {
+ const runtime=path.resolve('tests/support/upload-runtime.mjs');
+ await build({stdin:{contents:`export * as workspace from './app/api/workspace/route.ts';export * as history from './app/api/ideas/history/route.ts';export {normalizePaper} from './lib/papers.ts';export * from './tests/support/upload-runtime.mjs';`,resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'routes.mjs'),external:['node:*'],plugins:[{name:'local-runtime',setup(b){b.onResolve({filter:/^(cloudflare:workers|next\/headers|next\/navigation)$/},()=>({path:runtime}))}}]});
+ const {workspace,history,asUser,env,normalizePaper}=await import(pathToFileURL(path.join(temp,'routes.mjs')));
+ const paper=normalizePaper({id:'save-test-paper',title:'Synthetic saving test',abstract:'Test data only.',year:2026,url:'https://example.org/paper'});
+ await env.DB.prepare('INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?)').bind(paper.id,paper.title,JSON.stringify(paper),new Date().toISOString()).run();
+ const request=(body,method='POST')=>new Request('https://local.test/api/workspace',{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ assert.equal((await asUser(null,()=>workspace.POST(request({paperId:paper.id})))).status,401);
+ for(let i=0;i<2;i++)assert.equal((await asUser('owner',()=>workspace.POST(request({paperId:paper.id,saved:true})))).status,200);
+ const work=async user=>(await asUser(user,()=>workspace.GET())).json();
+ assert.equal((await work('owner')).savedPapers.length,1);assert.equal((await work('other')).savedPapers.length,0);
+ await asUser('other',()=>workspace.POST(request({paperId:paper.id,saved:false})));assert.equal((await work('owner')).savedPapers.length,1);
+ await asUser('owner',()=>workspace.POST(request({paperId:paper.id,saved:false})));assert.equal((await work('owner')).savedPapers.length,0);
+ console.log('PASS paper save persists, is idempotent, isolates owners and supports removal');
+ const idea={id:crypto.randomUUID(),title:'Synthetic idea',query:'test',gap:'test gap',hypothesis:'test hypothesis',paperIds:[paper.id],favorite:false,createdAt:new Date().toISOString()};
+ await env.DB.prepare('INSERT INTO ideas (id,user_id,query,data,created_at) VALUES (?,?,?,?,?)').bind(idea.id,'owner',idea.query,JSON.stringify(idea),idea.createdAt).run();
+ assert.equal((await work('owner')).ideas.length,0);
+ assert.equal((await asUser('other',()=>history.PATCH(request({id:idea.id,favorite:true},'PATCH')))).status,404);
+ assert.equal((await asUser('owner',()=>history.PATCH(request({id:idea.id,favorite:true},'PATCH')))).status,200);
+ assert.equal((await work('owner')).ideas[0].id,idea.id);assert.equal((await work('other')).ideas.length,0);
+ await asUser('owner',()=>history.PATCH(request({id:idea.id,favorite:false},'PATCH')));assert.equal((await work('owner')).ideas.length,0);
+ const records=await asUser('owner',()=>history.GET(new Request('https://local.test/api/ideas/history')));assert.equal((await records.json()).history.length,1);
+ console.log('PASS ideas enter workspace only after explicit save; unsaved ideas stay in history; ownership enforced');
+} finally {await rm(temp,{recursive:true,force:true});}

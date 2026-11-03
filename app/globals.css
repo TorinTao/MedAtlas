@@ -176,3 +176,8 @@
 .rail-related{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
 .rail-related>strong{grid-column:1/-1}
 .rail-related>button{min-width:0;overflow-wrap:anywhere}
+
+.rail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.rail-heading .rail-label{margin-bottom:0}.rail-heading{margin-bottom:18px}
+.paper-save-button,.detail-top .paper-save-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 11px;border:1px solid #bdd8d2;border-radius:6px;background:#f7fbf9;color:#216d68;font-size:11px;white-space:nowrap}
+.paper-save-button.active,.detail-top .paper-save-button.active{background:#dff1e9;border-color:#85c3ae;color:#156257}
+.library-item{min-width:0}.library-item>.library-row{width:100%}.library-save-row{display:flex;justify-content:flex-end;padding:0 12px 10px}.library-save-row .paper-save-button{font-size:10px;padding:6px 9px}
