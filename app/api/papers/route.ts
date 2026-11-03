@@ -1,4 +1,4 @@
-import { allPapers } from "../../../lib/store";
+import { allPapers } from "../../../platform/storage/papers";
 
 export async function GET() {
   const papers = await allPapers();

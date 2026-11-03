@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getChatGPTUser } from "../../../platform/identity/session";
 import { getDb } from "../../../db";
 import { readPapers } from "../../../db/schema";
-import { allPapers, findPaper, jsonError } from "../../../lib/store";
+import { allPapers, findPaper, jsonError } from "../../../platform/storage/papers";
 
 export async function GET() {
   const user = await getChatGPTUser();

@@ -1,5 +1,5 @@
-import { runtime } from "../../../../lib/runtime";
-import { backfillPublicationVenues } from "../../../../lib/venue-backfill";
+import { runtime } from "../../../../platform/config";
+import { backfillPublicationVenues } from "../../../../composition/jobs/venues";
 
 export async function POST(request: Request) {
   const token = runtime("SUMMARY_BACKFILL_TOKEN");

@@ -1,7 +1,7 @@
-import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../lib/store";
-import { readPaper } from "../../../../../lib/reading";
-import { runtime } from "../../../../../lib/runtime";
-import { hasDeepSeekKey } from "../../../../../lib/user-api-key";
+import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../platform/storage/papers";
+import { readPaper } from "../../../../../composition/research";
+import { runtime } from "../../../../../platform/config";
+import { hasDeepSeekKey } from "../../../../../platform/identity/model-credentials";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;

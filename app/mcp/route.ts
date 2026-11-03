@@ -1,8 +1,5 @@
-import { refreshLiterature } from "../../lib/refresh";
-import { enrichMissingPapers, enrichMissingRepositories } from "../../lib/enrich";
-import { runtime } from "../../lib/runtime";
-import { backfillMissingSummaries } from "../../lib/summary-backfill";
-import { backfillPublicationVenues } from "../../lib/venue-backfill";
+import {backgroundTasks} from "../../composition/automation";
+import { runtime } from "../../platform/config";
 
 const refreshTool = {
   name: "refresh_literature",
@@ -42,8 +39,8 @@ export async function POST(request: Request) {
   const caller = request.headers.get("oai-authenticated-user-email")?.toLowerCase();
   if (!owner || !caller || caller !== owner) return result({ content: [{ type: "text", text: "只有站点所有者可以更新文献语料" }], isError: true });
   try {
-    const updated = rpc.params.name === refreshTool.name ? await refreshLiterature() : rpc.params.name === enrichTool.name ? await enrichMissingPapers() : rpc.params.name === repoTool.name ? await enrichMissingRepositories() : rpc.params.name === venueTool.name ? await backfillPublicationVenues() : await backfillMissingSummaries();
-    return result({ content: [{ type: "text", text: JSON.stringify(updated) }] });
+    const executed = await backgroundTasks.run(rpc.params.name);
+    return result({ content: [{ type: "text", text: executed.ok ? JSON.stringify(executed.result) : executed.error }], ...(!executed.ok ? {isError:true} : {}) });
   } catch (cause) {
     return result({ content: [{ type: "text", text: (cause as Error).message }], isError: true });
   }

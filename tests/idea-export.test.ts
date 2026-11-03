@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatIdeaForDiscussion } from "../lib/idea-export";
-import { normalizePaper } from "../lib/papers";
-import type { ResearchIdea } from "../lib/types";
+import { formatIdeaForDiscussion } from "../modules/ideas/export";
+import { normalizePaper } from "../modules/catalog/papers";
+import type { ResearchIdea } from "../shared/models";
 
 test("copied idea includes its hidden plan, evidence chain, and original paper links", () => {
   const paper = normalizePaper({ id: "pmid-123", title: "Medical Image Agent", abstract: "We study medical image agents.", year: 2025, url: "https://pubmed.ncbi.nlm.nih.gov/123/", source: "PubMed" });

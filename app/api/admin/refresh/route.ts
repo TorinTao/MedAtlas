@@ -1,6 +1,6 @@
-import { refreshLiterature } from "../../../../lib/refresh";
-import { runtime } from "../../../../lib/runtime";
-import { jsonError } from "../../../../lib/store";
+import { refreshLiterature } from "../../../../composition/jobs/refresh";
+import { runtime } from "../../../../platform/config";
+import { jsonError } from "../../../../platform/storage/papers";
 
 export async function POST(request: Request) {
   const token = runtime("REFRESH_TOKEN");

@@ -1,7 +1,7 @@
-import { hasDeepSeekKey } from "../../../../../lib/user-api-key";
-import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../lib/store";
-import { summarizePaperZh } from "../../../../../lib/summary";
-import { needsGeneratedSummary } from "../../../../../lib/summary-fallback";
+import { hasDeepSeekKey } from "../../../../../platform/identity/model-credentials";
+import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../platform/storage/papers";
+import {  summarizePaperZh  } from "../../../../../composition/research";
+import { needsGeneratedSummary } from "../../../../../modules/catalog/summary-fallback";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;

@@ -2,6 +2,10 @@
 
 围绕医学影像、病历文本及 Agent 研究，提供论文检索、三维发展地图、证据精读、仓库静态审核和可追溯研究选题。中文界面保留英文论文标题和来源链接。
 
+## 代码导航
+
+从 [模块地图与替换指南](ARCHITECTURE.md) 开始。业务代码收拢在 `modules/` 的七个模块，外部服务在 `platform/`，组装入口在 `composition/`，公共契约在 `shared/`。执行 `npm test` 运行模块测试和依赖边界检查，`npm run test:module -- workspace` 可单独验证工作区。
+
 ## 数据流
 
 1. `/api/research` 根据自然语言方向查询 PubMed、arXiv 和 OpenAlex；同时调用 Lexmount Web Fetch 读取 Nature 与 Europe PMC 的公开搜索页。Nature 结果需要再次读取公开论文页并取得摘要；Europe PMC 结果须在页面上找到 PMID，再用官方 REST 元数据核对。通过这些检查的论文才写入 D1，按 DOI、PMID、arXiv ID 与标准化标题去重。论文详情显示 Lexmount 的公开搜索页、论文页、抓取时间和请求 ID。平台若返回限流、登录页或空内容，本次检索会显示警告。

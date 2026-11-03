@@ -1,7 +1,7 @@
-import { getChatGPTUser } from "../../../chatgpt-auth";
-import { deletePersonalDeepSeekKey, personalDeepSeekStatus, savePersonalDeepSeekKey } from "../../../../lib/user-api-key";
-import { runtime } from "../../../../lib/runtime";
-import { takeQuota } from "../../../../lib/store";
+import { getChatGPTUser } from "../../../../platform/identity/session";
+import { deletePersonalDeepSeekKey, personalDeepSeekStatus, savePersonalDeepSeekKey } from "../../../../platform/identity/model-credentials";
+import { runtime } from "../../../../platform/config";
+import { takeQuota } from "../../../../platform/storage/papers";
 
 const noStore = { "Cache-Control": "private, no-store" };
 function response(data: object, status = 200) { return Response.json(data, { status, headers: noStore }); }

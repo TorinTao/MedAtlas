@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-import { extractPdfText } from "../lib/pdf-upload";
+import { extractPdfText } from "../modules/workspace/pdf-text";
 
 // Synthetic document; no user PDF or research data is used in these checks.
 export function fixturePdf(pageCount = 2, withText = true): Uint8Array {

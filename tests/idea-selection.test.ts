@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeResearchFocus, selectEvidence, type ResearchFocus } from "../lib/idea-selection";
-import type { Paper } from "../lib/types";
+import { normalizeResearchFocus, selectEvidence, type ResearchFocus } from "../modules/ideas/selection";
+import type { Paper } from "../shared/models";
 
 const focus: ResearchFocus = { searchQuery: "chest x-ray report hallucination detection", conceptGroups: [["chest x-ray", "cxr"], ["hallucination", "hallucinations", "factual errors"]] };
 const abstract = "We examine chest X-ray report hallucination detection using a held-out dataset. This study compares error detection performance and reports observed limitations.";

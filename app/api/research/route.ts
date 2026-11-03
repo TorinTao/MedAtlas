@@ -1,5 +1,5 @@
-import { collectPapers, englishQuery } from "../../../lib/collect";
-import { allPapers, jsonError, putPapers, takeQuota } from "../../../lib/store";
+import {  collectPapers, englishQuery  } from "../../../composition/catalog";
+import { allPapers, jsonError, putPapers, takeQuota } from "../../../platform/storage/papers";
 
 export async function POST(request: Request) {
   const body: any = await request.json().catch(() => ({})); const query = String(body.query || "").trim().slice(0, 180);

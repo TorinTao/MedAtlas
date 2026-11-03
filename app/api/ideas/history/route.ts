@@ -1,10 +1,10 @@
 import { env } from "cloudflare:workers";
 import { and, desc, eq } from "drizzle-orm";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getChatGPTUser } from "../../../../platform/identity/session";
 import { getDb } from "../../../../db";
 import { ideas as ideaTable } from "../../../../db/schema";
-import { findPaper, jsonError, takeQuota } from "../../../../lib/store";
-import type { ResearchIdea } from "../../../../lib/types";
+import { findPaper, jsonError, takeQuota } from "../../../../platform/storage/papers";
+import type { ResearchIdea } from "../../../../shared/models";
 
 const validId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 const favorite = (idea: ResearchIdea) => ({ ...idea, favorite: idea.favorite === true });

@@ -1,4 +1,4 @@
-import { getChatGPTUser, chatGPTSignInPath, chatGPTSignOutPath } from "./chatgpt-auth";
+import { getChatGPTUser, chatGPTSignInPath, chatGPTSignOutPath } from "../platform/identity/session";
 import AtlasApp from "./components/atlas-app";
 
 export const dynamic = "force-dynamic";

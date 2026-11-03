@@ -1,6 +1,6 @@
-import { backfillMissingSummaries } from "../../../../lib/summary-backfill";
-import { runtime } from "../../../../lib/runtime";
-import { jsonError } from "../../../../lib/store";
+import { backfillMissingSummaries } from "../../../../composition/jobs/summaries";
+import { runtime } from "../../../../platform/config";
+import { jsonError } from "../../../../platform/storage/papers";
 
 export async function POST(request: Request) {
   const token = runtime("SUMMARY_BACKFILL_TOKEN");

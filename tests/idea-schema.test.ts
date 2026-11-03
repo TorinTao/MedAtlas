@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateIdea } from "../lib/idea-schema";
-import { normalizePaper } from "../lib/papers";
+import { validateIdea } from "../modules/ideas/schema";
+import { normalizePaper } from "../modules/catalog/papers";
 
 const papers = [
   normalizePaper({ id: "retrieval-study", title: "Retrieval for Radiology Report Generation", year: 2025, url: "https://example.org/retrieval", abstract: "Retrieval improved factual consistency in generated radiology reports on an internal retrospective test set. External hospital validation was not performed." }),

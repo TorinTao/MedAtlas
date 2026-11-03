@@ -1,0 +1,12 @@
+import { createRepositoryAudit } from "../modules/repositories/audit";
+import { createRepositoryDiscovery } from "../modules/repositories/discovery";
+import { createRepositoryEvaluation } from "../modules/repositories/evaluation";
+import { createRepositoryWorkflow } from "../modules/repositories/workflow";
+import { fetchGithubPublicDom } from "../platform/sources/github-page";
+import { runtime } from "../platform/config";
+import { deepseekJson, webReader, paperRepository } from "./providers";
+const deps = { web: webReader, publicDom: fetchGithubPublicDom, http: fetch, githubToken: () => runtime("GITHUB_TOKEN"), model: deepseekJson };
+export const { auditRepository } = createRepositoryAudit(deps);
+export const { discoverPaperRepository } = createRepositoryDiscovery(deps);
+export const { evaluateRepository } = createRepositoryEvaluation(deps);
+export const { inspectPaperRepository } = createRepositoryWorkflow({ papers: paperRepository, auditRepository, discoverPaperRepository, evaluateRepository });

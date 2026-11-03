@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { evidenceSources, sourcePapers, validateEvidenceChain } from "../lib/idea-evidence";
-import { normalizePaper } from "../lib/papers";
-import type { Paper } from "../lib/types";
+import { evidenceSources, sourcePapers, validateEvidenceChain } from "../modules/ideas/evidence";
+import { normalizePaper } from "../modules/catalog/papers";
+import type { Paper } from "../shared/models";
 
 const firstQuote = "The model was evaluated on an external chest radiograph dataset.";
 const secondQuote = "Performance declined under distribution shifts between hospitals.";

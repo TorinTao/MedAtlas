@@ -1,7 +1,7 @@
-import { auditRepository } from "../../../lib/repo-audit";
-import { evaluateRepository } from "../../../lib/repo-evaluation";
-import { inspectPaperRepository } from "../../../lib/repo-workflow";
-import { findPaper, jsonError, takeQuota } from "../../../lib/store";
+import {  auditRepository  } from "../../../composition/repositories";
+import {  evaluateRepository  } from "../../../composition/repositories";
+import {  inspectPaperRepository  } from "../../../composition/repositories";
+import { findPaper, jsonError, takeQuota } from "../../../platform/storage/papers";
 
 export async function POST(request: Request) {
   const body: any = await request.json().catch(() => ({}));

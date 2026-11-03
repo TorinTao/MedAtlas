@@ -1,14 +1,14 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getChatGPTUser } from "../../../platform/identity/session";
 import { getDb } from "../../../db";
 import { ideas as ideaTable } from "../../../db/schema";
-import { collectPapers, searchArxiv, searchOpenAlex, searchPubMed } from "../../../lib/collect";
-import { makeFollowupQueries, makeIdea, makeResearchBrief, makeResearchFocus, type ResearchBrief } from "../../../lib/ideas";
-import { selectEvidence, type ResearchFocus } from "../../../lib/idea-selection";
-import { dedupePapers } from "../../../lib/papers";
-import { allPapers, findPaper, jsonError, putPapers, takeQuota } from "../../../lib/store";
-import type { IdeaSummary, IdeasResearch, Paper } from "../../../lib/types";
-import { hasDeepSeekKey } from "../../../lib/user-api-key";
+import {  collectPapers, searchArxiv, searchOpenAlex, searchPubMed  } from "../../../composition/catalog";
+import {  makeFollowupQueries, makeIdea, makeResearchBrief, makeResearchFocus, type ResearchBrief  } from "../../../composition/research";
+import { selectEvidence, type ResearchFocus } from "../../../modules/ideas/selection";
+import { dedupePapers } from "../../../modules/catalog/papers";
+import { allPapers, findPaper, jsonError, putPapers, takeQuota } from "../../../platform/storage/papers";
+import type { IdeaSummary, IdeasResearch, Paper } from "../../../shared/models";
+import { hasDeepSeekKey } from "../../../platform/identity/model-credentials";
 
 type Prepared = { query: string; focus: ResearchFocus; paperIds: string[]; brief: ResearchBrief; owner: string; sources: string[]; warnings: string[]; scannedCount: number; preparedAt: string; expiresAt: string; drawCount: number; draws: IdeaSummary[] };
 async function ownerOf(request: Request, userId?: string) {

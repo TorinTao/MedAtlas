@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classify, dedupePapers, normalizePaper, seedPapers } from "../lib/papers";
-import { safePublicUrl } from "../lib/url";
-import { coreTimeline, relatedPapers } from "../lib/relations";
-import { githubRepositories } from "../lib/repo-links";
-import { githubDomEvidence } from "../lib/repo-dom";
-import { needsGeneratedSummary, withSummaryFallback } from "../lib/summary-fallback";
-import { arxivVenue, crossrefVenue, openAlexVenue, pubMedVenue } from "../lib/publication-venue";
-import { normalizeFollowupQueries } from "../lib/followup-queries";
+import { classify, dedupePapers, normalizePaper, seedPapers } from "../modules/catalog/papers";
+import { safePublicUrl } from "../shared/public-url";
+import { coreTimeline, relatedPapers } from "../modules/atlas/relations";
+import { githubRepositories } from "../shared/github-links";
+import { githubDomEvidence } from "../modules/repositories/dom";
+import { needsGeneratedSummary, withSummaryFallback } from "../modules/catalog/summary-fallback";
+import { arxivVenue, crossrefVenue, openAlexVenue, pubMedVenue } from "../modules/catalog/publication-venue";
+import { normalizeFollowupQueries } from "../modules/ideas/followup-queries";
 
 test("follow-up research queries reject URLs and duplicates", () => {
   assert.deepEqual(normalizeFollowupQueries([

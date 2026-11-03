@@ -1,6 +1,6 @@
-import { hasDeepSeekKey } from "../../../../../lib/user-api-key";
-import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../lib/store";
-import { translateAbstractZh } from "../../../../../lib/summary";
+import { hasDeepSeekKey } from "../../../../../platform/identity/model-credentials";
+import { findPaper, jsonError, putPapers, takeQuota } from "../../../../../platform/storage/papers";
+import {  translateAbstractZh  } from "../../../../../composition/research";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;

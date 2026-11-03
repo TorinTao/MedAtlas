@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const temp=await mkdtemp(path.join(tmpdir(),'medatlas-saving-'));
 try {
  const runtime=path.resolve('tests/support/upload-runtime.mjs');
- await build({stdin:{contents:`export * as workspace from './app/api/workspace/route.ts';export * as history from './app/api/ideas/history/route.ts';export {normalizePaper} from './lib/papers.ts';export * from './tests/support/upload-runtime.mjs';`,resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'routes.mjs'),external:['node:*'],plugins:[{name:'local-runtime',setup(b){b.onResolve({filter:/^(cloudflare:workers|next\/headers|next\/navigation)$/},()=>({path:runtime}))}}]});
+ await build({stdin:{contents:`export * as workspace from './app/api/workspace/route.ts';export * as history from './app/api/ideas/history/route.ts';export {normalizePaper} from './modules/catalog/papers.ts';export * from './tests/support/upload-runtime.mjs';`,resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'routes.mjs'),external:['node:*'],plugins:[{name:'local-runtime',setup(b){b.onResolve({filter:/^(cloudflare:workers|next\/headers|next\/navigation)$/},()=>({path:runtime}))}}]});
  const {workspace,history,asUser,env,normalizePaper}=await import(pathToFileURL(path.join(temp,'routes.mjs')));
  const paper=normalizePaper({id:'save-test-paper',title:'Synthetic saving test',abstract:'Test data only.',year:2026,url:'https://example.org/paper'});
  await env.DB.prepare('INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?)').bind(paper.id,paper.title,JSON.stringify(paper),new Date().toISOString()).run();
