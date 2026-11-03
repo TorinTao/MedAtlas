@@ -6,6 +6,8 @@ import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, Bookmark,
 import type { IdeasResearch, Method, Paper, PaperAnalysis, RepoAudit, ResearchIdea } from "../../lib/types";
 import { relatedPapers } from "../../lib/relations";
 import { formatIdeaForDiscussion } from "../../lib/idea-export";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { extractPdfText, PDF_MAX_BYTES } from "../../lib/pdf-upload";
 
 const AtlasScene = dynamic(() => import("./atlas-scene"), { ssr: false, loading: () => <div className="scene-loading" role="status"><div className="scene-loading-content"><span className="scene-loading-mark"><LoaderCircle className="spin" size={23} /></span><strong>正在载入文献星图</strong><small>发表时间 · 医学模态 · 临床任务</small></div><div className="scene-loading-timeline" aria-hidden="true"><span>2018</span><span>2020</span><span>2022</span><span>2024</span><span>2026</span></div></div> });
 const methodColors: Record<Method, string> = { "视觉语言模型": "#16bfa8", "Agent 协作": "#d98b1c", "检索增强": "#9256de", "表征学习": "#397fd4", "多模态融合": "#829e24", "生成式模型": "#d64f86", "预测与分类": "#d8664d", "评测与资源": "#b79516", "综述与趋势": "#388bae", "待核验": "#84939c" };
@@ -245,7 +247,26 @@ export default function AtlasApp({ user, signInPath, signOutPath }: { user: { na
   }
   async function savePaper(paper: Paper, saved = true) { if (!user) { window.location.href = signInPath; return; } try { await api("/api/workspace", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paperId: paper.id, saved }) }); setMessage(saved ? "已保存到我的工作区" : "已移出工作区"); if (section === "workspace") loadWorkspace(); } catch (e) { setMessage((e as Error).message); } }
   async function runAudit() { if (!selected && !repoInput) return; setAuditing(true); setAudit(null); setRepoLookupError(""); try { const knownRepo = Boolean(selected && repoInput.trim().replace(/\/$/, "").toLowerCase() === selected.repoUrl.replace(/\/$/, "").toLowerCase()); const result = await api<{ audit: RepoAudit | null; paper?: Paper }>("/api/repo-audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repoUrl: knownRepo ? "" : repoInput, paperId: selected?.id, refresh: knownRepo || !repoInput }) }); if (result.paper) { setPapers(previous => previous.map(paper => paper.id === result.paper!.id ? result.paper! : paper)); setRepoInput(result.paper.repoUrl || ""); } setAudit(result.audit); } catch (e) { setRepoLookupError((e as Error).message); } finally { setAuditing(false); } }
-  async function uploadPdf(file: File) { if (!user) { window.location.href = signInPath; return; } setUploading(true); setMessage(""); try { if (file.size > 20_000_000) throw new Error("PDF 请控制在 20 MB 以下"); const pdfjs = await import("pdfjs-dist"); pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString(); const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; if (pdf.numPages > 100) throw new Error("暂支持最多 100 页"); const chunks: string[] = []; for (let i = 1; i <= pdf.numPages && chunks.join("").length < 200000; i++) { const page = await pdf.getPage(i); const content = await page.getTextContent(); chunks.push(content.items.map(item => "str" in item ? item.str : "").join(" ")); } const form = new FormData(); form.append("file", file); form.append("text", chunks.join("\n")); form.append("pages", String(pdf.numPages)); await api("/api/upload", { method: "POST", body: form }); setMessage(`已保存 ${file.name}（${pdf.numPages} 页）`); loadWorkspace(); } catch (e) { setMessage((e as Error).message); } finally { setUploading(false); } }
+  async function uploadPdf(file: File) {
+    if (!user) { window.location.href = signInPath; return; }
+    setUploading(true); setMessage("");
+    let task: import("pdfjs-dist").PDFDocumentLoadingTask | undefined;
+    try {
+      if (!file.name.toLowerCase().endsWith(".pdf")) throw new Error("请选择 PDF 文件");
+      if (file.size > PDF_MAX_BYTES) throw new Error("PDF 请控制在 20 MB 以下");
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+      const pdf = await task.promise;
+      const text = await extractPdfText(pdf);
+      const form = new FormData(); form.append("file", file); form.append("text", text); form.append("pages", String(pdf.numPages));
+      await api("/api/upload", { method: "POST", body: form });
+      await loadWorkspace(); setMessage(`已保存 ${file.name}（${pdf.numPages} 页）`);
+    } catch (e) {
+      const error = e as Error;
+      setMessage(error.name === "PasswordException" ? "PDF 受密码保护，请先解密后上传" : error.name === "InvalidPDFException" ? "PDF 已损坏或格式无效，请换一个文件重试" : error.message);
+    } finally { await task?.destroy().catch(() => {}); setUploading(false); }
+  }
   async function analyzeUpload(id: string) { setPdfReading(id); setMessage(""); try { const result = await api<{ analysis: PaperAnalysis }>(`/api/upload/${id}/analyze`, { method: "POST" }); setPdfAnalysis(prev => ({ ...prev, [id]: result.analysis })); setMessage("PDF 精读完成，证据仅来自你上传的文档"); } catch (e) { setMessage((e as Error).message); } finally { setPdfReading(""); } }
   async function deleteUpload(id: string) { try { await api(`/api/upload/${id}`, { method: "DELETE" }); setMessage("PDF 已删除"); loadWorkspace(); } catch (e) { setMessage((e as Error).message); } }
   async function toggleRead(paper: Paper) {
