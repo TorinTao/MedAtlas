@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (!await takeQuota(request, "ideas-prepare", user ? 12 : 4, user?.userId)) return jsonError("今日深度调研次数已用完", 429);
     const preferredIds = (Array.isArray(body.paperIds) ? body.paperIds : []).filter((id: unknown): id is string => typeof id === "string" && /^[\w-]{3,80}$/.test(id)).slice(0, 24);
     try {
-      const focus = await makeResearchFocus(query);
+      let focus = await makeResearchFocus(query);
       const [live, review, stored] = await Promise.all([
         collectPapers(focus.searchQuery, "corpus"),
         searchOpenAlex(`${focus.searchQuery} review survey systematic`, 25).then(papers => ({ papers, error: "" })).catch(error => ({ papers: [] as Paper[], error: `综述补充检索：${(error as Error).message}` })),
@@ -80,8 +80,13 @@ export async function POST(request: Request) {
       const newPapers = dedupePapers([...live.papers, ...review.papers, ...followupPapers]);
       if (newPapers.length) await putPapers(newPapers);
       const corpus = dedupePapers([...newPapers, ...stored]);
-      const selected = selectEvidence(focus, corpus, preferredIds, followupPapers);
-      if (selected.length < 6) return jsonError("相关且有摘要的论文不足 6 篇，请调整研究方向", 422);
+      let selected = selectEvidence(focus, corpus, preferredIds, followupPapers);
+      if (selected.length < 6) {
+        focus = await makeResearchFocus(query, corpus);
+        selected = selectEvidence(focus, corpus, preferredIds, followupPapers);
+        followupWarnings.push("已依据候选论文的真实术语重新规划核心概念；改进目标用于比较研究空白，不强制每篇摘要同时提及。");
+      }
+      if (selected.length < 6) return jsonError(`相关且有摘要的论文不足 6 篇（实际 ${selected.length} 篇；核心概念：${focus.conceptGroups.map(group => group.join(" / ")).join("；")}），请调整研究方向`, 422);
       const brief = await makeResearchBrief(query, selected);
       const preparedAt = new Date().toISOString(), expiresAt = new Date(Date.now() + 7200000).toISOString(), jobId = `ideas:${crypto.randomUUID()}`;
       const sources = [...new Set([...live.sources, ...(review.papers.length ? ["OpenAlex 综述补充"] : []), ...[...followupSources].map(source => `${source} 相近研究补充`), "站内文献库"])];
