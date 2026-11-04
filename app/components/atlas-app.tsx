@@ -998,27 +998,38 @@ export default function AtlasApp({
       setPaperSaveBusyId("");
     }
   }
-  function paperSaveButton(paper: Paper) {
+  function paperSaveButton(paper: Paper, iconOnly = false) {
     const saved = savedPaperIds.has(paper.id);
     return (
       <button
         type="button"
-        className={`paper-save-button ${saved ? "active" : ""}`}
+        className={`paper-save-button ${saved ? "active" : ""} ${iconOnly ? "icon-only" : ""}`}
         onClick={() => savePaper(paper)}
         disabled={Boolean(paperSaveBusyId) || Boolean(user && !workspace)}
         aria-pressed={saved}
+        aria-label={saved ? "取消收藏文献" : "收藏文献到我的工作区"}
+        aria-busy={paperSaveBusyId === paper.id}
         title={saved ? "取消收藏文献" : "收藏文献到我的工作区"}
       >
-        <Bookmark size={15} fill={saved ? "currentColor" : "none"} />
-        {paperSaveBusyId === paper.id
-          ? "处理中…"
-          : !user
-            ? "登录后收藏"
-            : !workspace
-              ? "加载收藏…"
-              : saved
-                ? "已收藏 · 取消"
-                : "收藏文献"}
+        {paperSaveBusyId === paper.id ? (
+          <LoaderCircle size={17} className="spin" aria-hidden="true" />
+        ) : (
+          <Bookmark
+            size={17}
+            fill={saved ? "currentColor" : "none"}
+            aria-hidden="true"
+          />
+        )}
+        {!iconOnly &&
+          (paperSaveBusyId === paper.id
+            ? "处理中…"
+            : !user
+              ? "登录后收藏"
+              : !workspace
+                ? "加载收藏…"
+                : saved
+                  ? "已收藏 · 取消"
+                  : "收藏文献")}
       </button>
     );
   }
@@ -1590,11 +1601,8 @@ export default function AtlasApp({
                               )}
                             </div>
                           </div>
-                          <ArrowUpRight size={17} />
                         </button>
-                        <div className="library-save-row">
-                          {paperSaveButton(p)}
-                        </div>
+                        {paperSaveButton(p, true)}
                       </div>
                     ))
                   ) : (
@@ -1649,7 +1657,7 @@ export default function AtlasApp({
                     <>
                       <div className="detail-top">
                         <span>文献档案 / PAPER DOSSIER</span>
-                        {paperSaveButton(selected)}
+                        {paperSaveButton(selected, true)}
                       </div>
                       <div className="detail-year">
                         {selected.year}
