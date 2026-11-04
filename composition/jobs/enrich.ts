@@ -312,6 +312,76 @@ export async function enrichMissingPapers(limit = 2) {
     repository,
   };
 }
+/** Short MCP batch for the reading backlog; repository work has its own task. */
+export async function enrichMissingReadings(limit = 2) {
+  if (!env.DB) throw new Error("文献数据库不可用");
+  if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
+    throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
+  if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
+  const papers = await allPapersForEnrichment();
+  const jobs = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'",
+  ).all<JobRow>();
+  const byId = new Map((jobs.results || []).map((job) => [job.id, job]));
+  const pending = papers
+    .filter((paper) => !paper.analysis && Boolean(paper.abstract.trim()))
+    .sort(
+      (a, b) =>
+        Number(Boolean(byId.get(`enrich:${a.id}`))) -
+          Number(Boolean(byId.get(`enrich:${b.id}`))) ||
+        b.citedByCount - a.citedByCount ||
+        b.year - a.year,
+    );
+  const results: {
+    id: string;
+    analysis: boolean;
+    status: string;
+    depth: string;
+    errors: string[];
+  }[] = [];
+  for (const paper of pending) {
+    if (results.length >= Math.max(1, Math.min(limit, 2))) break;
+    const jobId = `enrich:${paper.id}`;
+    if (!(await claim(jobId, byId.get(jobId)))) continue;
+    try {
+      const reading = await readPaper(paper);
+      if (reading.analysis)
+        await putPapers([{
+          ...paper,
+          analysis: reading.analysis,
+          fulltextStatus: reading.depth === "全文" ? "全文可用" : "仅摘要",
+        }]);
+      const status = reading.analysis ? "done" : "partial";
+      await finish(jobId, status, {
+        sourceUrl: reading.sourceUrl,
+        errors: reading.errors,
+      });
+      results.push({
+        id: paper.id,
+        analysis: Boolean(reading.analysis),
+        status,
+        depth: reading.depth,
+        errors: reading.errors,
+      });
+    } catch (error) {
+      const message = (error as Error).message;
+      await finish(jobId, "failed", { errors: [message] });
+      results.push({
+        id: paper.id,
+        analysis: false,
+        status: "failed",
+        depth: "",
+        errors: [message],
+      });
+    }
+  }
+  return {
+    processed: results.length,
+    readingsCompleted: results.filter((result) => result.analysis).length,
+    remainingWithAbstract: pending.length - results.filter((result) => result.analysis).length,
+    results,
+  };
+}
 export async function enrichMissingRepositories(limit = 2) {
   if (!env.DB) throw new Error("文献数据库不可用");
   if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))

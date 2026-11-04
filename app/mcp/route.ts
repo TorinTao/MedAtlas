@@ -13,6 +13,12 @@ const enrichTool = {
     "Enrich up to two papers missing a Chinese overview or detailed reading, translate review abstracts, and evaluate linked GitHub repositories. Lexmount Web Fetch reads public paper and repository pages; DeepSeek produces evidence-aware Chinese explanations. Persists results and retries incomplete work later.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
 };
+const readingsTool = {
+  name: "enrich_missing_readings",
+  description:
+    "Complete evidence-checked detailed readings for up to two public papers with English abstracts. Saves results, skips recently claimed papers, and leaves repository evaluation to its separate task.",
+  inputSchema: { type: "object", properties: {}, additionalProperties: false },
+};
 const repoTool = {
   name: "enrich_missing_repositories",
   description:
@@ -46,13 +52,14 @@ export async function POST(request: Request) {
     });
   if (rpc.method === "tools/list")
     return result({
-      tools: [refreshTool, enrichTool, repoTool, summaryTool, venueTool],
+      tools: [refreshTool, enrichTool, readingsTool, repoTool, summaryTool, venueTool],
     });
   if (
     rpc.method !== "tools/call" ||
     ![
       refreshTool.name,
       enrichTool.name,
+      readingsTool.name,
       repoTool.name,
       summaryTool.name,
       venueTool.name,
