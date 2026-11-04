@@ -8,3 +8,5 @@ export const uploads = sqliteTable("uploads", { id: text("id").primaryKey(), use
 export const usage = sqliteTable("usage", { id: text("id").primaryKey(), count: integer("count").notNull().default(0), updatedAt: text("updated_at").notNull() });
 export const jobs = sqliteTable("jobs", { id: text("id").primaryKey(), status: text("status").notNull(), updatedAt: text("updated_at").notNull(), detail: text("detail").notNull().default("") });
 export const userApiCredentials = sqliteTable("user_api_credentials", { userId: text("user_id").primaryKey(), encryptedKey: text("encrypted_key").notNull(), iv: text("iv").notNull(), updatedAt: text("updated_at").notNull() });
+
+export const researchDirections = sqliteTable("research_directions", { id: text("id").primaryKey(), userId: text("user_id").notNull(), data: text("data").notNull(), updatedAt: text("updated_at").notNull() });

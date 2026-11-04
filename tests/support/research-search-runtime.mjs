@@ -1,0 +1,12 @@
+import {normalizePaper} from '../../modules/catalog/papers';
+export const calls={external:0,local:0};
+export const fresh=normalizePaper({id:'fresh-external',title:'Chest report generation',abstract:'This study investigates chest report generation with paired images and clinical evaluation metrics. '.repeat(3),year:2025,url:'https://example.org/fresh'});
+fresh.discovery={method:'Lexmount Web Fetch',searchUrl:'https://example.org/search',capturedAt:new Date().toISOString(),requestId:'fresh-request'};
+export let unavailable=false;
+export const setUnavailable=value=>{unavailable=value};
+export const makeResearchFocus=async()=>({searchQuery:'chest report generation',conceptGroups:[['chest'],['report']]});
+export const collectPapers=async()=>{calls.external++;return {papers:unavailable?[]:[fresh],sources:['Lexmount'],errors:unavailable?['timeout']:[]}};
+export const allPapers=async()=>{calls.local++;throw Error('External search must not read the existing library')};
+export const putPapers=async()=>{};
+export const takeQuota=async()=>true;
+export const jsonError=(error,status=400)=>Response.json({error},{status});

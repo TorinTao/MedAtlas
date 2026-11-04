@@ -3,7 +3,6 @@ import { makeResearchFocus } from "../../../composition/research";
 import { dedupePapers } from "../../../modules/catalog/papers";
 import { collectPapers } from "../../../composition/catalog";
 import {
-  allPapers,
   jsonError,
   putPapers,
   takeQuota,
@@ -43,10 +42,9 @@ export async function POST(request: Request) {
       ),
     ),
   ];
-  const stored = await allPapers();
   const papers = selectEvidence(
     focus,
-    dedupePapers([...result.papers, ...stored]),
+    dedupePapers(result.papers),
     [],
     [],
     500,
@@ -70,9 +68,10 @@ export async function POST(request: Request) {
     query,
     searchQuery,
     strategy: "lexmount-first",
+    origin: "external-search",
     papers,
     matchingCount: papers.length,
-    lexmountCount: result.papers.filter(
+    lexmountCount: papers.filter(
       (paper) => paper.discovery?.method === "Lexmount Web Fetch",
     ).length,
     sources: result.sources,

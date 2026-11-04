@@ -6,6 +6,11 @@ import { PaperSummary } from "../../modules/reading/ui/paper-summary";
 
 import {
   RESEARCH_SCOPE_KEY,
+  RESEARCH_HISTORY_KEY,
+  parseDirectionHistory,
+  mergeDirectionHistory,
+  directionKey,
+  type ResearchDirection,
   parseResearchScope,
   papersInScope,
   type ResearchScope,
@@ -172,7 +177,7 @@ export default function AtlasApp({
   signInPath,
   signOutPath,
 }: {
-  user: { name: string } | null;
+  user: { name: string; id: string } | null;
   signInPath: string;
   signOutPath: string;
 }) {
@@ -182,6 +187,12 @@ export default function AtlasApp({
     null,
   );
   const researchRevision = useRef(0);
+  const [directionHistory, setDirectionHistory] = useState<ResearchDirection[]>(
+    [],
+  );
+  const directionHistoryRef = useRef<ResearchDirection[]>([]);
+  const scopeStorageKey = `${RESEARCH_SCOPE_KEY}:${user?.id || "guest"}`;
+  const historyStorageKey = `${RESEARCH_HISTORY_KEY}:${user?.id || "guest"}`;
   const [query, setQuery] = useState("医学影像 + 病历文本 Agent");
   const [selectedId, setSelectedId] = useState("");
   const [motion, setMotion] = useState(true);
@@ -242,44 +253,79 @@ export default function AtlasApp({
   useEffect(() => {
     const revision = researchRevision.current;
     let active = true;
-    let saved: ResearchScope | null = null;
-    try {
-      saved = parseResearchScope(localStorage.getItem(RESEARCH_SCOPE_KEY));
-    } catch {
-      /* Storage may be disabled. */
-    }
-    if (saved) {
-      setQuery(saved.query);
-      setResearchScope(saved);
-    }
-    api<{ papers: Paper[] }>(
-      "/api/papers",
-      saved
-        ? {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids: saved.paperIds }),
-          }
-        : undefined,
-    )
-      .then((r) => {
+    async function initialize() {
+      let saved: ResearchScope | null = null;
+      let history: ResearchDirection[] = [];
+      try {
+        saved = parseResearchScope(
+          localStorage.getItem(scopeStorageKey) ||
+            localStorage.getItem(RESEARCH_SCOPE_KEY),
+        );
+        history = parseDirectionHistory(
+          localStorage.getItem(historyStorageKey),
+        );
+        if (saved)
+          history = mergeDirectionHistory(
+            [{ ...saved, updatedAt: new Date(0).toISOString() }],
+            history,
+          );
+      } catch {
+        /* Browser storage may be disabled. */
+      }
+      if (user) {
+        try {
+          const remote = await api<{ directions: ResearchDirection[] }>(
+            "/api/research/history",
+          );
+          history = mergeDirectionHistory(
+            history,
+            parseDirectionHistory(JSON.stringify(remote.directions)),
+          );
+        } catch {
+          if (active) setMessage("账户方向历史暂时无法加载，先显示本地记录");
+        }
+      }
+      if (!active || revision !== researchRevision.current) return;
+      directionHistoryRef.current = history;
+      setDirectionHistory(history);
+      try {
+        localStorage.setItem(historyStorageKey, JSON.stringify(history));
+      } catch {
+        /* Local-only persistence is best effort. */
+      }
+      saved = saved || history[0] || null;
+      if (saved) {
+        setQuery(saved.query);
+        setResearchScope(saved);
+      }
+      try {
+        const response = await api<{ papers: Paper[] }>(
+          "/api/papers",
+          saved
+            ? {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids: saved.paperIds }),
+              }
+            : undefined,
+        );
         if (!active || revision !== researchRevision.current) return;
-        const scoped = papersInScope(r.papers, saved);
+        const scoped = papersInScope(response.papers, saved);
         setPapers(scoped);
         setSelectedId(scoped[0]?.id || "");
         if (saved && !scoped.length)
-          setMessage("当前研究方向的论文暂未加载，请在系统设置中重新探索文献");
-      })
-      .catch((e) => {
+          setMessage("该方向的论文暂未加载，请重新探索文献；历史标签已保留");
+      } catch (error) {
         if (active && revision === researchRevision.current)
-          setMessage(e.message);
-      });
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setMotion(!reduced.matches);
+          setMessage((error as Error).message);
+      }
+    }
+    void initialize();
+    setMotion(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     return () => {
       active = false;
     };
-  }, []);
+  }, [user?.id, scopeStorageKey, historyStorageKey]);
   useEffect(() => {
     let localIds: string[] = [];
     try {
@@ -653,6 +699,70 @@ export default function AtlasApp({
     [papers, researchScope, readOnly, readIds],
   );
 
+  function rememberDirection(scope: ResearchScope) {
+    const record = { ...scope, updatedAt: new Date().toISOString() };
+    const history = mergeDirectionHistory(directionHistoryRef.current, [
+      record,
+    ]);
+    directionHistoryRef.current = history;
+    setDirectionHistory(history);
+    let locallySaved = true;
+    try {
+      localStorage.setItem(scopeStorageKey, JSON.stringify(scope));
+      localStorage.setItem(historyStorageKey, JSON.stringify(history));
+    } catch {
+      locallySaved = false;
+    }
+    if (user) {
+      const toSync = researchScope && directionKey(researchScope.query) !== directionKey(scope.query) ? [researchScope, scope] : [scope];
+      void (async () => {
+        for (const item of toSync) await api("/api/research/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(item),
+        });
+      })().catch((error) => setMessage((error as Error).message));
+    }
+    return locallySaved;
+  }
+  async function restoreDirection(scope: ResearchScope) {
+    if (loading || generating) return;
+    const revision = ++researchRevision.current;
+    setLoading(true);
+    setMessage("");
+    try {
+      const result = await api<{ papers: Paper[] }>("/api/papers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: scope.paperIds }),
+      });
+      if (revision !== researchRevision.current) return;
+      if (!result.papers.length)
+        throw new Error(
+          "该方向的论文暂时无法恢复，历史标签已保留，可重新探索文献",
+        );
+      setResearchScope(scope);
+      setQuery(scope.query);
+      setPapers(result.papers);
+      setSelectedId(result.papers[0]?.id || "");
+      clearFilters();
+      setResearchBrief(null);
+      setIdeas([]);
+      setHistorySelected(null);
+      setAudit(null);
+      setRepoLookupError("");
+      const locallySaved = rememberDirection(scope);
+      setSection("atlas");
+      setMessage(
+        `已恢复「${scope.query}」：${result.papers.length} 篇论文${result.papers.length < scope.paperIds.length ? "，部分记录暂不可用，历史集合已保留" : ""}。点击“探索文献”可重新从外部网站检索。${!locallySaved ? "本地保存失败，未登录时关闭页面将无法恢复。" : ""}`,
+      );
+    } catch (error) {
+      if (revision === researchRevision.current)
+        setMessage((error as Error).message);
+    } finally {
+      if (revision === researchRevision.current) setLoading(false);
+    }
+  }
   async function research() {
     if (generating || loading) return;
     const requestedQuery = query.trim();
@@ -677,11 +787,7 @@ export default function AtlasApp({
         paperIds: result.papers.map((p) => p.id),
       };
       setResearchScope(scope);
-      try {
-        localStorage.setItem(RESEARCH_SCOPE_KEY, JSON.stringify(scope));
-      } catch {
-        /* Current view still works without persistence. */
-      }
+      const locallySaved = rememberDirection(scope);
       setQuery(requestedQuery);
       setResearchBrief(null);
       setIdeas([]);
@@ -702,7 +808,7 @@ export default function AtlasApp({
       );
       setSection("atlas");
       setMessage(
-        `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；当前方向「${requestedQuery}」展示 ${result.papers.length} 篇${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
+        `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；当前方向「${requestedQuery}」展示 ${result.papers.length} 篇${!locallySaved ? "；本地保存失败，未登录时关闭页面将无法恢复" : ""}${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
       );
     } catch (e) {
       if (revision === researchRevision.current)
@@ -1362,6 +1468,32 @@ export default function AtlasApp({
         </header>
 
         <main className="content">
+          {(section === "atlas" ||
+            section === "library" ||
+            section === "settings") &&
+            directionHistory.length > 0 && (
+              <nav className="direction-history" aria-label="研究方向历史">
+                <span>研究方向</span>
+                <div className="direction-tags">
+                  {directionHistory.map((direction) => (
+                    <button
+                      type="button"
+                      key={directionKey(direction.query)}
+                      title={`恢复 ${direction.query} · ${direction.paperIds.length} 篇论文`}
+                      aria-pressed={
+                        directionKey(researchScope?.query || "") ===
+                        directionKey(direction.query)
+                      }
+                      disabled={loading || generating}
+                      onClick={() => restoreDirection(direction)}
+                    >
+                      <span>{direction.query}</span>
+                      <small>{direction.paperIds.length}</small>
+                    </button>
+                  ))}
+                </div>
+              </nav>
+            )}
           {message && (
             <div className="notice" role="status">
               <span>{message}</span>
@@ -2497,6 +2629,13 @@ export default function AtlasApp({
               </div>
               <div className="research-settings">
                 <h3>研究方向</h3>
+                <p className="direction-help">
+                  探索文献会通过 Lexmount
+                  从外部网站检索；点击历史标签可恢复已保存的论文集合。
+                  {user
+                    ? "方向记录同步到账户。"
+                    : "未登录时方向记录保存在当前浏览器。"}
+                </p>
                 <form
                   className="search-box settings-search"
                   onSubmit={(e) => {

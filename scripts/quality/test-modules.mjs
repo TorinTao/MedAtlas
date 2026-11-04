@@ -6,7 +6,11 @@ const suites = {
     "tests/papers.test.ts",
   ],
   reading: ["tests/modules/reading.test.ts"],
-  atlas: ["tests/modules/atlas.test.ts", "tests/research-scope-routes.test.mjs"],
+  atlas: [
+    "tests/modules/atlas.test.ts",
+    "tests/research-scope-routes.test.mjs",
+    "tests/research-direction-routes.test.mjs",
+  ],
   repositories: ["tests/modules/repositories.test.ts"],
   ideas: [
     "tests/modules/ideas.test.ts",

@@ -53,3 +53,35 @@ test("scope persists only valid query and paper IDs and never falls back to all 
   );
   assert.deepEqual(papersInScope([], scope), []);
 });
+
+import {
+  mergeDirectionHistory,
+  parseDirectionHistory,
+} from "../../modules/atlas/research-scope";
+test("direction history preserves previous labels and replaces only the same direction", () => {
+  const a = {
+    query: "Chest report",
+    paperIds: ["old-a"],
+    updatedAt: "2026-01-01T00:00:00Z",
+  };
+  const b = {
+    query: "Pathology agent",
+    paperIds: ["b"],
+    updatedAt: "2026-02-01T00:00:00Z",
+  };
+  const refreshed = {
+    query: " chest   report ",
+    paperIds: ["new-a"],
+    updatedAt: "2026-03-01T00:00:00Z",
+  };
+  const merged = mergeDirectionHistory([a, b], [refreshed]);
+  assert.equal(merged.length, 2);
+  assert.deepEqual(merged[0].paperIds, ["new-a"]);
+  assert.deepEqual(merged[1].paperIds, ["b"]);
+  assert.equal(
+    parseDirectionHistory(
+      JSON.stringify([...merged, { query: "bad", paperIds: [] }]),
+    ).length,
+    2,
+  );
+});

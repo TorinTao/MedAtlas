@@ -11,7 +11,7 @@ export default async function Home() {
   const user = await getChatGPTUser();
   return (
     <AtlasApp
-      user={user ? { name: user.displayName } : null}
+      user={user ? { name: user.displayName, id: user.userId } : null}
       signInPath={chatGPTSignInPath("/")}
       signOutPath={chatGPTSignOutPath("/")}
     />

@@ -22,6 +22,13 @@
       "when": 1793288023300,
       "tag": "0002_military_zzzax",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793761071550,
+      "tag": "0003_brown_iceman",
+      "breakpoints": true
     }
   ]
 }

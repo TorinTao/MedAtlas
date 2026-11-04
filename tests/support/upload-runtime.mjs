@@ -6,7 +6,7 @@ export const asUser = (id, fn) => identity.run(id, fn);
 export async function headers() { const id = identity.getStore(); return new Headers(id ? {'oai-authenticated-user-id':id,'oai-authenticated-user-email':`${id}@example.test`} : {}); }
 export function redirect() { throw new Error('Unexpected redirect in upload route'); }
 const sqlite = new DatabaseSync(':memory:');
-for (const file of ['0000_smart_william_stryker.sql','0001_square_valkyrie.sql','0002_military_zzzax.sql']) sqlite.exec(readFileSync(`drizzle/${file}`, 'utf8'));
+for (const file of ['0000_smart_william_stryker.sql','0001_square_valkyrie.sql','0002_military_zzzax.sql','0003_brown_iceman.sql']) sqlite.exec(readFileSync(`drizzle/${file}`, 'utf8'));
 export const objects = new Map();
 export const failures = { put: false, insert: false };
 function prepare(sql, values = []) {
