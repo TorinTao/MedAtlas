@@ -2346,8 +2346,9 @@ export default function AtlasApp({
               <div className="draw-header-row">
                 <div className="draw-toolbar">
                   <div>
-                    <b>抽卡</b>
-                    <small>逐张补查相近工作 · 核验与审查后展示</small>
+                    <b>
+                      科研从<span className="draw-title-accent">抽卡</span>开始
+                    </b>
                   </div>
                 </div>
                 <button
