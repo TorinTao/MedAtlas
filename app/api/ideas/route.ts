@@ -114,6 +114,7 @@ export async function POST(request: Request) {
           })),
         allPapers(),
       ]);
+      if (!live.papers.length) return jsonError(`本次 Lexmount 文献核验未完成，暂不生成选题。${live.errors.join("；")}`, 502);
       const initial = dedupePapers([
         ...live.papers,
         ...review.papers,

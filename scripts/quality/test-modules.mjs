@@ -1,6 +1,10 @@
 import { spawnSync } from "node:child_process";
 const suites = {
-  catalog: ["tests/modules/catalog.test.ts", "tests/papers.test.ts"],
+  catalog: [
+    "tests/modules/catalog.test.ts",
+    "tests/modules/lex-first.test.ts",
+    "tests/papers.test.ts",
+  ],
   reading: ["tests/modules/reading.test.ts"],
   atlas: ["tests/modules/atlas.test.ts"],
   repositories: ["tests/modules/repositories.test.ts"],

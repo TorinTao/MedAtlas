@@ -6,7 +6,6 @@ import {
   classify,
   dedupePapers,
   publicPaperUrl,
-  relevantMedicalAiPaper,
   seedPapers,
 } from "../../modules/catalog/papers";
 import type { Paper } from "../../shared/models";
@@ -23,12 +22,7 @@ export async function allPapers(): Promise<Paper[]> {
       ...rows.map((r) => securePaperUrls(JSON.parse(r.data) as Paper)),
       ...seedPapers,
     ])
-      .filter(
-        (paper) =>
-          paper.year <= new Date().getUTCFullYear() &&
-          (!paper.discovery ||
-            relevantMedicalAiPaper(paper.title, paper.abstract)),
-      )
+      .filter((paper) => paper.year <= new Date().getUTCFullYear())
       .slice(0, 500)
       .map(withVenueFallback)
       .map(withSummaryFallback);

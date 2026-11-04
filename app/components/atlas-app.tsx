@@ -634,7 +634,7 @@ export default function AtlasApp({
       );
       setSection("atlas");
       setMessage(
-        `本次检索返回 ${result.matchingCount} 篇相关论文，其中 Lexmount 发现或核验 ${result.lexmountCount} 篇；文献库共 ${result.papers.length} 篇${result.warnings.length ? `；部分来源暂不可用：${result.warnings.join("、")}` : ""}`,
+        `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；文献库共 ${result.papers.length} 篇${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
       );
     } catch (e) {
       setMessage((e as Error).message);
@@ -1696,17 +1696,22 @@ export default function AtlasApp({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            公开搜索页 <ExternalLink size={12} />
+                            {selected.discovery.stage === "article-verification"
+                              ? "Lexmount 已核验页面"
+                              : "Lexmount 公开搜索页"}{" "}
+                            <ExternalLink size={12} />
                           </a>
-                          {selected.discovery.articleUrl && (
-                            <a
-                              href={selected.discovery.articleUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              公开论文页 <ExternalLink size={12} />
-                            </a>
-                          )}
+                          {selected.discovery.articleUrl &&
+                            selected.discovery.articleUrl !==
+                              selected.discovery.searchUrl && (
+                              <a
+                                href={selected.discovery.articleUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                公开论文页 <ExternalLink size={12} />
+                              </a>
+                            )}
                           <small>
                             抓取：{selected.discovery.capturedAt.slice(0, 10)} ·
                             请求 ID：{selected.discovery.requestId || "未返回"}

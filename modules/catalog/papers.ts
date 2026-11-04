@@ -207,7 +207,12 @@ export function dedupePapers(items: Paper[]): Paper[] {
         reviewAbstractSourceUrl:
           paper.reviewAbstractSourceUrl || prior.reviewAbstractSourceUrl,
         analysis: paper.analysis || prior.analysis,
-        discovery: paper.discovery || prior.discovery,
+        discovery:
+          !prior.discovery ||
+          (paper.discovery &&
+            paper.discovery.capturedAt >= prior.discovery.capturedAt)
+            ? paper.discovery
+            : prior.discovery,
         paperType:
           prior.paperType === "预印本" && paper.paperType !== "预印本"
             ? paper.paperType

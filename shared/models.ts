@@ -74,6 +74,8 @@ export type Paper = {
     capturedAt: string;
     requestId: string;
     searchRequestId?: string;
+    stage?: "article-verification";
+    candidateSource?: string;
   };
   summaryZh?: string;
   summaryBasis?: "摘要" | "标题" | "公开页面" | "元数据";
