@@ -1,11 +1,7 @@
 import { createResearchSearch } from "../../../modules/catalog/research-search";
 import { makeResearchFocus } from "../../../composition/research";
 import { collectPapers } from "../../../composition/catalog";
-import {
-  jsonError,
-  putPapers,
-  takeQuota,
-} from "../../../platform/storage/papers";
+import { jsonError, putPapers } from "../../../platform/storage/papers";
 
 export async function POST(request: Request) {
   const body: any = await request.json().catch(() => ({}));
@@ -13,8 +9,6 @@ export async function POST(request: Request) {
     .trim()
     .slice(0, 180);
   if (query.length < 4) return jsonError("请输入至少 4 个字符的研究方向");
-  if (!(await takeQuota(request, "research", 12)))
-    return jsonError("今日公开检索次数已用完，请明天再试", 429);
   const planningWarnings: string[] = [];
   let focus;
   try {
