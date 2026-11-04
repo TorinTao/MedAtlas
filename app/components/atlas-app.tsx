@@ -32,6 +32,7 @@ import {
   FileText,
   Filter,
   GitBranch,
+  History,
   Lightbulb,
   LoaderCircle,
   LockKeyhole,
@@ -92,7 +93,7 @@ const methodColors: Record<Method, string> = {
 const sections = [
   { id: "atlas", label: "研究星图", icon: Compass },
   { id: "library", label: "文献库", icon: BookOpen },
-  { id: "ideas", label: "Ideas 工作台", icon: Lightbulb },
+  { id: "ideas", label: "创新点", icon: Lightbulb },
   { id: "workspace", label: "我的工作区", icon: Bookmark },
   { id: "settings", label: "系统设置", icon: Settings2 },
 ] as const;
@@ -1355,7 +1356,7 @@ export default function AtlasApp({
       await api("/api/upload", { method: "POST", body: form });
       await loadWorkspace();
       setPdfImportStatus(
-        `已保存 ${file.name}（${pdf.numPages} 页），可在下方“我的 PDF”中打开或精读。`,
+        `已保存 ${file.name}（${pdf.numPages} 页），可在下方文件列表中打开或精读。`,
       );
       setMessage(`已保存 ${file.name}（${pdf.numPages} 页）`);
     } catch (e) {
@@ -2342,39 +2343,151 @@ export default function AtlasApp({
 
           {section === "ideas" && (
             <>
-              <div className="draw-toolbar">
-                <div>
-                  <b>抽卡</b>
-                  <small>逐张补查相近工作 · 核验与审查后展示</small>
+              <div className="draw-header-row">
+                <div className="draw-toolbar">
+                  <div>
+                    <b>抽卡</b>
+                    <small>逐张补查相近工作 · 核验与审查后展示</small>
+                  </div>
                 </div>
-                <div className="draw-options">
-                  {([1, 3, 5, 10] as const).map((count) => (
-                    <button
-                      key={count}
-                      onClick={() => generateIdeas(count)}
-                      disabled={
-                        loading || generating || query.trim().length < 4
-                      }
-                    >
-                      {generating ? (
-                        <LoaderCircle size={14} className="spin" />
-                      ) : (
-                        <Sparkles size={14} />
-                      )}
-                      {
-                        (
-                          {
-                            1: "单抽",
-                            3: "三连抽",
-                            5: "五连抽",
-                            10: "十连抽",
-                          } as const
-                        )[count]
-                      }
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  className="idea-history-trigger"
+                  aria-label={`抽卡历史，${ideaHistory.length} 条记录`}
+                  aria-controls="idea-history-panel"
+                  aria-expanded={historyOpen}
+                  title="抽卡历史"
+                  onClick={() => setHistoryOpen((open) => !open)}
+                >
+                  <History size={22} aria-hidden="true" />
+                  {ideaHistory.length > 0 && (
+                    <span aria-hidden="true">{ideaHistory.length}</span>
+                  )}
+                </button>
               </div>
+              <div className="draw-options" role="group" aria-label="抽卡数量">
+                {([1, 3, 5, 10] as const).map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => generateIdeas(count)}
+                    disabled={loading || generating || query.trim().length < 4}
+                  >
+                    {generating ? (
+                      <LoaderCircle size={14} className="spin" />
+                    ) : (
+                      <Sparkles size={14} />
+                    )}
+                    {
+                      (
+                        {
+                          1: "单抽",
+                          3: "三连抽",
+                          5: "五连抽",
+                          10: "十连抽",
+                        } as const
+                      )[count]
+                    }
+                  </button>
+                ))}
+              </div>
+              {historyOpen && (
+                <section
+                  className="idea-history-panel"
+                  id="idea-history-panel"
+                  aria-label="抽卡历史"
+                >
+                  <div className="idea-history-header">
+                    <span>
+                      抽卡历史 <small>{ideaHistory.length} 条记录</small>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="关闭抽卡历史"
+                      onClick={() => setHistoryOpen(false)}
+                    >
+                      <X size={17} />
+                    </button>
+                  </div>
+                  <div className="idea-history-body">
+                    {ideaHistory.length ? (
+                      <>
+                        <div className="idea-history-list">
+                          {ideaHistory
+                            .slice(0, historyVisibleCount)
+                            .map((item) => (
+                              <button
+                                type="button"
+                                key={item.id}
+                                className={
+                                  historySelected?.id === item.id
+                                    ? "active"
+                                    : ""
+                                }
+                                onClick={() => openHistoryIdea(item)}
+                              >
+                                <span>
+                                  {item.createdAt.slice(0, 10)} ·{" "}
+                                  {item.paperCount} 篇论文
+                                  {item.favorite ? " · 已收藏" : ""}
+                                  {item.local ? " · 本设备" : ""}
+                                </span>
+                                <strong>{item.title}</strong>
+                                <small>
+                                  {item.gap.slice(0, 120)}
+                                  {item.gap.length > 120 ? "…" : ""}
+                                </small>
+                                {historyLoadingId === item.id && (
+                                  <em>加载中…</em>
+                                )}
+                              </button>
+                            ))}
+                        </div>
+                        {historyVisibleCount < ideaHistory.length && (
+                          <button
+                            type="button"
+                            className="idea-history-more"
+                            onClick={() =>
+                              setHistoryVisibleCount((value) => value + 12)
+                            }
+                          >
+                            查看更多记录
+                          </button>
+                        )}
+                        {historySelected && (
+                          <div className="idea-history-selected">
+                            <IdeaCard
+                              key={historySelected.id}
+                              idea={historySelected}
+                              index={Math.max(
+                                0,
+                                ideaHistory.findIndex(
+                                  (item) => item.id === historySelected.id,
+                                ),
+                              )}
+                              papers={papers}
+                              onPaper={(p) => {
+                                openWorkspacePaper(p);
+                              }}
+                              onFavorite={toggleIdeaFavorite}
+                              favoriteBusy={
+                                favoriteBusyId === historySelected.id
+                              }
+                              authenticated={Boolean(user)}
+                              signInPath={signInPath}
+                            />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p>
+                        {user
+                          ? "还没有抽卡记录。生成选题后会保存在这里。"
+                          : "还没有本设备的抽卡记录。生成选题后会保存在此浏览器。"}
+                      </p>
+                    )}
+                  </div>
+                </section>
+              )}
               {drawProgress && (
                 <p className="draw-progress" role="status">
                   <LoaderCircle size={15} className="spin" />
@@ -2448,8 +2561,7 @@ export default function AtlasApp({
                   ))}
                 </div>
               ) : (
-                !generating &&
-                !ideaHistory.length && (
+                !generating && (
                   <div className="empty-ideas">
                     <div className="empty-icon">
                       <Sparkles size={32} />
@@ -2461,90 +2573,6 @@ export default function AtlasApp({
                   </div>
                 )
               )}
-              <details
-                className="idea-history-panel"
-                open={historyOpen}
-                onToggle={(event) => setHistoryOpen(event.currentTarget.open)}
-              >
-                <summary>
-                  <span>
-                    抽卡历史 <small>{ideaHistory.length} 条记录</small>
-                  </span>
-                  <ChevronDown size={17} />
-                </summary>
-                <div className="idea-history-body">
-                  {ideaHistory.length ? (
-                    <>
-                      <div className="idea-history-list">
-                        {ideaHistory
-                          .slice(0, historyVisibleCount)
-                          .map((item) => (
-                            <button
-                              type="button"
-                              key={item.id}
-                              className={
-                                historySelected?.id === item.id ? "active" : ""
-                              }
-                              onClick={() => openHistoryIdea(item)}
-                            >
-                              <span>
-                                {item.createdAt.slice(0, 10)} ·{" "}
-                                {item.paperCount} 篇论文
-                                {item.favorite ? " · 已收藏" : ""}
-                                {item.local ? " · 本设备" : ""}
-                              </span>
-                              <strong>{item.title}</strong>
-                              <small>
-                                {item.gap.slice(0, 120)}
-                                {item.gap.length > 120 ? "…" : ""}
-                              </small>
-                              {historyLoadingId === item.id && <em>加载中…</em>}
-                            </button>
-                          ))}
-                      </div>
-                      {historyVisibleCount < ideaHistory.length && (
-                        <button
-                          type="button"
-                          className="idea-history-more"
-                          onClick={() =>
-                            setHistoryVisibleCount((value) => value + 12)
-                          }
-                        >
-                          查看更多记录
-                        </button>
-                      )}
-                      {historySelected && (
-                        <div className="idea-history-selected">
-                          <IdeaCard
-                            key={historySelected.id}
-                            idea={historySelected}
-                            index={Math.max(
-                              0,
-                              ideaHistory.findIndex(
-                                (item) => item.id === historySelected.id,
-                              ),
-                            )}
-                            papers={papers}
-                            onPaper={(p) => {
-                              openWorkspacePaper(p);
-                            }}
-                            onFavorite={toggleIdeaFavorite}
-                            favoriteBusy={favoriteBusyId === historySelected.id}
-                            authenticated={Boolean(user)}
-                            signInPath={signInPath}
-                          />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p>
-                      {user
-                        ? "还没有抽卡记录。生成选题后会保存在这里。"
-                        : "还没有本设备的抽卡记录。生成选题后会保存在此浏览器。"}
-                    </p>
-                  )}
-                </div>
-              </details>
               <div className="research-note">
                 <CircleHelp size={17} />{" "}
                 研究选题是待检验假设，不能替代系统综述、实验复现或临床验证。
@@ -2693,8 +2721,7 @@ export default function AtlasApp({
                       </label>
 
                       <small>
-                        文件仅保存在你的个人工作区，上传后可在“我的 PDF”中进行
-                        AI 精读。
+                        文件仅保存在你的个人工作区，上传后可在下方查看、精读或删除。
                       </small>
                       {uploading && (
                         <p role="status">正在解析并上传 PDF，请稍候…</p>
@@ -2707,9 +2734,60 @@ export default function AtlasApp({
                           {pdfImportStatus}
                         </p>
                       )}
+                      {workspace?.uploads.map((f) => (
+                        <div key={f.id}>
+                          <div className="upload-row">
+                            <FileText size={17} />
+                            <a
+                              href={`/api/upload/${f.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {f.fileName}
+                              <small>
+                                {f.pageCount} 页 ·{" "}
+                                {(f.fileSize / 1024 / 1024).toFixed(1)} MB
+                              </small>
+                            </a>
+                            <button
+                              className="upload-analyze"
+                              onClick={() => analyzeUpload(f.id)}
+                              disabled={pdfReading === f.id}
+                            >
+                              {pdfReading === f.id ? "分析中" : "AI 精读"}
+                            </button>
+                            <button
+                              onClick={() => deleteUpload(f.id)}
+                              aria-label="删除 PDF"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                          {pdfAnalysis[f.id] && (
+                            <div className="upload-analysis">
+                              <strong>研究问题</strong>
+                              <p>{pdfAnalysis[f.id].question}</p>
+                              <strong>方法</strong>
+                              <p>{pdfAnalysis[f.id].method}</p>
+                              <strong>主要发现</strong>
+                              <ul>
+                                {pdfAnalysis[f.id].findings.map((v, i) => (
+                                  <li key={i}>{v}</li>
+                                ))}
+                              </ul>
+                              <strong>局限</strong>
+                              <ul>
+                                {pdfAnalysis[f.id].limitations.map((v, i) => (
+                                  <li key={i}>{v}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="workspace-panel">
+                  <div className="workspace-panel full">
                     <div className="workspace-panel-head">
                       <div>
                         <span>01 / SAVED PAPERS</span>
@@ -2744,75 +2822,10 @@ export default function AtlasApp({
                       </p>
                     )}
                   </div>
-                  <div className="workspace-panel">
-                    <div className="workspace-panel-head">
-                      <div>
-                        <span>02 / PRIVATE LIBRARY</span>
-                        <h3>我的 PDF</h3>
-                      </div>
-                      <strong>{workspace?.uploads.length || 0}</strong>
-                    </div>
-                    {!workspace?.uploads.length && (
-                      <p className="workspace-empty">
-                        暂无 PDF，在上方“导入论文”中选择 PDF 文件上传。
-                      </p>
-                    )}
-                    {workspace?.uploads.map((f) => (
-                      <div key={f.id}>
-                        <div className="upload-row">
-                          <FileText size={17} />
-                          <a
-                            href={`/api/upload/${f.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {f.fileName}
-                            <small>
-                              {f.pageCount} 页 ·{" "}
-                              {(f.fileSize / 1024 / 1024).toFixed(1)} MB
-                            </small>
-                          </a>
-                          <button
-                            className="upload-analyze"
-                            onClick={() => analyzeUpload(f.id)}
-                            disabled={pdfReading === f.id}
-                          >
-                            {pdfReading === f.id ? "分析中" : "AI 精读"}
-                          </button>
-                          <button
-                            onClick={() => deleteUpload(f.id)}
-                            aria-label="删除 PDF"
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                        {pdfAnalysis[f.id] && (
-                          <div className="upload-analysis">
-                            <strong>研究问题</strong>
-                            <p>{pdfAnalysis[f.id].question}</p>
-                            <strong>方法</strong>
-                            <p>{pdfAnalysis[f.id].method}</p>
-                            <strong>主要发现</strong>
-                            <ul>
-                              {pdfAnalysis[f.id].findings.map((v, i) => (
-                                <li key={i}>{v}</li>
-                              ))}
-                            </ul>
-                            <strong>局限</strong>
-                            <ul>
-                              {pdfAnalysis[f.id].limitations.map((v, i) => (
-                                <li key={i}>{v}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
                   <div className="workspace-panel full">
                     <div className="workspace-panel-head">
                       <div>
-                        <span>03 / RESEARCH IDEAS</span>
+                        <span>02 / RESEARCH IDEAS</span>
                         <h3>已保存选题</h3>
                       </div>
                       <strong>{workspace?.ideas.length || 0}</strong>
@@ -2947,7 +2960,7 @@ export default function AtlasApp({
                       <p>
                         个人 Key
                         将优先用于文献精读、中文概述与摘要翻译、代码仓库评价、PDF
-                        分析和 Ideas 抽卡。删除后恢复使用站点配置。
+                        分析和创新点抽卡。删除后恢复使用站点配置。
                       </p>
                       <label htmlFor="deepseek-key">DeepSeek API Key</label>
                       <div className="api-key-field">
