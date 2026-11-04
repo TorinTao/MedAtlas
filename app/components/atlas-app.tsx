@@ -217,6 +217,9 @@ export default function AtlasApp({
   );
   const [auditing, setAuditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [importMethod, setImportMethod] = useState<"link" | "pdf">("link");
+  const [pdfImportStatus, setPdfImportStatus] = useState("");
+  const [pdfImportError, setPdfImportError] = useState(false);
   const [paperLink, setPaperLink] = useState("");
   const [importingLink, setImportingLink] = useState(false);
   const [paperLinkError, setPaperLinkError] = useState("");
@@ -1331,6 +1334,8 @@ export default function AtlasApp({
     }
     setUploading(true);
     setMessage("");
+    setPdfImportStatus("");
+    setPdfImportError(false);
     let task: import("pdfjs-dist").PDFDocumentLoadingTask | undefined;
     try {
       if (!file.name.toLowerCase().endsWith(".pdf"))
@@ -1349,16 +1354,21 @@ export default function AtlasApp({
       form.append("pages", String(pdf.numPages));
       await api("/api/upload", { method: "POST", body: form });
       await loadWorkspace();
+      setPdfImportStatus(
+        `已保存 ${file.name}（${pdf.numPages} 页），可在下方“我的 PDF”中打开或精读。`,
+      );
       setMessage(`已保存 ${file.name}（${pdf.numPages} 页）`);
     } catch (e) {
       const error = e as Error;
-      setMessage(
+      const errorMessage =
         error.name === "PasswordException"
           ? "PDF 受密码保护，请先解密后上传"
           : error.name === "InvalidPDFException"
             ? "PDF 已损坏或格式无效，请换一个文件重试"
-            : error.message,
-      );
+            : error.message;
+      setPdfImportError(true);
+      setPdfImportStatus(errorMessage);
+      setMessage(errorMessage);
     } finally {
       await task?.destroy().catch(() => {});
       setUploading(false);
@@ -2553,75 +2563,137 @@ export default function AtlasApp({
               ) : (
                 <div className="workspace-grid">
                   <div className="workspace-panel paper-link-panel">
-                    <h3>导入论文链接</h3>
-                    <p>
-                      粘贴公开论文详情页或 DOI，Agent 将通过 Lexmount
-                      加载论文、生成中文解读并加入已收藏文献。
-                    </p>
-                    <form
-                      className="paper-link-form"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        void importPaperFromLink();
-                      }}
+                    <h3>导入论文</h3>
+                    <p>粘贴论文链接或上传 PDF，开始阅读与研究。</p>
+                    <div
+                      className="paper-import-switch"
+                      role="group"
+                      aria-label="论文导入方式"
                     >
-                      <label className="paper-link-field">
-                        论文链接
-                        <input
-                          value={paperLink}
-                          onChange={(event) => setPaperLink(event.target.value)}
-                          inputMode="url"
-                          autoComplete="off"
-                          placeholder="https://arxiv.org/abs/… 或 10.…"
-                          maxLength={2048}
-                          required
-                          disabled={importingLink}
-                        />
-                      </label>
                       <button
-                        type="submit"
-                        disabled={importingLink || !paperLink.trim()}
+                        type="button"
+                        aria-pressed={importMethod === "link"}
+                        onClick={() => setImportMethod("link")}
                       >
-                        {importingLink ? (
-                          <>
-                            <LoaderCircle size={16} className="spin" />{" "}
-                            正在加载…
-                          </>
-                        ) : paperLinkError ? (
-                          "重试导入"
-                        ) : (
-                          "导入论文"
-                        )}
+                        论文链接{importingLink ? " · 加载中" : ""}
                       </button>
-                    </form>
-                    <small>
-                      仅支持公开页面；arXiv PDF 链接自动转换为摘要页。其他 PDF
-                      或私有文档请使用文件上传。公开论文内容将加入公共文献库，收藏记录仅自己可见。
-                    </small>
-                    {importingLink && (
-                      <p role="status">
-                        正在读取公开页面并生成中文概述与摘要译文，请稍候…
-                      </p>
-                    )}
-                    {paperLinkError && (
-                      <p className="paper-link-error" role="alert">
-                        {paperLinkError}
-                      </p>
-                    )}
-                    {linkResult && (
-                      <div className="paper-link-result" role="status">
-                        <strong>已加载并收藏：{linkResult.paper.title}</strong>
-                        {linkResult.warnings.map((warning) => (
-                          <p key={warning}>{warning}</p>
-                        ))}
+                      <button
+                        type="button"
+                        aria-pressed={importMethod === "pdf"}
+                        onClick={() => setImportMethod("pdf")}
+                      >
+                        PDF 文件{uploading ? " · 上传中" : ""}
+                      </button>
+                    </div>
+                    <div hidden={importMethod !== "link"}>
+                      <form
+                        className="paper-link-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void importPaperFromLink();
+                        }}
+                      >
+                        <label className="paper-link-field">
+                          论文链接
+                          <input
+                            value={paperLink}
+                            onChange={(event) =>
+                              setPaperLink(event.target.value)
+                            }
+                            inputMode="url"
+                            autoComplete="off"
+                            placeholder="https://arxiv.org/abs/… 或 10.…"
+                            maxLength={2048}
+                            required
+                            disabled={importingLink}
+                          />
+                        </label>
                         <button
-                          type="button"
-                          onClick={() => openWorkspacePaper(linkResult.paper)}
+                          type="submit"
+                          disabled={importingLink || !paperLink.trim()}
                         >
-                          查看论文 <ArrowRight size={15} />
+                          {importingLink ? (
+                            <>
+                              <LoaderCircle size={16} className="spin" />{" "}
+                              正在加载…
+                            </>
+                          ) : paperLinkError ? (
+                            "重试导入"
+                          ) : (
+                            "导入论文"
+                          )}
                         </button>
-                      </div>
-                    )}
+                      </form>
+                      <small>
+                        仅支持公开页面；arXiv PDF 链接自动转换为摘要页。其他 PDF
+                        或私有文档请使用文件上传。公开论文内容将加入公共文献库，收藏记录仅自己可见。
+                      </small>
+                      {importingLink && (
+                        <p role="status">
+                          正在读取公开页面并生成中文概述与摘要译文，请稍候…
+                        </p>
+                      )}
+                      {paperLinkError && (
+                        <p className="paper-link-error" role="alert">
+                          {paperLinkError}
+                        </p>
+                      )}
+                      {linkResult && (
+                        <div className="paper-link-result" role="status">
+                          <strong>
+                            已加载并收藏：{linkResult.paper.title}
+                          </strong>
+                          {linkResult.warnings.map((warning) => (
+                            <p key={warning}>{warning}</p>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => openWorkspacePaper(linkResult.paper)}
+                          >
+                            查看论文 <ArrowRight size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div hidden={importMethod !== "pdf"}>
+                      <label className="upload-zone">
+                        <input
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadPdf(f);
+                            e.currentTarget.value = "";
+                          }}
+                          disabled={uploading}
+                        />
+                        <UploadCloud size={25} />
+                        <b>
+                          {uploading
+                            ? "正在解析并上传…"
+                            : "点击上传研究论文 PDF"}
+                        </b>
+                        <small>
+                          只上传你有权使用的文件 · 最多 20 MB / 100 页
+                        </small>
+                      </label>
+
+                      <small>
+                        文件仅保存在你的个人工作区，上传后可在“我的 PDF”中进行
+                        AI 精读。
+                      </small>
+                      {uploading && (
+                        <p role="status">正在解析并上传 PDF，请稍候…</p>
+                      )}
+                      {pdfImportStatus && (
+                        <p
+                          className={pdfImportError ? "paper-link-error" : ""}
+                          role={pdfImportError ? "alert" : "status"}
+                        >
+                          {pdfImportStatus}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="workspace-panel">
                     <div className="workspace-panel-head">
@@ -2666,25 +2738,11 @@ export default function AtlasApp({
                       </div>
                       <strong>{workspace?.uploads.length || 0}</strong>
                     </div>
-                    <label className="upload-zone">
-                      <input
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) uploadPdf(f);
-                          e.currentTarget.value = "";
-                        }}
-                        disabled={uploading}
-                      />
-                      <UploadCloud size={25} />
-                      <b>
-                        {uploading ? "正在解析并上传…" : "点击上传研究论文 PDF"}
-                      </b>
-                      <small>
-                        只上传你有权使用的文件 · 最多 20 MB / 100 页
-                      </small>
-                    </label>
+                    {!workspace?.uploads.length && (
+                      <p className="workspace-empty">
+                        暂无 PDF，在上方“导入论文”中选择 PDF 文件上传。
+                      </p>
+                    )}
                     {workspace?.uploads.map((f) => (
                       <div key={f.id}>
                         <div className="upload-row">

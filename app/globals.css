@@ -221,7 +221,8 @@
   grid-column: 1 / -1;
 }
 .paper-link-panel > p,
-.paper-link-panel > small {
+.paper-link-panel > small,
+.paper-link-panel > div > small {
   color: var(--muted);
   line-height: 1.7;
 }
@@ -283,3 +284,10 @@
     align-items: stretch;
   }
 }
+
+.paper-import-switch { display:flex; gap:6px; width:fit-content; padding:4px; margin:16px 0; background:#edf3f0; border-radius:10px; }
+.paper-import-switch button { min-height:40px; padding:9px 20px; border-radius:7px; color:#52736c; }
+.paper-import-switch button[aria-pressed="true"] { background:#174b50; color:#fff; }
+.paper-import-switch button:focus-visible { outline:2px solid #238d82; outline-offset:2px; }
+.paper-link-panel [hidden] { display:none; }
+.paper-link-panel .upload-zone { margin:12px 0; }
