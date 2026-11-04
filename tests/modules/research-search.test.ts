@@ -4,6 +4,7 @@ import { normalizePaper } from "../../modules/catalog/papers";
 import {
   planLiteratureSearch,
   matchesLiteraturePlan,
+  classifyLiteraturePaper,
 } from "../../modules/catalog/search-plan";
 import { createResearchSearch } from "../../modules/catalog/research-search";
 import { createLexFirstCatalog } from "../../modules/catalog/lex-first";
@@ -20,8 +21,8 @@ const relevant = paper(
 );
 test("medical agent memory uses multiple short queries and accepts conceptual synonyms", () => {
   const plan = planLiteratureSearch("医学Agent + Memory管理", focus);
-  assert.equal(plan.queries.length, 4);
-  assert.ok(plan.queries.every((q) => q.split(" ").length <= 5));
+  assert.equal(plan.queries.length, 9);
+  assert.ok(plan.paths.filter(path => path.role === "核心研究").every(path => path.query.split(" ").length <= 5));
   assert.equal(matchesLiteraturePlan(relevant, plan), true);
   assert.equal(
     matchesLiteraturePlan(
@@ -131,8 +132,72 @@ test("query failures remain visible while synonyms deduplicate across successful
     };
   });
   const result = await search("医学Agent + Memory管理", focus);
-  assert.equal(calls, 4);
+  assert.equal(calls, 9);
   assert.equal(result.papers.length, 1);
   assert.equal(result.diagnostics.queries[0].status, "failed");
   assert.equal(result.diagnostics.matched, 1);
+});
+
+test("broader paths add historical, adjacent and transferable work without admitting biological or hardware memory", async () => {
+  const plan = planLiteratureSearch("医学Agent + Memory管理", focus);
+  const history = {
+    ...paper(
+      "history",
+      "Clinical decision support review",
+      "Machine learning for clinical decision support used longitudinal patient records and historical patient information. ",
+    ),
+    year: 2018,
+  };
+  const adjacent = paper(
+    "adjacent",
+    "Medical language agents for clinical workflow",
+    "Clinical language model agents support medical workflow reasoning and electronic health records without a persistent memory module. ",
+  );
+  const inspiration = paper(
+    "inspiration",
+    "Episodic memory retrieval for autonomous agents",
+    "Autonomous language model agents use episodic memory retrieval for multi-step software reasoning and planning. ",
+  );
+  const biology = paper(
+    "biology",
+    "Episodic memory in medical patients",
+    "Pharmacological agents alter episodic memory in clinical patients in a randomized biomedical study. ",
+  );
+  const hardware = paper(
+    "hardware",
+    "GPU memory for healthcare models",
+    "Medical language models reduce GPU memory consumption and memory footprint for efficient inference. ",
+  );
+  assert.equal(classifyLiteraturePaper(history, plan), "历史脉络");
+  assert.equal(classifyLiteraturePaper(adjacent, plan), "邻近研究");
+  assert.equal(classifyLiteraturePaper(inspiration, plan), "跨领域启发");
+  assert.equal(classifyLiteraturePaper(biology, plan), null);
+  assert.equal(classifyLiteraturePaper(hardware, plan), null);
+  const candidates = [
+    relevant,
+    history,
+    adjacent,
+    inspiration,
+    biology,
+    hardware,
+  ];
+  const search = createResearchSearch(async (_query, _breadth, accepts) => ({
+    papers: candidates.filter(accepts),
+    sources: ["Lexmount"],
+    errors: [],
+    candidateCount: candidates.length,
+  }));
+  const result = await search("医学Agent + Memory管理", focus);
+  assert.deepEqual(result.diagnostics.roles, {
+    核心研究: 1,
+    历史脉络: 1,
+    邻近研究: 1,
+    跨领域启发: 1,
+  });
+  assert.equal(result.papers.length, 4);
+  assert.equal(result.paperRoles.inspiration, "跨领域启发");
+  assert.equal(
+    result.papers.some((p) => p.id === "biology" || p.id === "hardware"),
+    false,
+  );
 });

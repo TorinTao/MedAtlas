@@ -85,3 +85,25 @@ test("direction history preserves previous labels and replaces only the same dir
     2,
   );
 });
+
+test("direction roles survive saving and ignore roles for papers outside that direction", () => {
+  const scope = parseResearchScope(
+    JSON.stringify({
+      query: "医学Agent记忆管理",
+      paperIds: ["core", "history"],
+      paperRoles: {
+        core: "核心研究",
+        history: "历史脉络",
+        unrelated: "跨领域启发",
+      },
+    }),
+  );
+  assert.deepEqual(scope?.paperRoles, {
+    core: "核心研究",
+    history: "历史脉络",
+  });
+  const restored = parseDirectionHistory(
+    JSON.stringify([{ ...scope, updatedAt: "2026-11-04T00:00:00Z" }]),
+  );
+  assert.equal(restored[0].paperRoles?.history, "历史脉络");
+});

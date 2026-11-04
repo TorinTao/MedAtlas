@@ -856,6 +856,7 @@ export default function AtlasApp({
       const result = await api<{
         papers: Paper[];
         diagnostics: SearchDiagnostics;
+        paperRoles: Record<string, import("../../shared/models").ResearchRole>;
         matchingCount: number;
         lexmountCount: number;
         sources: string[];
@@ -870,6 +871,7 @@ export default function AtlasApp({
       const scope = {
         query: requestedQuery,
         paperIds: result.papers.map((p) => p.id),
+        paperRoles: result.paperRoles,
       };
       setResearchScope(scope);
       const locallySaved = rememberDirection(scope);
@@ -1693,10 +1695,23 @@ export default function AtlasApp({
                   去重后 {searchDiagnostics.matched} 篇主题相关论文
                 </summary>
                 <p>{searchDiagnostics.description}</p>
+                {searchDiagnostics.roles && (
+                  <p className="search-role-counts">
+                    {Object.entries(searchDiagnostics.roles).map(
+                      ([role, count]) => (
+                        <span key={role}>
+                          {role} {count}
+                        </span>
+                      ),
+                    )}
+                  </p>
+                )}
                 <ul>
                   {searchDiagnostics.queries.map((path) => (
                     <li key={path.query}>
-                      <code>{path.query}</code>
+                      <code>
+                        {path.role} · {path.query}
+                      </code>
                       <span>
                         候选 {path.candidates} · 核验且匹配 {path.accepted}
                         {path.status === "failed" ? " · 请求失败" : ""}
@@ -1811,6 +1826,11 @@ export default function AtlasApp({
                           <span>{selected.paperType}</span>
                         </div>
                         <h3>{selected.title}</h3>
+                        {researchScope?.paperRoles?.[selected.id] && (
+                          <span className="paper-context-role">
+                            {researchScope.paperRoles[selected.id]}
+                          </span>
+                        )}
                         <p className="rail-venue">
                           {selected.publicationVenue &&
                           selected.publicationVenue.type !== "待核验"
@@ -1986,6 +2006,11 @@ export default function AtlasApp({
                             >
                               {p.method}
                             </span>
+                            {researchScope?.paperRoles?.[p.id] && (
+                              <span className="paper-context-role">
+                                {researchScope.paperRoles[p.id]}
+                              </span>
+                            )}
                             <h3>{p.title}</h3>
                             <p>
                               {p.authors

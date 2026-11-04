@@ -1,3 +1,4 @@
+export type ResearchRole = "核心研究" | "历史脉络" | "邻近研究" | "跨领域启发";
 export type PaperType = "综述" | "预印本" | "研究论文" | "数据集";
 export type Modality = "影像+文本" | "影像" | "病历文本" | "多模态";
 export type ClinicalTask =

@@ -1,6 +1,10 @@
-import type { Paper } from "../../shared/models";
+import type { Paper, ResearchRole } from "../../shared/models";
 export const RESEARCH_SCOPE_KEY = "medatlas-research-scope-v1";
-export type ResearchScope = { query: string; paperIds: string[] };
+export type ResearchScope = {
+  query: string;
+  paperIds: string[];
+  paperRoles?: Record<string, ResearchRole>;
+};
 export function parseResearchScope(raw: string | null): ResearchScope | null {
   try {
     const value: unknown = JSON.parse(raw || "null");
@@ -18,7 +22,24 @@ export function parseResearchScope(raw: string | null): ResearchScope | null {
       )
     )
       return null;
-    return { query: query.trim(), paperIds: [...new Set(paperIds)] };
+    const uniqueIds = [...new Set(paperIds)];
+    const ids = new Set(uniqueIds);
+    const allowed = new Set<ResearchRole>([
+      "核心研究",
+      "历史脉络",
+      "邻近研究",
+      "跨领域启发",
+    ]);
+    const rawRoles = (value as ResearchScope).paperRoles;
+    const paperRoles: Record<string, ResearchRole> = {};
+    if (rawRoles && typeof rawRoles === "object" && !Array.isArray(rawRoles))
+      for (const [id, role] of Object.entries(rawRoles))
+        if (ids.has(id) && allowed.has(role)) paperRoles[id] = role;
+    return {
+      query: query.trim(),
+      paperIds: uniqueIds,
+      ...(Object.keys(paperRoles).length ? { paperRoles } : {}),
+    };
   } catch {
     return null;
   }

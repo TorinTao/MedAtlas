@@ -350,3 +350,5 @@
 .idea-model-links .discussion-model:hover { filter:brightness(.96); transform:translateY(-1px); }
 .idea-model-links .discussion-model:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .idea-model-links .discussion-model:disabled { opacity:.6; cursor:wait; transform:none; }
+
+.search-role-counts{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.search-role-counts span,.paper-context-role{display:inline-block;padding:3px 7px;border:1px solid #c5dcd3;border-radius:5px;background:#edf6f1;color:#39796a;font-size:10px;font-weight:700}.paper-context-role{margin:4px 0 7px 7px}.rail-card .paper-context-role{margin-left:0}
