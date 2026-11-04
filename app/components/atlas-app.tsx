@@ -1535,7 +1535,6 @@ export default function AtlasApp({
             ))}
           </nav>
           <label className="header-direction">
-            <span>研究方向</span>
             <select
               aria-label="切换研究方向"
               title={researchScope?.query || "选择研究方向"}
