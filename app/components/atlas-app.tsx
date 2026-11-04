@@ -1534,6 +1534,47 @@ export default function AtlasApp({
               </button>
             ))}
           </nav>
+          <label className="header-direction">
+            <span>研究方向</span>
+            <select
+              aria-label="切换研究方向"
+              title={researchScope?.query || "选择研究方向"}
+              value={
+                directionHistory.some(
+                  (d) =>
+                    directionKey(d.query) ===
+                    directionKey(researchScope?.query || ""),
+                )
+                  ? directionKey(researchScope?.query || "")
+                  : ""
+              }
+              disabled={loading || generating}
+              onChange={(event) => {
+                if (event.target.value === "__new") {
+                  setSection("settings");
+                  window.scrollTo({ top: 0, behavior: "instant" });
+                  return;
+                }
+                const direction = directionHistory.find(
+                  (d) => directionKey(d.query) === event.target.value,
+                );
+                if (direction) void restoreDirection(direction);
+              }}
+            >
+              <option value="" disabled>
+                {researchScope?.query || "选择或创建研究方向"}
+              </option>
+              {directionHistory.map((direction) => (
+                <option
+                  key={directionKey(direction.query)}
+                  value={directionKey(direction.query)}
+                >
+                  {direction.query} · {direction.paperIds.length} 篇
+                </option>
+              ))}
+              <option value="__new">＋ 新建研究方向</option>
+            </select>
+          </label>
           <div className="top-actions">
             {user ? (
               <a
@@ -1556,32 +1597,6 @@ export default function AtlasApp({
         </header>
 
         <main className="content">
-          {(section === "atlas" ||
-            section === "library" ||
-            section === "settings") &&
-            directionHistory.length > 0 && (
-              <nav className="direction-history" aria-label="研究方向历史">
-                <span>研究方向</span>
-                <div className="direction-tags">
-                  {directionHistory.map((direction) => (
-                    <button
-                      type="button"
-                      key={directionKey(direction.query)}
-                      title={`恢复 ${direction.query} · ${direction.paperIds.length} 篇论文`}
-                      aria-pressed={
-                        directionKey(researchScope?.query || "") ===
-                        directionKey(direction.query)
-                      }
-                      disabled={loading || generating}
-                      onClick={() => restoreDirection(direction)}
-                    >
-                      <span>{direction.query}</span>
-                      <small>{direction.paperIds.length}</small>
-                    </button>
-                  ))}
-                </div>
-              </nav>
-            )}
           {searchDiagnostics &&
             (section === "atlas" ||
               section === "library" ||
