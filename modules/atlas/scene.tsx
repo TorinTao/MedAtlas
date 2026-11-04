@@ -124,7 +124,8 @@ function pointTexture(): CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;
   const context = canvas.getContext("2d")!;
-  const glow = context.createRadialGradient(64, 64, 0, 64, 64, 48);
+  // Reduce visible diameter by one third while preserving sprite hit targets.
+  const glow = context.createRadialGradient(64, 64, 0, 64, 64, 32);
   glow.addColorStop(0, "#fff");
   glow.addColorStop(0.3, "#fff");
   glow.addColorStop(0.52, "#ffffffed");
