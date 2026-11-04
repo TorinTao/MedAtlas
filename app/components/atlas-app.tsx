@@ -1913,20 +1913,6 @@ export default function AtlasApp({
 
           {section === "library" && (
             <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">02 / READ</span>
-                  <h2>
-                    文献库 <span>Paper Library</span>
-                  </h2>
-                  <p>筛选、比较和精读真实文献；每条结论都可回溯到来源。</p>
-                </div>
-                <span className="source-chip">
-                  {visible.length === papers.length
-                    ? `${papers.length} 篇已收录`
-                    : `${visible.length} / ${papers.length} 篇结果`}
-                </span>
-              </div>
               <div className="filters">
                 <Filter size={17} />
                 {[
@@ -2481,6 +2467,7 @@ export default function AtlasApp({
                 {([1, 3, 5, 10] as const).map((count) => (
                   <button
                     key={count}
+                    className={`draw-option-${count}`}
                     onClick={() => generateIdeas(count)}
                     disabled={loading || generating || query.trim().length < 4}
                   >
@@ -2678,10 +2665,9 @@ export default function AtlasApp({
                     <div className="empty-icon">
                       <Sparkles size={32} />
                     </div>
-                    <h3>从一个待验证的问题开始</h3>
-                    <p>
-                      点击抽卡，系统会先检索文献、比对证据，再生成研究方案。
-                    </p>
+                    <h3 className="empty-ideas-promise">
+                      <span>五连出金</span>，<span>十连出红</span>
+                    </h3>
                   </div>
                 )
               )}
@@ -2693,18 +2679,6 @@ export default function AtlasApp({
           )}
           {section === "workspace" && (
             <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">04 / YOUR RESEARCH</span>
-                  <h2>
-                    我的工作区 <span>Workspace</span>
-                  </h2>
-                  <p>
-                    保存重要文献、导入公开论文链接或上传
-                    PDF，并持续打磨研究选题。
-                  </p>
-                </div>
-              </div>
               {!user ? (
                 <div className="workspace-login">
                   <LockKeyhole size={30} />
@@ -2987,17 +2961,6 @@ export default function AtlasApp({
           )}
           {section === "settings" && (
             <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">
-                    05 / PERSONAL CONFIGURATION
-                  </span>
-                  <h2>
-                    系统设置 <span>System Settings</span>
-                  </h2>
-                  <p>设定研究方向，并管理文献解读和选题生成所用的模型。</p>
-                </div>
-              </div>
               <div className="research-settings">
                 <h3>研究方向</h3>
                 <p className="direction-help">

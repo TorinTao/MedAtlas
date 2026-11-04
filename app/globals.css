@@ -329,11 +329,21 @@
 .draw-header-row .draw-toolbar { flex:1; min-width:0; margin:0; }
 .draw-header-row .draw-toolbar b { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; font-size:18px; line-height:1.5; }
 .draw-title-accent { padding:1px 7px; border-radius:6px; background:#dff3e9; color:#126d5d; font-size:24px; font-weight:900; line-height:1.3; }
+.empty-ideas .empty-ideas-promise { margin:0; font-size:22px; font-weight:850; }
+.empty-ideas-promise span:first-child { color:#b98217; }
+.empty-ideas-promise span:last-child { color:#c54c4c; }
 .idea-history-trigger { position:relative; display:grid; place-items:center; flex:0 0 70px; min-height:70px; border:1px solid #c9dfd7; border-radius:10px; background:#f5faf7; color:#246d67; cursor:pointer; }
 .idea-history-trigger:hover,.idea-history-trigger[aria-expanded="true"] { border-color:#83bfb0; background:#e7f4ee; }
 .idea-history-trigger:focus-visible,.idea-history-header button:focus-visible { outline:2px solid #238d82; outline-offset:2px; }
 .idea-history-trigger span { position:absolute; top:8px; right:8px; display:grid; place-items:center; min-width:17px; height:17px; padding:0 3px; border-radius:9px; background:#1a5559; color:#fff; font-size:9px; font-weight:800; }
-.draw-options { margin:0 0 17px; }
+.draw-options { justify-content:center; margin:0 0 17px; }
+.draw-options button { min-width:105px; justify-content:center; }
+.draw-options button.draw-option-1 { background:#176a68; border-color:#176a68; color:#fff; }
+.draw-options button.draw-option-3 { background:#5267a7; border-color:#5267a7; color:#fff; }
+.draw-options button.draw-option-5 { background:#9b690e; border-color:#9b690e; color:#fff; }
+.draw-options button.draw-option-10 { background:#ac4351; border-color:#ac4351; color:#fff; }
+.draw-options button:hover:not(:disabled) { filter:brightness(1.1); }
+.draw-options button:focus-visible { outline:2px solid #238d82; outline-offset:2px; }
 .idea-history-panel { margin:0 0 17px; }
 .idea-history-header { display:flex; justify-content:space-between; align-items:center; padding:13px 18px; color:#205f5b; font-size:14px; font-weight:800; }
 .idea-history-header small { margin-left:8px; color:#78938d; font-size:10px; font-weight:600; }
