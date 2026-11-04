@@ -364,7 +364,7 @@ function Plot({
   return (
     <group ref={group}>
       <gridHelper
-        args={[12, 12, "#243d50", "#122b3a"]}
+        args={[12, 12, "#1b394a", "#0c2635"]}
         position={[0, -3.1, 0]}
       />
       <mesh position={[0, -3.05, 0]}>
@@ -378,26 +378,26 @@ function Plot({
       </mesh>
       {[-4.56, -2.28, 0, 2.28, 4.56].map((x, i) => (
         <mesh key={i} position={[x, 0, 0]}>
-          <boxGeometry args={[0.008, 6, 5.2]} />
+          <boxGeometry args={[0.004, 6, 5.2]} />
           <meshBasicMaterial
             color="#244659"
             transparent
-            opacity={i === 2 ? 0.24 : 0.1}
+            opacity={i === 2 ? 0.17 : 0.07}
             depthWrite={false}
           />
         </mesh>
       ))}
       <mesh position={[0, -2.63, 2.7]}>
-        <boxGeometry args={[10.3, 0.028, 0.028]} />
-        <meshBasicMaterial color="#70e1e1" />
+        <boxGeometry args={[10.3, 0.009, 0.009]} />
+        <meshBasicMaterial color="#70e1e1" transparent opacity={0.72} />
       </mesh>
       <mesh position={[-5.15, 0, 2.7]}>
-        <boxGeometry args={[0.028, 5.26, 0.028]} />
-        <meshBasicMaterial color="#e8bd7f" />
+        <boxGeometry args={[0.009, 5.26, 0.009]} />
+        <meshBasicMaterial color="#e8bd7f" transparent opacity={0.72} />
       </mesh>
       <mesh position={[-5.15, -2.63, 0]}>
-        <boxGeometry args={[0.028, 0.028, 5.4]} />
-        <meshBasicMaterial color="#bcaaf9" />
+        <boxGeometry args={[0.009, 0.009, 5.4]} />
+        <meshBasicMaterial color="#bcaaf9" transparent opacity={0.72} />
       </mesh>
       <AxisLabel
         text="X · 发表时间"
