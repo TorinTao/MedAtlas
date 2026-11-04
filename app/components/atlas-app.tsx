@@ -214,6 +214,11 @@ export default function AtlasApp({
   const [auditing, setAuditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 5000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
   const [ideas, setIdeas] = useState<ResearchIdea[]>([]);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [ideaHistory, setIdeaHistory] = useState<IdeaHistoryItem[]>([]);
