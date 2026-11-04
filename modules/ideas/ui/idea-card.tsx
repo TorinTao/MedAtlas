@@ -3,17 +3,15 @@ import { useState } from "react";
 import type { Paper, ResearchIdea } from "../../../shared/models";
 import { formatIdeaForDiscussion } from "../export";
 const discussionModels = [
-  { name: "ChatGPT", url: "https://chatgpt.com/" },
-  { name: "Claude", url: "https://claude.ai/" },
-  { name: "Gemini", url: "https://gemini.google.com/" },
-  { name: "Kimi K3", url: "https://www.kimi.com/" },
+  { theme: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com/" },
+  { theme: "claude", name: "Claude", url: "https://claude.ai/" },
+  { theme: "gemini", name: "Gemini", url: "https://gemini.google.com/" },
+  { theme: "kimi", name: "Kimi K3", url: "https://www.kimi.com/" },
 ];
 import {
   ArrowUpRight,
   Bookmark,
-  Check,
   ChevronDown,
-  Copy,
   ExternalLink,
   Sparkles,
 } from "lucide-react";
@@ -36,9 +34,9 @@ export function IdeaCard({
   authenticated: boolean;
   signInPath: string;
 }) {
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
-    "idle",
-  );
+  const [copyState, setCopyState] = useState<
+    "idle" | "copying" | "copied" | "error"
+  >("idle");
   const refs = idea.paperIds
     .map((id) => papers.find((p) => p.id === id))
     .filter(Boolean) as Paper[];
@@ -67,7 +65,9 @@ export function IdeaCard({
         ["资源预算与假设", experiment.resourceBudget],
       ]
     : [];
-  async function copyFullIdea() {
+  async function discussWithModel(url: string) {
+    if (copyState === "copying") return;
+    setCopyState("copying");
     try {
       const content = formatIdeaForDiscussion(idea, papers);
       let copied = false;
@@ -86,11 +86,15 @@ export function IdeaCard({
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
         textarea.select();
-        copied = document.execCommand("copy");
-        textarea.remove();
+        try {
+          copied = document.execCommand("copy");
+        } finally {
+          textarea.remove();
+        }
         if (!copied) throw new Error("Clipboard unavailable");
       }
       setCopyState("copied");
+      window.location.assign(url);
     } catch {
       setCopyState("error");
     }
@@ -116,10 +120,6 @@ export function IdeaCard({
         </div>
       </div>
       <div className="idea-share">
-        <button type="button" className="idea-copy" onClick={copyFullIdea}>
-          {copyState === "copied" ? <Check size={14} /> : <Copy size={14} />}
-          {copyState === "copied" ? "已复制完整方案" : "复制完整方案与证据"}
-        </button>
         {authenticated ? (
           <button
             type="button"
@@ -145,26 +145,32 @@ export function IdeaCard({
           </a>
         )}
         <div className="idea-model-links">
-          <span>复制后继续讨论</span>
+          <span>复制并继续讨论</span>
           {discussionModels.map((model) => (
-            <a
+            <button
               key={model.name}
-              href={model.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={
-                model.name === "Kimi K3"
-                  ? "打开 Kimi 后选择 K3 模型"
-                  : `打开 ${model.name}`
-              }
+              type="button"
+              className={`discussion-model model-${model.theme}`}
+              disabled={copyState === "copying"}
+              onClick={() => void discussWithModel(model.url)}
+              title={`复制完整方案与证据并前往 ${model.name}，打开后粘贴即可继续讨论`}
+              aria-label={`复制完整方案与证据并前往 ${model.name}`}
             >
               {model.name === "Kimi K3" ? "Kimi（选 K3）" : model.name}
               <ArrowUpRight size={12} />
-            </a>
+            </button>
           ))}
         </div>
+        {copyState === "copying" && (
+          <small role="status">正在复制完整方案与证据…</small>
+        )}
+        {copyState === "copied" && (
+          <small role="status">已复制，正在跳转；打开后粘贴即可讨论。</small>
+        )}
         {copyState === "error" && (
-          <small role="alert">复制失败，请允许浏览器使用剪贴板后重试。</small>
+          <small role="alert">
+            复制或跳转未完成，请允许浏览器使用剪贴板后点击模型按钮重试。
+          </small>
         )}
       </div>
       <details className="idea-expanded">
