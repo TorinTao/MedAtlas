@@ -3,6 +3,7 @@ import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
+  AdditiveBlending,
   BufferGeometry,
   CanvasTexture,
   Group,
@@ -124,14 +125,42 @@ function pointTexture(): CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;
   const context = canvas.getContext("2d")!;
-  // Reduce visible diameter by one third while preserving sprite hit targets.
+  // Keep the same 32px footprint and hit target; concentrate light in a tiny
+  // nucleus with tapered diffraction rays instead of a solid circular disk.
   const glow = context.createRadialGradient(64, 64, 0, 64, 64, 32);
-  glow.addColorStop(0, "#fff");
-  glow.addColorStop(0.3, "#fff");
-  glow.addColorStop(0.52, "#ffffffed");
-  glow.addColorStop(0.78, "#ffffff24");
+  glow.addColorStop(0, "#ffffffa8");
+  glow.addColorStop(0.16, "#ffffff70");
+  glow.addColorStop(0.42, "#ffffff20");
   glow.addColorStop(1, "#ffffff00");
   context.fillStyle = glow;
+  context.fillRect(0, 0, 128, 128);
+  context.globalCompositeOperation = "lighter";
+  for (const angle of [0, Math.PI / 2]) {
+    context.save();
+    context.translate(64, 64);
+    context.rotate(angle);
+    const ray = context.createLinearGradient(-30, 0, 30, 0);
+    ray.addColorStop(0, "#ffffff00");
+    ray.addColorStop(0.38, "#ffffff45");
+    ray.addColorStop(0.5, "#fffffff0");
+    ray.addColorStop(0.62, "#ffffff45");
+    ray.addColorStop(1, "#ffffff00");
+    context.fillStyle = ray;
+    context.beginPath();
+    context.moveTo(-30, 0);
+    context.lineTo(0, -2.4);
+    context.lineTo(30, 0);
+    context.lineTo(0, 2.4);
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+  const nucleus = context.createRadialGradient(64, 64, 0, 64, 64, 9);
+  nucleus.addColorStop(0, "#fff");
+  nucleus.addColorStop(0.28, "#fff");
+  nucleus.addColorStop(0.6, "#ffffffb0");
+  nucleus.addColorStop(1, "#ffffff00");
+  context.fillStyle = nucleus;
   context.fillRect(0, 0, 128, 128);
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
@@ -266,6 +295,12 @@ function Star({
           ? 1 + Math.sin(clock.elapsedTime * 2.1 + position[0]) * 0.055
           : 1;
       dot.current.scale.setScalar(size * pulse);
+      const phase = position[0] * 2.3 + position[1] * 3.7 + position[2] * 1.9;
+      const shimmer = motion
+        ? 0.94 + 0.06 * Math.sin(clock.elapsedTime * 1.35 + phase)
+        : 1;
+      dot.current.material.opacity =
+        (selected ? 1 : 0.75 + paper.relevance * 0.22) * shimmer;
     }
   });
   const over = (event: ThreeEvent<PointerEvent>) => {
@@ -290,6 +325,8 @@ function Star({
       >
         <spriteMaterial
           map={texture}
+          blending={AdditiveBlending}
+          toneMapped={false}
           color={methodColors[paper.method]}
           transparent
           opacity={selected ? 1 : 0.75 + paper.relevance * 0.22}

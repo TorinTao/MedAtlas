@@ -30,6 +30,28 @@ export async function allPapers(): Promise<Paper[]> {
     return seedPapers.map(withVenueFallback).map(withSummaryFallback);
   }
 }
+/** Scan every stored paper for background enrichment, including older library rows. */
+export async function allPapersForEnrichment(): Promise<Paper[]> {
+  const rows: { data: string }[] = [];
+  const pageSize = 200;
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await getDb()
+      .select({ data: paperTable.data })
+      .from(paperTable)
+      .orderBy(desc(paperTable.updatedAt), desc(paperTable.id))
+      .limit(pageSize)
+      .offset(offset);
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return dedupePapers([
+    ...rows.map((row) => securePaperUrls(JSON.parse(row.data) as Paper)),
+    ...seedPapers,
+  ])
+    .filter((paper) => paper.year <= new Date().getUTCFullYear())
+    .map(withVenueFallback)
+    .map(withSummaryFallback);
+}
 /** Restore a public research collection without the global library's 500-row window. */
 export async function findPapersByIds(ids: string[]): Promise<Paper[]> {
   const records: Paper[] = [];

@@ -57,6 +57,22 @@ test("reading never calls a model when no source text is available", async () =>
     null,
   );
 });
+test("reading rejects incomplete analysis instead of marking a paper as read", async () => {
+  const service = createReadingService({
+    web,
+    fullText: async () => null,
+    model: async () => ({
+      question: " ",
+      method: "回顾性评测",
+      findings: ["技术指标"],
+      limitations: ["无临床结局"],
+      evidence: [{ claim: "背景", excerpt: "This model saves lives." }],
+    }),
+  });
+  const result = await service.readPaper(paper);
+  assert.equal(result.analysis, null);
+  assert.ok(result.errors.some((error) => error.includes("完整且可核验")));
+});
 test("the same summary module works with two interchangeable model implementations", async () => {
   for (const output of [
     "研究影像智能体的报告生成方法。",

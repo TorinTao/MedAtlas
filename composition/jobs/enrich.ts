@@ -5,7 +5,11 @@ import { inspectPaperRepository } from "../repositories";
 import { lexmountExtract } from "../providers";
 import { readPaper } from "../research";
 import { runtime } from "../../platform/config";
-import { allPapers, putPapers } from "../../platform/storage/papers";
+import {
+  allPapers,
+  allPapersForEnrichment,
+  putPapers,
+} from "../../platform/storage/papers";
 import { summarizePaperZh, translateAbstractZh } from "../research";
 import { needsGeneratedSummary } from "../../modules/catalog/summary-fallback";
 import type { Paper } from "../../shared/models";
@@ -76,7 +80,7 @@ export async function enrichMissingPapers(limit = 2) {
   if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
     throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
   if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
-  const papers = await allPapers();
+  const papers = await allPapersForEnrichment();
   const jobs = await env.DB.prepare(
     "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'",
   ).all<JobRow>();

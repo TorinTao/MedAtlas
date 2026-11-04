@@ -87,28 +87,44 @@ export function createReadingService(deps: {
       const evidence = (Array.isArray(raw.evidence) ? raw.evidence : [])
         .filter(
           (e: any) =>
+            typeof e.claim === "string" &&
+            e.claim.trim().length > 0 &&
             typeof e.excerpt === "string" &&
-            e.excerpt.length >= 8 &&
+            e.excerpt.trim().length >= 8 &&
             evidenceSource
               .toLowerCase()
               .includes(e.excerpt.trim().toLowerCase()),
         )
         .slice(0, 6);
-      analysis = {
-        question: String(raw.question || "未报告"),
-        method: String(raw.method || "未报告"),
-        datasets: asStrings(raw.datasets),
-        findings: asStrings(raw.findings),
-        limitations: asStrings(raw.limitations),
-        evidence: evidence.map((e: any) => ({
-          claim: String(e.claim || ""),
-          location: depth === "全文" ? "全文" : "摘要",
-          excerpt: e.excerpt.trim(),
-        })),
-        depth,
-        sourceUrl,
-        analyzedAt: new Date().toISOString(),
-      };
+      const question = String(raw.question || "").trim();
+      const method = String(raw.method || "").trim();
+      const findings = asStrings(raw.findings);
+      const limitations = asStrings(raw.limitations);
+      if (
+        !question ||
+        !method ||
+        !findings.length ||
+        !limitations.length ||
+        !evidence.length
+      ) {
+        errors.push("模型未返回完整且可核验的结构化精读，请稍后重试");
+      } else {
+        analysis = {
+          question,
+          method,
+          datasets: asStrings(raw.datasets),
+          findings,
+          limitations,
+          evidence: evidence.map((e: any) => ({
+            claim: String(e.claim || ""),
+            location: depth === "全文" ? "全文" : "摘要",
+            excerpt: e.excerpt.trim(),
+          })),
+          depth,
+          sourceUrl,
+          analyzedAt: new Date().toISOString(),
+        };
+      }
     } catch (e) {
       errors.push((e as Error).message);
     }
@@ -123,7 +139,11 @@ export function createReadingService(deps: {
   }
   function asStrings(value: unknown): string[] {
     return Array.isArray(value)
-      ? value.filter((v) => typeof v === "string").slice(0, 8)
+      ? value
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter(Boolean)
+          .slice(0, 8)
       : [];
   }
   return { readPaper };
