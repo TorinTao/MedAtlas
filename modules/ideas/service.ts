@@ -3,6 +3,7 @@ import type {
   IdeaSummary,
   Paper,
   ResearchIdea,
+  ResearchRole,
 } from "../../shared/models";
 import {
   normalizeFollowupQueries,
@@ -83,14 +84,15 @@ export function createIdeasService(deepseekJson: JsonModel) {
   async function makeResearchBrief(
     query: string,
     papers: Paper[],
+    roles: Record<string, ResearchRole> = {},
   ): Promise<ResearchBrief> {
     let feedback = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const raw = (await deepseekJson(
-        `${untrusted}你是医学AI文献调研员。比较已有方法、评测和反证，形成3到8个机制明显不同且有证据的候选问题。不要硬凑8个，不按固定领域模板生成。每个候选写出已有能力留下的具体空白、只改变哪个关键机制、最相近至少两篇论文ID和用于核查该机制是否已有的英文检索式。空白是待验证命题，未报告不等于不存在，不宣称首次或临床有效。只有摘要时明确证据范围。仅输出JSON {"landscape":"中文研究现状","cautions":["检索或证据局限，至少两项"],"opportunities":[{"gap":"待验证空白","mechanism":"核心干预及为何可能起作用","nearestPaperIds":["输入论文ID"],"searchQuery":"具体任务与机制的英文关键词"}]}。`,
+        `${untrusted}你是医学AI文献调研员。比较已有方法、评测和反证，形成3到8个机制明显不同且有证据的候选问题。不要硬凑8个，不按固定领域模板生成。输入论文包含核心研究、历史脉络、邻近研究和跨领域启发；后面三类可以用于发展脉络、方法迁移和选题启发，但不能把背景或跨领域结果写成目标临床任务的直接效果。每个候选写出已有能力留下的具体空白、只改变哪个关键机制、最相近至少两篇论文ID和用于核查该机制是否已有的英文检索式。空白是待验证命题，未报告不等于不存在，不宣称首次或临床有效。只有摘要时明确证据范围。仅输出JSON {"landscape":"中文研究现状","cautions":["检索或证据局限，至少两项"],"opportunities":[{"gap":"待验证空白","mechanism":"核心干预及为何可能起作用","nearestPaperIds":["输入论文ID"],"searchQuery":"具体任务与机制的英文关键词"}]}。`,
         JSON.stringify({
           query,
-          papers: sourcePapers(papers),
+          papers: sourcePapers(papers, roles),
           revisionFeedback: feedback,
         }),
         {
@@ -167,13 +169,14 @@ export function createIdeasService(deepseekJson: JsonModel) {
     brief: ResearchBrief,
     opportunity: IdeaOpportunity,
     previous: IdeaSummary[],
+    roles: Record<string, ResearchRole> = {},
   ): Promise<ResearchIdea> {
     const context = {
       query,
       researchBrief: brief,
       candidate: opportunity,
       previousIdeas: previous.slice(-20),
-      papers: sourcePapers(papers),
+      papers: sourcePapers(papers, roles),
     };
     let feedback: string[] = [],
       priorDraft: unknown;
@@ -183,7 +186,7 @@ export function createIdeasService(deepseekJson: JsonModel) {
       };
       try {
         raw = (await deepseekJson(
-          `${untrusted}你是严谨的医学多模态研究设计顾问。基于候选问题与新补充的相近工作，构建一个聚焦且可执行的方案。先判断候选是否已被覆盖；若已覆盖，明确转为边界条件验证或提出真正可检验的机制差异，不用换名包装创新。与历史卡片的空白、核心干预和实验问题避重，不能只换标题。研究空白不是新颖性证明。一个主假设，5到8项改进中只有1到3项核心，其余作为可选实验。先做最小验证，再扩展。模型benchmark不是临床效果；没有权限、标签或配对模态的证据就标待核验，不臆造数据能力。不得编造引用、原文、负面结果或已证实数值。若有修订反馈必须逐项解决。${ideaContract}`,
+          `${untrusted}你是严谨的医学多模态研究设计顾问。基于候选问题与新补充的相近工作，构建一个聚焦且可执行的方案。论文的researchRole标明核心、历史、邻近或跨领域；后面三类可以支持脉络与方法启发，不能被写成目标临床任务已证实的直接效果。先判断候选是否已被覆盖；若已覆盖，明确转为边界条件验证或提出真正可检验的机制差异，不用换名包装创新。与历史卡片的空白、核心干预和实验问题避重，不能只换标题。研究空白不是新颖性证明。一个主假设，5到8项改进中只有1到3项核心，其余作为可选实验。先做最小验证，再扩展。模型benchmark不是临床效果；没有权限、标签或配对模态的证据就标待核验，不臆造数据能力。不得编造引用、原文、负面结果或已证实数值。若有修订反馈必须逐项解决。${ideaContract}`,
           JSON.stringify({
             ...context,
             ...(attempt ? { revisionFeedback: feedback, priorDraft } : {}),

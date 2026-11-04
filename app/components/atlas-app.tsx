@@ -963,7 +963,12 @@ export default function AtlasApp({
         }>("/api/ideas", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "prepare", query }),
+          body: JSON.stringify({
+            action: "prepare",
+            query,
+            paperIds: researchScope?.query === query.trim() ? researchScope.paperIds : [],
+            paperRoles: researchScope?.query === query.trim() ? researchScope.paperRoles : {},
+          }),
         });
         research = prepared.research;
         setResearchBrief(research);

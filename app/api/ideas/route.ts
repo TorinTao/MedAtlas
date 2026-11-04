@@ -17,6 +17,7 @@ import {
 } from "../../../composition/research";
 import {
   selectEvidence,
+  selectResearchContext,
   type ResearchFocus,
 } from "../../../modules/ideas/selection";
 import { dedupePapers } from "../../../modules/catalog/papers";
@@ -27,13 +28,14 @@ import {
   putPapers,
   takeQuota,
 } from "../../../platform/storage/papers";
-import type { IdeaSummary, IdeasResearch, Paper } from "../../../shared/models";
+import type { IdeaSummary, IdeasResearch, Paper, ResearchRole } from "../../../shared/models";
 import { hasDeepSeekKey } from "../../../platform/identity/model-credentials";
 
 type Prepared = {
   query: string;
   focus: ResearchFocus;
   paperIds: string[];
+  paperRoles?: Record<string, ResearchRole>;
   brief: ResearchBrief;
   owner: string;
   sources: string[];
@@ -101,7 +103,14 @@ export async function POST(request: Request) {
         (id: unknown): id is string =>
           typeof id === "string" && /^[\w-]{3,80}$/.test(id),
       )
-      .slice(0, 24);
+      .slice(0, 120);
+    const allowedRoles = new Set<ResearchRole>(["核心研究", "历史脉络", "邻近研究", "跨领域启发"]);
+    const paperRoles: Record<string, ResearchRole> = {};
+    if (body.paperRoles && typeof body.paperRoles === "object" && !Array.isArray(body.paperRoles))
+      for (const id of preferredIds) {
+        const role = body.paperRoles[id] as ResearchRole;
+        if (allowedRoles.has(role)) paperRoles[id] = role;
+      }
     try {
       let focus = await makeResearchFocus(query);
       const [live, review, stored] = await Promise.all([
@@ -120,7 +129,13 @@ export async function POST(request: Request) {
         ...review.papers,
         ...stored,
       ]);
-      const initialEvidence = selectEvidence(focus, initial, preferredIds);
+      const initialEvidence = selectResearchContext(
+        focus,
+        initial,
+        preferredIds,
+        paperRoles,
+        [...live.papers, ...review.papers].map((paper) => paper.id),
+      ).papers;
       const followupWarnings: string[] = [];
       const followupQueries = await makeFollowupQueries(
         query,
@@ -167,25 +182,27 @@ export async function POST(request: Request) {
       ]);
       if (newPapers.length) await putPapers(newPapers);
       const corpus = dedupePapers([...newPapers, ...stored]);
-      let selected = selectEvidence(
+      let context = selectResearchContext(
         focus,
         corpus,
         preferredIds,
-        followupPapers,
+        paperRoles,
+        newPapers.map((paper) => paper.id),
       );
-      if (selected.length < 6) {
+      if (context.papers.length < 2) {
         focus = await makeResearchFocus(query, corpus);
-        selected = selectEvidence(focus, corpus, preferredIds, followupPapers);
+        context = selectResearchContext(focus, corpus, preferredIds, paperRoles, newPapers.map((paper) => paper.id));
         followupWarnings.push(
           "已依据候选论文的真实术语重新规划核心概念；改进目标用于比较研究空白，不强制每篇摘要同时提及。",
         );
       }
-      if (selected.length < 6)
+      const selected = context.papers;
+      if (selected.length < 2)
         return jsonError(
-          `相关且有摘要的论文不足 6 篇（实际 ${selected.length} 篇；核心概念：${focus.conceptGroups.map((group) => group.join(" / ")).join("；")}），请调整研究方向`,
+          `可核验摘要的相关、邻近或历史论文不足 2 篇（实际 ${selected.length} 篇），请调整研究方向`,
           422,
         );
-      const brief = await makeResearchBrief(query, selected);
+      const brief = await makeResearchBrief(query, selected, context.roles);
       const preparedAt = new Date().toISOString(),
         expiresAt = new Date(Date.now() + 7200000).toISOString(),
         jobId = `ideas:${crypto.randomUUID()}`;
@@ -210,6 +227,7 @@ export async function POST(request: Request) {
         query,
         focus,
         paperIds: selected.map((p) => p.id),
+        paperRoles: context.roles,
         brief,
         owner,
         sources,
@@ -288,7 +306,7 @@ export async function POST(request: Request) {
     let papers = (await Promise.all(prepared.paperIds.map(findPaper))).filter(
       Boolean,
     ) as Paper[];
-    if (papers.length < 6)
+    if (papers.length < 2)
       return jsonError("调研论文暂不可用，请重新调研", 503);
     const nearby = await searchNearby(opportunity.searchQuery);
     const extra = selectEvidence(prepared.focus, nearby.papers, [], [], 8);
@@ -337,6 +355,7 @@ export async function POST(request: Request) {
         prepared.brief,
         opportunity,
         distinctPrevious,
+        prepared.paperRoles,
       )),
       favorite: false,
       targetedSearch: {

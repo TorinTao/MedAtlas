@@ -1,4 +1,4 @@
-import type { Paper } from "../../shared/models";
+import type { Paper, ResearchRole } from "../../shared/models";
 export type ResearchFocus = {
   searchQuery: string;
   conceptGroups: string[][];
@@ -175,4 +175,66 @@ export function selectEvidence(
   );
   add(unique, count);
   return [...selected.values()];
+}
+
+/** Include adjacent and historical work as context while keeping direct matches first. */
+export function selectResearchContext(
+  focus: ResearchFocus,
+  corpus: Paper[],
+  preferredIds: string[] = [],
+  paperRoles: Record<string, ResearchRole> = {},
+  discoveredIds: string[] = [],
+  limit = 24,
+): { papers: Paper[]; roles: Record<string, ResearchRole> } {
+  const count = Math.max(0, Math.min(24, Math.floor(limit)));
+  if (!count) return { papers: [], roles: {} };
+  const groups = normalizeResearchFocus(focus).conceptGroups.map((group) =>
+    group.map((term) => ` ${normalizeText(term)} `),
+  );
+  const preferred = new Set(preferredIds);
+  const discovered = new Set(discoveredIds);
+  const year = new Date().getUTCFullYear();
+  const direct = selectEvidence(focus, corpus, preferredIds, [], count);
+  const directIds = new Set(direct.map((paper) => paper.id));
+  const candidates = corpus.flatMap((paper) => {
+    if (
+      paper.abstract.trim().length < 100 ||
+      !Number.isInteger(paper.year) ||
+      paper.year < 2000 ||
+      paper.year > year ||
+      directIds.has(paper.id)
+    ) return [];
+    const body = ` ${normalizeText(`${paper.title} ${paper.abstract}`)} `;
+    const title = ` ${normalizeText(paper.title)} `;
+    const matches = groups.filter((group) => group.some((term) => body.includes(term))).length;
+    const role = paperRoles[paper.id];
+    // The scope has already classified these papers. Otherwise a broad match
+    // must come from this request's external search, never the entire archive.
+    if (!role && (!discovered.has(paper.id) || !matches)) return [];
+    const inferred: ResearchRole = role || (paper.paperType === "综述" || paper.year < year - 5 ? "历史脉络" : "邻近研究");
+    const titleMatches = groups.filter((group) => group.some((term) => title.includes(term))).length;
+    const score =
+      (preferred.has(paper.id) ? 8 : 0) +
+      (discovered.has(paper.id) ? 2 : 0) +
+      titleMatches * 3 + matches +
+      Math.min(2, Math.log1p(Math.max(0, paper.citedByCount || 0)) / 5);
+    return [{ paper, role: inferred, score }];
+  }).sort((a, b) => b.score - a.score || b.paper.year - a.paper.year);
+  const result: Paper[] = [];
+  const roles: Record<string, ResearchRole> = {};
+  const add = (paper: Paper, role: ResearchRole) => {
+    if (result.length >= count || roles[paper.id]) return;
+    result.push(paper);
+    roles[paper.id] = role;
+  };
+  // Preserve room for research history and nearby methods even when direct
+  // matches are numerous; use the remaining capacity for strongest matches.
+  for (const paper of direct.slice(0, Math.min(12, count)))
+    add(paper, paperRoles[paper.id] || "核心研究");
+  for (const role of ["历史脉络", "邻近研究", "跨领域启发"] as const)
+    for (const item of candidates.filter((candidate) => candidate.role === role).slice(0, Math.max(2, Math.floor(count / 6))))
+      add(item.paper, role);
+  for (const paper of direct) add(paper, paperRoles[paper.id] || "核心研究");
+  for (const item of candidates) add(item.paper, item.role);
+  return { papers: result, roles };
 }

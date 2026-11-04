@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeResearchFocus, selectEvidence, type ResearchFocus } from "../modules/ideas/selection";
+import { normalizeResearchFocus, selectEvidence, selectResearchContext, type ResearchFocus } from "../modules/ideas/selection";
 import type { Paper } from "../shared/models";
 
 const focus: ResearchFocus = { searchQuery: "chest x-ray report hallucination detection", conceptGroups: [["chest x-ray", "cxr"], ["hallucination", "hallucinations", "factual errors"]] };
@@ -52,4 +52,17 @@ test("search query rejects URLs, controls, non-English input and excessive lengt
     assert.throws(() => normalizeResearchFocus({ ...focus, searchQuery }));
   }
   assert.equal(normalizeResearchFocus({ ...focus, searchQuery: "  Chest  X-ray report hallucinations  " }).searchQuery, "Chest X-ray report hallucinations");
+});
+
+test("idea context counts verified nearby and historical scope papers without treating them as direct matches", () => {
+  const direct = paper("direct");
+  const historic = paper("historic", { title: "Early radiology report generation review", abstract: "This review traces radiology report generation methods and their limitations over time. ".repeat(3), year: 2012, paperType: "综述" });
+  const nearby = paper("nearby", { title: "Chest X-ray report generation", abstract: "We generate chest X-ray reports from image data and assess clinical report quality. ".repeat(3) });
+  const transfer = paper("transfer", { title: "Agent memory retrieval", abstract: "This study evaluates memory retrieval in agents across multiple tasks and reports limitations. ".repeat(3) });
+  const unrelated = paper("unrelated", { title: "Bone density treatment", abstract: "We compare bone density treatments in an outpatient cohort and report longitudinal follow-up. ".repeat(3) });
+  const selected = selectResearchContext(focus, [direct, historic, nearby, transfer, unrelated], ["historic", "nearby", "transfer"], { historic: "历史脉络", nearby: "邻近研究", transfer: "跨领域启发" }, ["direct"]);
+  assert.deepEqual(new Set(selected.papers.map((item) => item.id)), new Set(["direct", "historic", "nearby", "transfer"]));
+  assert.equal(selected.roles.historic, "历史脉络");
+  assert.equal(selected.roles.transfer, "跨领域启发");
+  assert.equal(selectEvidence(focus, [direct, historic, nearby, transfer]).length, 1);
 });

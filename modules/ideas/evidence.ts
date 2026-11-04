@@ -1,4 +1,4 @@
-import type { Paper } from "../../shared/models";
+import type { Paper, ResearchRole } from "../../shared/models";
 export type EvidenceLocation = "摘要" | "全文摘录";
 export type EvidenceSource = {
   location: EvidenceLocation;
@@ -42,7 +42,7 @@ export function evidenceSources(paper: Paper): EvidenceSource[] {
   }
   return sources;
 }
-export function sourcePapers(papers: Paper[]) {
+export function sourcePapers(papers: Paper[], roles: Record<string, ResearchRole> = {}) {
   return papers.map((paper) => ({
     id: paper.id,
     title: paper.title,
@@ -50,6 +50,7 @@ export function sourcePapers(papers: Paper[]) {
     type: paper.paperType,
     modality: paper.modality,
     method: paper.method,
+    researchRole: roles[paper.id] || "待分类",
     sources: evidenceSources(paper),
   }));
 }
