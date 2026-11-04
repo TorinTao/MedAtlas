@@ -326,6 +326,7 @@
 }
 
 .draw-header-row { display:flex; align-items:stretch; gap:10px; margin-bottom:12px; }
+.api-settings-layout { grid-template-columns:minmax(0,1fr); max-width:720px; }
 .draw-header-row .draw-toolbar { flex:1; min-width:0; margin:0; }
 .draw-header-row .draw-toolbar b { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; font-size:18px; line-height:1.5; }
 .draw-title-accent { padding:1px 7px; border-radius:6px; background:#dff3e9; color:#126d5d; font-size:24px; font-weight:900; line-height:1.3; }

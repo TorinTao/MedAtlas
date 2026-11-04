@@ -3115,28 +3115,6 @@ export default function AtlasApp({
                       )}
                     </div>
                   </div>
-                  <aside className="api-settings-note">
-                    <CircleHelp size={19} />
-                    <div>
-                      <h4>使用范围</h4>
-                      <p>
-                        公开文献检索、Lexmount 网页读取仍由站点服务提供。个人
-                        DeepSeek Key 只用于 AI 模型请求；用量和费用由你的
-                        DeepSeek 账户承担。
-                      </p>
-                      <p>
-                        本站服务端用独立加密密钥保存个人
-                        Key。浏览器不会保存它，也不会通过设置接口读取原文。
-                      </p>
-                      <a
-                        href="https://platform.deepseek.com/api_keys"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        前往 DeepSeek 创建 API Key <ExternalLink size={13} />
-                      </a>
-                    </div>
-                  </aside>
                 </div>
               )}
             </>
