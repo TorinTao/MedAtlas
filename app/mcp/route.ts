@@ -72,7 +72,7 @@ export async function POST(request: Request) {
           ? "站点所有者邮箱尚未配置，无法更新文献语料"
           : !caller
             ? "站点未收到已验证的用户邮箱，无法更新文献语料"
-            : "当前登录账号与配置的站点所有者邮箱不一致",
+            : `当前插件登录邮箱 ${caller} 与配置的站点所有者邮箱不一致`,
       }],
       isError: true,
     });
