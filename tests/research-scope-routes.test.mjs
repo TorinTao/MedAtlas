@@ -28,5 +28,12 @@ try {
  await putPapers([{...original,abstract:'A corrected abstract.'}]);
  const corrected=(await (await route.POST(request(['scope-abstract']))).json()).papers[0];
  assert.equal(corrected.abstract,'A corrected abstract.');
- console.log('PASS exact collection restoration, invalid input rejection, and preservation of stored abstracts');
+ const oldSeed=normalizePaper({id:'W4416035470',title:'3MDBench: Medical Multimodal Multi-agent Dialogue Benchmark',year:2025,abstract:'A stored abstract.'});
+ oldSeed.analysis={question:'已保存的研究问题',method:'评测',datasets:[],findings:['结果'],limitations:['局限'],evidence:[],depth:'摘要',sourceUrl:'https://example.org/paper',analyzedAt:new Date().toISOString()};
+ await env.DB.prepare('INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?)').bind(oldSeed.id,oldSeed.title,JSON.stringify(oldSeed),'1960-01-01T00:00:00.000Z').run();
+ const duplicate=normalizePaper({id:'scope-duplicate',title:'Stored paper 509',year:2025,url:'https://example.org/paper'});
+ await env.DB.prepare('INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?)').bind(duplicate.id,duplicate.title,JSON.stringify(duplicate),'2026-01-01T00:00:00.000Z').run();
+ const library=(await (await route.GET()).json()).papers;
+ assert.equal(library.find(p=>p.id==='W4416035470')?.analysis?.question,'已保存的研究问题');
+ console.log('PASS exact collection restoration, stored abstracts, and seed reading hydration');
 } finally {await rm(temp,{recursive:true,force:true})}

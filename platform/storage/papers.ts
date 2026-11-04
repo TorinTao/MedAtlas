@@ -18,9 +18,25 @@ export async function allPapers(): Promise<Paper[]> {
       .from(paperTable)
       .orderBy(desc(paperTable.updatedAt))
       .limit(500);
+    const recentIds = new Set(rows.map((row) => row.id));
+    const olderSeedIds = seedPapers
+      .filter((paper) => !recentIds.has(paper.id))
+      .map((paper) => paper.id);
+    const olderSeedRows = olderSeedIds.length
+      ? await getDb()
+          .select()
+          .from(paperTable)
+          .where(inArray(paperTable.id, olderSeedIds))
+      : [];
+    const olderSeedData = new Map(
+      olderSeedRows.map((row) => [
+        row.id,
+        securePaperUrls(JSON.parse(row.data) as Paper),
+      ]),
+    );
     return dedupePapers([
       ...rows.map((r) => securePaperUrls(JSON.parse(r.data) as Paper)),
-      ...seedPapers,
+      ...seedPapers.map((paper) => olderSeedData.get(paper.id) || paper),
     ])
       .filter((paper) => paper.year <= new Date().getUTCFullYear())
       .slice(0, 500)
