@@ -252,10 +252,10 @@ function Star({
   const initial = useRef(position);
   const target = useMemo(() => new Vector3(...position), [position]);
   const size =
-    0.25 +
-    Math.min(1, paper.citationPercentile / 100) * 0.12 +
-    (core ? 0.025 : 0) +
-    (selected ? 0.08 : 0);
+    0.18 +
+    Math.min(1, paper.citationPercentile / 100) * 0.085 +
+    (core ? 0.018 : 0) +
+    (selected ? 0.06 : 0);
   useFrame(({ clock }, dt) => {
     if (group.current)
       group.current.position.lerp(target, Math.min(1, dt * 3.2));

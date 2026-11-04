@@ -39,8 +39,8 @@
 .map-toolbar{height:62px;padding:0 25px}
 .map-title{font-size:14px;gap:11px}
 .map-title small{font-size:11px}
-.map-canvas{height:clamp(560px,68vh,780px);background:radial-gradient(ellipse at 46% 38%,#102f3e 0%,#0a2332 46%,#041521 100%),repeating-linear-gradient(90deg,transparent 0 42px,#ffffff05 43px 44px)}
-.map-canvas:before{background-size:42px 36px;opacity:.09}
+.map-canvas{height:clamp(560px,68vh,780px);background:radial-gradient(ellipse at 46% 38%,#081923 0%,#040e17 46%,#01060c 100%),repeating-linear-gradient(90deg,transparent 0 42px,#ffffff05 43px 44px)}
+.map-canvas:before{background-size:42px 36px;opacity:.045}
 .map-overlay-top{top:21px;left:25px;right:25px}
 .map-overlay-top span{font-size:10px}
 .map-overlay-top button{font-size:10px;padding:7px 10px}
@@ -159,7 +159,7 @@
 .legend .legend-pair{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto}
 
 /* Keep the atlas legible while its 3D scene is loading. */
-.scene-loading{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#174758 0%,#0b2a39 48%,#061b29 100%)}
+.scene-loading{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#0b202c 0%,#05121c 48%,#01060c 100%)}
 .scene-loading:before{content:"";position:absolute;inset:13% -7% -31%;background-image:linear-gradient(#5a89942b 1px,transparent 1px),linear-gradient(90deg,#5a89942b 1px,transparent 1px);background-size:58px 58px;transform:perspective(480px) rotateX(59deg);transform-origin:center bottom;opacity:.7}
 .scene-loading:after{content:"";position:absolute;left:9%;right:9%;bottom:55px;height:1px;background:linear-gradient(90deg,transparent,#72c5c79c,transparent);box-shadow:0 0 18px #6bdbda77}
 .scene-loading-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;padding:23px 32px;border:1px solid #80b9ba35;border-radius:13px;background:#0b2c3ac9;box-shadow:0 20px 55px #00131e55;backdrop-filter:blur(8px)}
