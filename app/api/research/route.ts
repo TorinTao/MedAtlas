@@ -1,6 +1,7 @@
+import { selectEvidence } from "../../../modules/ideas/selection";
 import { makeResearchFocus } from "../../../composition/research";
 import { dedupePapers } from "../../../modules/catalog/papers";
-import { collectPapers, englishQuery } from "../../../composition/catalog";
+import { collectPapers } from "../../../composition/catalog";
 import {
   allPapers,
   jsonError,
@@ -16,18 +17,14 @@ export async function POST(request: Request) {
   if (query.length < 4) return jsonError("请输入至少 4 个字符的研究方向");
   if (!(await takeQuota(request, "research", 12)))
     return jsonError("今日公开检索次数已用完，请明天再试", 429);
-  let searchQuery = englishQuery(query);
   const planningWarnings: string[] = [];
-  if (/[\u3400-\u9fff]/.test(searchQuery)) {
-    try {
-      searchQuery = (await makeResearchFocus(query)).searchQuery;
-    } catch {
-      return jsonError(
-        "研究方向暂未成功转换为英文检索式，请重试或使用英文关键词",
-        503,
-      );
-    }
+  let focus;
+  try {
+    focus = await makeResearchFocus(query);
+  } catch {
+    return jsonError("研究方向解析失败，请重试；此前的星图未切换", 503);
   }
+  const searchQuery = focus.searchQuery;
   const result = await collectPapers(searchQuery);
   if (!result.papers.length)
     return jsonError(
@@ -47,25 +44,34 @@ export async function POST(request: Request) {
     ),
   ];
   const stored = await allPapers();
-  const papers = dedupePapers([...result.papers, ...stored])
-    .slice(0, 500)
-    .map((paper) => {
-      const text = `${paper.title} ${paper.abstract}`.toLowerCase();
-      const matched = terms.filter((term) => text.includes(term)).length;
-      return {
-        ...paper,
-        relevance: Math.min(
-          1,
-          0.18 + (0.82 * matched) / Math.max(terms.length, 1),
-        ),
-      };
-    });
+  const papers = selectEvidence(
+    focus,
+    dedupePapers([...result.papers, ...stored]),
+    [],
+    [],
+    500,
+  ).map((paper) => {
+    const text = `${paper.title} ${paper.abstract}`.toLowerCase();
+    const matched = terms.filter((term) => text.includes(term)).length;
+    return {
+      ...paper,
+      relevance: Math.min(
+        1,
+        0.18 + (0.82 * matched) / Math.max(terms.length, 1),
+      ),
+    };
+  });
+  if (!papers.length)
+    return jsonError(
+      "本次抓取成功，但没有匹配当前研究方向的论文；此前的星图未切换，请调整关键词",
+      404,
+    );
   return Response.json({
     query,
     searchQuery,
     strategy: "lexmount-first",
     papers,
-    matchingCount: result.papers.length,
+    matchingCount: papers.length,
     lexmountCount: result.papers.filter(
       (paper) => paper.discovery?.method === "Lexmount Web Fetch",
     ).length,

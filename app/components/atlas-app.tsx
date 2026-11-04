@@ -4,6 +4,12 @@ import { IdeaCard } from "../../modules/ideas/ui/idea-card";
 import { RepoEvaluationView } from "../../modules/repositories/ui/evaluation";
 import { PaperSummary } from "../../modules/reading/ui/paper-summary";
 
+import {
+  RESEARCH_SCOPE_KEY,
+  parseResearchScope,
+  papersInScope,
+  type ResearchScope,
+} from "../../modules/atlas/research-scope";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -172,6 +178,10 @@ export default function AtlasApp({
 }) {
   const [section, setSection] = useState<Section>("atlas");
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [researchScope, setResearchScope] = useState<ResearchScope | null>(
+    null,
+  );
+  const researchRevision = useRef(0);
   const [query, setQuery] = useState("医学影像 + 病历文本 Agent");
   const [selectedId, setSelectedId] = useState("");
   const [motion, setMotion] = useState(true);
@@ -230,14 +240,45 @@ export default function AtlasApp({
   const [translationRetry, setTranslationRetry] = useState(0);
 
   useEffect(() => {
-    api<{ papers: Paper[] }>("/api/papers")
+    const revision = researchRevision.current;
+    let active = true;
+    let saved: ResearchScope | null = null;
+    try {
+      saved = parseResearchScope(localStorage.getItem(RESEARCH_SCOPE_KEY));
+    } catch {
+      /* Storage may be disabled. */
+    }
+    if (saved) {
+      setQuery(saved.query);
+      setResearchScope(saved);
+    }
+    api<{ papers: Paper[] }>(
+      "/api/papers",
+      saved
+        ? {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: saved.paperIds }),
+          }
+        : undefined,
+    )
       .then((r) => {
-        setPapers(r.papers);
-        setSelectedId(r.papers[0]?.id || "");
+        if (!active || revision !== researchRevision.current) return;
+        const scoped = papersInScope(r.papers, saved);
+        setPapers(scoped);
+        setSelectedId(scoped[0]?.id || "");
+        if (saved && !scoped.length)
+          setMessage("当前研究方向的论文暂未加载，请在系统设置中重新探索文献");
       })
-      .catch((e) => setMessage(e.message));
+      .catch((e) => {
+        if (active && revision === researchRevision.current)
+          setMessage(e.message);
+      });
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     setMotion(!reduced.matches);
+    return () => {
+      active = false;
+    };
   }, []);
   useEffect(() => {
     let localIds: string[] = [];
@@ -372,6 +413,10 @@ export default function AtlasApp({
       yearFilter,
     ],
   );
+  const atlasVisible = useMemo(
+    () => papersInScope(visible, researchScope),
+    [visible, researchScope],
+  );
   const libraryPageCount = Math.max(
     1,
     Math.ceil(visible.length / LIBRARY_PAGE_SIZE),
@@ -392,7 +437,8 @@ export default function AtlasApp({
   useEffect(() => {
     setLibraryPage(1);
   }, [typeFilter, modalityFilter, yearFilter, methodFilter]);
-  const selected = visible.find((p) => p.id === selectedId) || visible[0];
+  const selectable = section === "atlas" ? atlasVisible : visible;
+  const selected = selectable.find((p) => p.id === selectedId) || selectable[0];
   useEffect(() => {
     setRepoInput(selected?.repoUrl || "");
     setAudit(null);
@@ -495,8 +541,8 @@ export default function AtlasApp({
     selected?.repoDiscovery?.checkedAt,
   ]);
   const relatedForSelected = useMemo(
-    () => (selected ? relatedPapers(visible, selected, 3) : []),
-    [visible, selected],
+    () => (selected ? relatedPapers(selectable, selected, 3) : []),
+    [selectable, selected],
   );
   useEffect(() => {
     if (
@@ -588,7 +634,9 @@ export default function AtlasApp({
     selected?.reviewAbstractZh,
     translationRetry,
   ]);
-  const readCount = papers.filter((paper) => readIds.has(paper.id)).length;
+  const readCount = papersInScope(papers, researchScope).filter((paper) =>
+    readIds.has(paper.id),
+  ).length;
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [section]);
@@ -597,15 +645,18 @@ export default function AtlasApp({
       Object.fromEntries(
         Object.keys(methodColors).map((method) => [
           method,
-          papers.filter(
+          papersInScope(papers, researchScope).filter(
             (p) => (!readOnly || readIds.has(p.id)) && p.method === method,
           ).length,
         ]),
       ) as Record<Method, number>,
-    [papers, readOnly, readIds],
+    [papers, researchScope, readOnly, readIds],
   );
 
   async function research() {
+    if (generating || loading) return;
+    const requestedQuery = query.trim();
+    const revision = ++researchRevision.current;
     setLoading(true);
     setMessage("");
     try {
@@ -618,8 +669,25 @@ export default function AtlasApp({
       }>("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: requestedQuery }),
       });
+      if (revision !== researchRevision.current) return;
+      const scope = {
+        query: requestedQuery,
+        paperIds: result.papers.map((p) => p.id),
+      };
+      setResearchScope(scope);
+      try {
+        localStorage.setItem(RESEARCH_SCOPE_KEY, JSON.stringify(scope));
+      } catch {
+        /* Current view still works without persistence. */
+      }
+      setQuery(requestedQuery);
+      setResearchBrief(null);
+      setIdeas([]);
+      setHistorySelected(null);
+      setAudit(null);
+      setRepoLookupError("");
       setPapers(result.papers);
       const focus = [...result.papers].sort(
         (a, b) => b.relevance - a.relevance || b.citedByCount - a.citedByCount,
@@ -634,12 +702,13 @@ export default function AtlasApp({
       );
       setSection("atlas");
       setMessage(
-        `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；文献库共 ${result.papers.length} 篇${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
+        `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；当前方向「${requestedQuery}」展示 ${result.papers.length} 篇${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
       );
     } catch (e) {
-      setMessage((e as Error).message);
+      if (revision === researchRevision.current)
+        setMessage((e as Error).message);
     } finally {
-      setLoading(false);
+      if (revision === researchRevision.current) setLoading(false);
     }
   }
   async function readSelected() {
@@ -673,7 +742,7 @@ export default function AtlasApp({
     }
   }
   async function generateIdeas(count: 1 | 3 | 5 | 10 = 1) {
-    if (generating || query.trim().length < 4) return;
+    if (generating || loading || query.trim().length < 4) return;
     setGenerating(true);
     setSection("ideas");
     setMessage("");
@@ -1307,16 +1376,20 @@ export default function AtlasApp({
                 <div className="atlas-main" id="atlas-map">
                   <div className="map-canvas">
                     <AtlasScene
-                      papers={visible}
+                      key={researchScope?.query || "default"}
+                      papers={atlasVisible}
                       selectedId={selected?.id || ""}
                       onPick={selectPaper}
                       motion={motion}
                     />
-                    {readOnly && visible.length === 0 && (
-                      <div className="map-empty-overlay">
-                        还没有已阅读论文。关闭筛选后，选择论文并标记已阅读。
-                      </div>
-                    )}
+                    {(readOnly || researchScope) &&
+                      atlasVisible.length === 0 && (
+                        <div className="map-empty-overlay">
+                          {readOnly
+                            ? "当前方向还没有已阅读论文，请关闭已阅读筛选查看。"
+                            : "当前方向没有符合筛选条件的论文，请调整筛选或重新探索文献。"}
+                        </div>
+                      )}
                     <div className="map-overlay-top">
                       <span>
                         <span className="live-dot" /> TEMPORAL KNOWLEDGE SPACE
@@ -2019,7 +2092,9 @@ export default function AtlasApp({
                     <button
                       key={count}
                       onClick={() => generateIdeas(count)}
-                      disabled={generating || query.trim().length < 4}
+                      disabled={
+                        loading || generating || query.trim().length < 4
+                      }
                     >
                       {generating ? (
                         <LoaderCircle size={14} className="spin" />
@@ -2438,10 +2513,11 @@ export default function AtlasApp({
                       id="research-query"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
+                      disabled={loading || generating}
                       placeholder="例如：胸部影像与电子病历协同诊断 Agent"
                     />
                   </div>
-                  <button type="submit" disabled={loading}>
+                  <button type="submit" disabled={loading || generating}>
                     {loading ? (
                       <LoaderCircle size={18} className="spin" />
                     ) : (

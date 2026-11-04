@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "../../db";
 import { papers as paperTable } from "../../db/schema";
 import {
@@ -29,6 +29,28 @@ export async function allPapers(): Promise<Paper[]> {
   } catch {
     return seedPapers.map(withVenueFallback).map(withSummaryFallback);
   }
+}
+/** Restore a public research collection without the global library's 500-row window. */
+export async function findPapersByIds(ids: string[]): Promise<Paper[]> {
+  const records: Paper[] = [];
+  const unique = [...new Set(ids)].slice(0, 500);
+  for (let start = 0; start < unique.length; start += 80) {
+    const rows = await getDb()
+      .select()
+      .from(paperTable)
+      .where(inArray(paperTable.id, unique.slice(start, start + 80)));
+    records.push(
+      ...rows.map((row) => securePaperUrls(JSON.parse(row.data) as Paper)),
+    );
+  }
+  const found = new Set(records.map((p) => p.id));
+  const requested = new Set(unique);
+  return [
+    ...records,
+    ...seedPapers.filter((p) => requested.has(p.id) && !found.has(p.id)),
+  ]
+    .map(withVenueFallback)
+    .map(withSummaryFallback);
 }
 export async function findPaper(id: string): Promise<Paper | undefined> {
   try {
