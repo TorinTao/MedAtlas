@@ -1,4 +1,5 @@
 import { backgroundTasks } from "../../composition/automation";
+import { retryMissingReading } from "../../composition/jobs/enrich";
 import { runtime } from "../../platform/config";
 
 const refreshTool = {
@@ -18,6 +19,17 @@ const readingsTool = {
   description:
     "Complete evidence-checked detailed readings for up to two public papers with English abstracts. Saves results, skips recently claimed papers, and leaves repository evaluation to its separate task.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
+};
+const retryReadingTool = {
+  name: "retry_missing_reading",
+  description:
+    "Retry one incomplete public paper reading by paper ID. Only the Site owner can call this tool; source evidence is checked before saving.",
+  inputSchema: {
+    type: "object",
+    properties: { paperId: { type: "string" } },
+    required: ["paperId"],
+    additionalProperties: false,
+  },
 };
 const repoTool = {
   name: "enrich_missing_repositories",
@@ -52,7 +64,7 @@ export async function POST(request: Request) {
     });
   if (rpc.method === "tools/list")
     return result({
-      tools: [refreshTool, enrichTool, readingsTool, repoTool, summaryTool, venueTool],
+      tools: [refreshTool, enrichTool, readingsTool, retryReadingTool, repoTool, summaryTool, venueTool],
     });
   if (
     rpc.method !== "tools/call" ||
@@ -60,6 +72,7 @@ export async function POST(request: Request) {
       refreshTool.name,
       enrichTool.name,
       readingsTool.name,
+      retryReadingTool.name,
       repoTool.name,
       summaryTool.name,
       venueTool.name,
@@ -84,6 +97,14 @@ export async function POST(request: Request) {
       isError: true,
     });
   try {
+    if (rpc.params.name === retryReadingTool.name) {
+      const paperId = rpc.params?.arguments?.paperId;
+      if (typeof paperId !== "string" || !/^[\w.-]{3,80}$/.test(paperId))
+        return error(-32602, "论文 ID 无效");
+      return result({
+        content: [{ type: "text", text: JSON.stringify(await retryMissingReading(paperId)) }],
+      });
+    }
     const executed = await backgroundTasks.run(rpc.params.name);
     return result({
       content: [

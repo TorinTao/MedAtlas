@@ -8,6 +8,7 @@ import { runtime } from "../../platform/config";
 import {
   allPapers,
   allPapersForEnrichment,
+  findPaper,
   putPapers,
 } from "../../platform/storage/papers";
 import { summarizePaperZh, translateAbstractZh } from "../research";
@@ -381,6 +382,38 @@ export async function enrichMissingReadings(limit = 2) {
     remainingWithAbstract: pending.length - results.filter((result) => result.analysis).length,
     results,
   };
+}
+/** Owner-triggered retry for one paper after a previous incomplete reading. */
+export async function retryMissingReading(paperId: string) {
+  if (!env.DB) throw new Error("文献数据库不可用");
+  if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
+    throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
+  if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
+  const paper = await findPaper(paperId);
+  if (!paper) throw new Error("论文不存在");
+  if (paper.analysis) return { id: paper.id, analysis: true, cached: true, errors: [] };
+  const jobId = `manual-read:${paper.id}`;
+  const previous = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id = ?",
+  ).bind(jobId).first<JobRow>();
+  if (!(await claim(jobId, previous || undefined)))
+    return { id: paper.id, analysis: false, status: "cooldown", errors: ["该论文的手动重试正在运行或等待冷却"] };
+  try {
+    const reading = await readPaper(paper);
+    if (reading.analysis)
+      await putPapers([{
+        ...paper,
+        analysis: reading.analysis,
+        fulltextStatus: reading.depth === "全文" ? "全文可用" : "仅摘要",
+      }]);
+    const status = reading.analysis ? "done" : "partial";
+    await finish(jobId, status, { sourceUrl: reading.sourceUrl, errors: reading.errors });
+    return { id: paper.id, analysis: Boolean(reading.analysis), status, depth: reading.depth, errors: reading.errors };
+  } catch (error) {
+    const message = (error as Error).message;
+    await finish(jobId, "failed", { errors: [message] });
+    return { id: paper.id, analysis: false, status: "failed", errors: [message] };
+  }
 }
 export async function enrichMissingRepositories(limit = 2) {
   if (!env.DB) throw new Error("文献数据库不可用");
