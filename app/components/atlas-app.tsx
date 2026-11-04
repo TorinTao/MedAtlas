@@ -196,6 +196,9 @@ export default function AtlasApp({
     [],
   );
   const directionHistoryRef = useRef<ResearchDirection[]>([]);
+  const [directionMenuOpen, setDirectionMenuOpen] = useState(false);
+  const directionMenuRef = useRef<HTMLDivElement>(null);
+  const directionButtonRef = useRef<HTMLButtonElement>(null);
   const scopeStorageKey = `${RESEARCH_SCOPE_KEY}:${user?.id || "guest"}`;
   const historyStorageKey = `${RESEARCH_HISTORY_KEY}:${user?.id || "guest"}`;
   const [query, setQuery] = useState("医学影像 + 病历文本 Agent");
@@ -277,8 +280,10 @@ export default function AtlasApp({
     let active = true;
     async function initialize() {
       let saved: ResearchScope | null = null;
+      let showAll = false;
       let history: ResearchDirection[] = [];
       try {
+        showAll = localStorage.getItem(scopeStorageKey) === "all";
         saved = parseResearchScope(
           localStorage.getItem(scopeStorageKey) ||
             localStorage.getItem(RESEARCH_SCOPE_KEY),
@@ -315,7 +320,7 @@ export default function AtlasApp({
       } catch {
         /* Local-only persistence is best effort. */
       }
-      saved = saved || history[0] || null;
+      saved = showAll ? null : saved || history[0] || null;
       if (saved) {
         setQuery(saved.query);
         setResearchScope(saved);
@@ -752,6 +757,55 @@ export default function AtlasApp({
     }
     return locallySaved;
   }
+  useEffect(() => {
+    if (!directionMenuOpen) return;
+    function closeOnOutside(event: PointerEvent) {
+      if (!directionMenuRef.current?.contains(event.target as Node))
+        setDirectionMenuOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setDirectionMenuOpen(false);
+        directionButtonRef.current?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [directionMenuOpen]);
+
+  async function showAllPapers() {
+    if (loading || generating) return;
+    const revision = ++researchRevision.current;
+    setDirectionMenuOpen(false);
+    setLoading(true);
+    setMessage("");
+    try {
+      const result = await api<{ papers: Paper[] }>("/api/papers");
+      if (revision !== researchRevision.current) return;
+      setResearchScope(null);
+      try {
+        localStorage.setItem(scopeStorageKey, "all");
+      } catch {
+        /* Viewing the full catalog still works without local storage. */
+      }
+      setPapers(result.papers);
+      setSelectedId(result.papers[0]?.id || "");
+      clearFilters();
+      setSearchDiagnostics(null);
+      setSection("atlas");
+      setMessage(`正在显示全部 ${result.papers.length} 篇已收录论文。`);
+    } catch (error) {
+      if (revision === researchRevision.current)
+        setMessage((error as Error).message);
+    } finally {
+      if (revision === researchRevision.current) setLoading(false);
+    }
+  }
+
   async function restoreDirection(scope: ResearchScope) {
     if (loading || generating) return;
     const revision = ++researchRevision.current;
@@ -1535,46 +1589,78 @@ export default function AtlasApp({
               </button>
             ))}
           </nav>
-          <label className="header-direction">
-            <select
-              aria-label="切换研究方向"
-              title={researchScope?.query || "选择研究方向"}
-              value={
-                directionHistory.some(
-                  (d) =>
-                    directionKey(d.query) ===
-                    directionKey(researchScope?.query || ""),
-                )
-                  ? directionKey(researchScope?.query || "")
-                  : ""
-              }
+          <div className="header-direction" ref={directionMenuRef}>
+            <button
+              ref={directionButtonRef}
+              type="button"
+              className="header-direction-trigger"
+              aria-label={`切换研究方向，当前：${researchScope?.query || "显示全部"}`}
+              aria-expanded={directionMenuOpen}
+              aria-controls="direction-menu"
               disabled={loading || generating}
-              onChange={(event) => {
-                if (event.target.value === "__new") {
-                  setSection("settings");
-                  window.scrollTo({ top: 0, behavior: "instant" });
-                  return;
-                }
-                const direction = directionHistory.find(
-                  (d) => directionKey(d.query) === event.target.value,
-                );
-                if (direction) void restoreDirection(direction);
-              }}
+              onClick={() => setDirectionMenuOpen((open) => !open)}
             >
-              <option value="" disabled>
-                {researchScope?.query || "选择或创建研究方向"}
-              </option>
-              {directionHistory.map((direction) => (
-                <option
-                  key={directionKey(direction.query)}
-                  value={directionKey(direction.query)}
+              <span>{researchScope?.query || "显示全部"}</span>
+              {researchScope && (
+                <small>{researchScope.paperIds.length} 篇</small>
+              )}
+              <ChevronDown size={16} aria-hidden="true" />
+            </button>
+            {directionMenuOpen && (
+              <div id="direction-menu" className="header-direction-menu">
+                <span className="header-direction-menu-title">
+                  切换研究方向
+                </span>
+                <button
+                  type="button"
+                  className={!researchScope ? "active" : ""}
+                  aria-current={!researchScope ? "true" : undefined}
+                  onClick={() => void showAllPapers()}
                 >
-                  {direction.query} · {direction.paperIds.length} 篇
-                </option>
-              ))}
-              <option value="__new">＋ 新建研究方向</option>
-            </select>
-          </label>
+                  <span>显示全部</span>
+                  <small>已收录论文</small>
+                </button>
+                {directionHistory.map((direction) => (
+                  <button
+                    type="button"
+                    key={directionKey(direction.query)}
+                    className={
+                      researchScope &&
+                      directionKey(researchScope.query) ===
+                        directionKey(direction.query)
+                        ? "active"
+                        : ""
+                    }
+                    aria-current={
+                      researchScope &&
+                      directionKey(researchScope.query) ===
+                        directionKey(direction.query)
+                        ? "true"
+                        : undefined
+                    }
+                    onClick={() => {
+                      setDirectionMenuOpen(false);
+                      void restoreDirection(direction);
+                    }}
+                  >
+                    <span>{direction.query}</span>
+                    <small>{direction.paperIds.length} 篇</small>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="direction-new"
+                  onClick={() => {
+                    setDirectionMenuOpen(false);
+                    setSection("settings");
+                    window.scrollTo({ top: 0, behavior: "instant" });
+                  }}
+                >
+                  ＋ 新建研究方向
+                </button>
+              </div>
+            )}
+          </div>
           <div className="top-actions">
             {user ? (
               <a

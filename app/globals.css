@@ -297,19 +297,31 @@
 .site-header .top-brand small { color:#7f9d96; font-weight:600; font-size:7px; letter-spacing:.13em; }
 .site-header .brand-symbol { background:#eaf5ef; border:1px solid #d4e9dc; border-radius:11px; box-shadow:none; width:36px; height:36px; }
 .site-header .brand-symbol:before,.site-header .brand-symbol:after,.site-header .brand-symbol span { border-color:#6a9e8f; }
-.header-direction { min-width:0; display:grid; align-items:center; min-height:44px; padding:9px 12px; background:#f8faf9; border:1px solid #e0e9e4; border-radius:10px; }
-.header-direction select { width:100%; min-width:0; border:0; background:transparent; color:#416e64; font-family:inherit; font-size:12px; font-weight:600; text-overflow:ellipsis; cursor:pointer; min-height:22px; }
-.header-direction select:focus-visible { outline:2px solid #438a7e; outline-offset:2px; border-radius:3px; }
-.header-direction:focus-within { border-color:#91b9a8; }
-.header-direction select:disabled { cursor:wait; opacity:.6; }
+.header-direction { position:relative; min-width:0; min-height:44px; }
+.header-direction-trigger { width:100%; min-height:44px; display:flex; align-items:center; gap:8px; padding:9px 12px; text-align:left; background:#f7faf8; border:1px solid #dfeae4; border-radius:10px; color:#315f54; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; box-shadow:0 1px 3px #163a2510; }
+.header-direction-trigger:hover,.header-direction-trigger[aria-expanded="true"] { border-color:#82bca8; background:#edf7f1; }
+.header-direction-trigger:focus-visible,.header-direction-menu button:focus-visible { outline:2px solid #438a7e; outline-offset:2px; }
+.header-direction-trigger:disabled { opacity:.6; cursor:wait; }
+.header-direction-trigger span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.header-direction-trigger small { flex:none; font-size:10px; color:#73968a; }
+.header-direction-trigger svg { flex:none; transition:transform .2s; }
+.header-direction-trigger[aria-expanded="true"] svg { transform:rotate(180deg); }
+.header-direction-menu { position:absolute; z-index:70; top:calc(100% + 8px); right:0; width:max(100%,300px); max-width:min(420px,calc(100vw - 24px)); max-height:min(60vh,420px); overflow-y:auto; padding:7px; border:1px solid #dce9e1; border-radius:12px; background:#fff; box-shadow:0 16px 40px #163c2d2b; }
+.header-direction-menu-title { display:block; padding:8px 10px 7px; color:#80998d; font-size:10px; font-weight:700; letter-spacing:.08em; }
+.header-direction-menu button { display:flex; align-items:center; gap:10px; width:100%; min-height:42px; padding:9px 11px; border:0; border-radius:8px; background:transparent; color:#315a52; text-align:left; cursor:pointer; font-size:12px; }
+.header-direction-menu button:hover { background:#f0f7f2; }
+.header-direction-menu button.active { background:#e5f2e9; color:#166a55; font-weight:700; }
+.header-direction-menu button span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.header-direction-menu button small { flex:none; color:#78978b; font-size:10px; }
+.header-direction-menu .direction-new { margin-top:5px; border-top:1px solid #e6eee8; border-radius:0 0 8px 8px; color:#216d60; font-weight:700; }
 .site-header .account-pill { color:#758b84; }
 .site-header .account-pill span { background:#eff5f1; color:#608f7e; border:1px solid #e2ece6; }
 @media(max-width:1350px) { .header-direction { grid-column:2; grid-row:1; } }
 @media(max-width:600px) {
   .site-header { grid-template-columns:minmax(0,1fr) auto; gap:9px 12px; }
   .site-header .top-actions { grid-column:2; grid-row:1; }
-  .header-direction { grid-column:1/-1; grid-row:2; display:flex; align-items:center; gap:12px; padding:7px 10px; }
-  .header-direction select { flex:1; font-size:11px; }
+  .header-direction { grid-column:1/-1; grid-row:2; }
+  .header-direction-menu { width:100%; }
   .primary-nav { grid-row:3; }
 }
 
