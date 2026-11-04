@@ -1217,7 +1217,7 @@ export default function AtlasApp({
   return (
     <div className="app-shell">
       <div className="main-column">
-        <header className="topbar">
+        <header className="site-header">
           <div className="top-left">
             <div className="top-brand">
               <span className="brand-symbol small">
@@ -1227,12 +1227,40 @@ export default function AtlasApp({
                 MedAtlas<small>RESEARCH INTELLIGENCE</small>
               </span>
             </div>
-            <span className="slash">/</span>
-            <strong>{sections.find((s) => s.id === section)?.label}</strong>
           </div>
+          <nav className="primary-nav" aria-label="主要导航">
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                className={
+                  section === s.id
+                    ? "primary-nav-item active"
+                    : "primary-nav-item"
+                }
+                aria-label={s.label}
+                aria-current={section === s.id ? "page" : undefined}
+                onClick={() => {
+                  setSection(s.id);
+                  window.scrollTo({ top: 0, behavior: "instant" });
+                }}
+              >
+                <s.icon size={19} strokeWidth={1.8} />
+                <span className="nav-label-full">{s.label}</span>
+                <span className="nav-label-compact">
+                  {
+                    {
+                      atlas: "星图",
+                      library: "文献库",
+                      ideas: "选题",
+                      workspace: "工作区",
+                      settings: "设置",
+                    }[s.id]
+                  }
+                </span>
+              </button>
+            ))}
+          </nav>
           <div className="top-actions">
-            <span className="top-date">医学多模态 Agent · 影像 × 病历文本</span>
-            <div className="top-separator" />
             {user ? (
               <a
                 className="account-pill"
@@ -2553,21 +2581,6 @@ export default function AtlasApp({
           )}
         </main>
       </div>
-      <nav className="bottom-nav" aria-label="主要导航">
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            className={
-              section === s.id ? "bottom-nav-item active" : "bottom-nav-item"
-            }
-            aria-current={section === s.id ? "page" : undefined}
-            onClick={() => setSection(s.id)}
-          >
-            <s.icon size={19} strokeWidth={1.8} />
-            <span>{s.label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }
