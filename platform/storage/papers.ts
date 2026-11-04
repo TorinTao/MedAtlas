@@ -22,12 +22,15 @@ export async function allPapers(): Promise<Paper[]> {
     const olderSeedIds = seedPapers
       .filter((paper) => !recentIds.has(paper.id))
       .map((paper) => paper.id);
-    const olderSeedRows = olderSeedIds.length
-      ? await getDb()
+    const olderSeedRows: (typeof rows)[number][] = [];
+    for (let start = 0; start < olderSeedIds.length; start += 80) {
+      olderSeedRows.push(
+        ...(await getDb()
           .select()
           .from(paperTable)
-          .where(inArray(paperTable.id, olderSeedIds))
-      : [];
+          .where(inArray(paperTable.id, olderSeedIds.slice(start, start + 80)))),
+      );
+    }
     const olderSeedData = new Map(
       olderSeedRows.map((row) => [
         row.id,
