@@ -85,7 +85,7 @@ export function validateIdea(
       challenges: Array.isArray(assessment.blockers) ? assessment.blockers[0] : undefined,
     };
     for (const [key, source] of Object.entries(fallback))
-      if ((!Array.isArray(draft[key]) || !draft[key].length) &&
+      if (!list.safeParse(draft[key]).success &&
           typeof source === "string" && source.trim().length >= 2)
         draft[key] = [source.trim()];
   }
