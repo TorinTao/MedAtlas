@@ -22,6 +22,8 @@ const suites = {
   ],
   workspace: [
     "tests/modules/workspace.test.ts",
+    "tests/modules/paper-link.test.ts",
+    "tests/paper-link-route.test.mjs",
     "tests/pdf-upload.test.ts",
     "tests/upload-routes.test.mjs",
     "tests/workspace-saving.test.mjs",

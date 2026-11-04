@@ -217,6 +217,13 @@ export default function AtlasApp({
   );
   const [auditing, setAuditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [paperLink, setPaperLink] = useState("");
+  const [importingLink, setImportingLink] = useState(false);
+  const [paperLinkError, setPaperLinkError] = useState("");
+  const [linkResult, setLinkResult] = useState<{
+    paper: Paper;
+    warnings: string[];
+  } | null>(null);
   const [message, setMessage] = useState("");
   const [searchDiagnostics, setSearchDiagnostics] =
     useState<SearchDiagnostics | null>(null);
@@ -1271,6 +1278,50 @@ export default function AtlasApp({
       setRepoLookupError((e as Error).message);
     } finally {
       setAuditing(false);
+    }
+  }
+  function openWorkspacePaper(paper: Paper) {
+    setPapers((previous) => [
+      paper,
+      ...previous.filter((p) => p.id !== paper.id),
+    ]);
+    clearFilters();
+    selectPaper(paper);
+    setSection("library");
+  }
+  async function importPaperFromLink() {
+    if (!user || importingLink) return;
+    setImportingLink(true);
+    setPaperLinkError("");
+    setLinkResult(null);
+    try {
+      const result = await api<{ paper: Paper; warnings: string[] }>(
+        "/api/workspace/import-link",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: paperLink }),
+        },
+      );
+      setLinkResult(result);
+      setPapers((previous) => [
+        result.paper,
+        ...previous.filter((p) => p.id !== result.paper.id),
+      ]);
+      setWorkspace((previous) => ({
+        savedPapers: [
+          result.paper,
+          ...(previous?.savedPapers || []).filter(
+            (p) => p.id !== result.paper.id,
+          ),
+        ],
+        ideas: previous?.ideas || [],
+        uploads: previous?.uploads || [],
+      }));
+    } catch (error) {
+      setPaperLinkError((error as Error).message);
+    } finally {
+      setImportingLink(false);
     }
   }
   async function uploadPdf(file: File) {
@@ -2451,8 +2502,7 @@ export default function AtlasApp({
                             )}
                             papers={papers}
                             onPaper={(p) => {
-                              selectPaper(p);
-                              setSection("library");
+                              openWorkspacePaper(p);
                             }}
                             onFavorite={toggleIdeaFavorite}
                             favoriteBusy={favoriteBusyId === historySelected.id}
@@ -2486,7 +2536,8 @@ export default function AtlasApp({
                     我的工作区 <span>Workspace</span>
                   </h2>
                   <p>
-                    保存重要文献、上传你有权使用的 PDF，并持续打磨研究选题。
+                    保存重要文献、导入公开论文链接或上传
+                    PDF，并持续打磨研究选题。
                   </p>
                 </div>
               </div>
@@ -2501,6 +2552,77 @@ export default function AtlasApp({
                 </div>
               ) : (
                 <div className="workspace-grid">
+                  <div className="workspace-panel paper-link-panel">
+                    <h3>导入论文链接</h3>
+                    <p>
+                      粘贴公开论文详情页或 DOI，Agent 将通过 Lexmount
+                      加载论文、生成中文解读并加入已收藏文献。
+                    </p>
+                    <form
+                      className="paper-link-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void importPaperFromLink();
+                      }}
+                    >
+                      <label className="paper-link-field">
+                        论文链接
+                        <input
+                          value={paperLink}
+                          onChange={(event) => setPaperLink(event.target.value)}
+                          inputMode="url"
+                          autoComplete="off"
+                          placeholder="https://arxiv.org/abs/… 或 10.…"
+                          maxLength={2048}
+                          required
+                          disabled={importingLink}
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={importingLink || !paperLink.trim()}
+                      >
+                        {importingLink ? (
+                          <>
+                            <LoaderCircle size={16} className="spin" />{" "}
+                            正在加载…
+                          </>
+                        ) : paperLinkError ? (
+                          "重试导入"
+                        ) : (
+                          "导入论文"
+                        )}
+                      </button>
+                    </form>
+                    <small>
+                      仅支持公开页面；arXiv PDF 链接自动转换为摘要页。其他 PDF
+                      或私有文档请使用文件上传。公开论文内容将加入公共文献库，收藏记录仅自己可见。
+                    </small>
+                    {importingLink && (
+                      <p role="status">
+                        正在读取公开页面并生成中文概述与摘要译文，请稍候…
+                      </p>
+                    )}
+                    {paperLinkError && (
+                      <p className="paper-link-error" role="alert">
+                        {paperLinkError}
+                      </p>
+                    )}
+                    {linkResult && (
+                      <div className="paper-link-result" role="status">
+                        <strong>已加载并收藏：{linkResult.paper.title}</strong>
+                        {linkResult.warnings.map((warning) => (
+                          <p key={warning}>{warning}</p>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => openWorkspacePaper(linkResult.paper)}
+                        >
+                          查看论文 <ArrowRight size={15} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="workspace-panel">
                     <div className="workspace-panel-head">
                       <div>
@@ -2514,8 +2636,7 @@ export default function AtlasApp({
                         <div key={p.id} className="saved-row">
                           <button
                             onClick={() => {
-                              selectPaper(p);
-                              setSection("library");
+                              openWorkspacePaper(p);
                             }}
                           >
                             {p.title}
