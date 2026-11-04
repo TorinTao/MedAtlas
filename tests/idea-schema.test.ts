@@ -113,3 +113,12 @@ test("a minimum experiment and its falsification criterion are required", () => 
   draft.minimumExperiment.falsificationCriterion = "";
   assert.throws(() => validateIdea(draft, papers, query), /minimumExperiment\.falsificationCriterion/);
 });
+
+test("missing summary metric reuses the model's explicit primary metric", () => {
+  const { metrics: _metrics, ...draft } = validDraft();
+  assert.deepEqual(validateIdea(draft, papers, query).metrics, [draft.minimumExperiment.primaryMetric]);
+  const missingEverywhere = validDraft();
+  delete (missingEverywhere as Partial<typeof missingEverywhere>).metrics;
+  missingEverywhere.minimumExperiment.primaryMetric = "";
+  assert.throws(() => validateIdea(missingEverywhere, papers, query), /metrics/);
+});

@@ -65,7 +65,31 @@ export function validateIdea(
   papers: Paper[],
   query: string,
 ): ResearchIdea {
-  const parsed = draftSchema.safeParse(raw);
+  // These four summary lists repeat details already required in the minimum
+  // experiment and feasibility sections. Recover an omitted list only from
+  // those explicit model-written fields; never invent an experiment detail.
+  const draft: Record<string, unknown> | null = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? { ...raw } as Record<string, unknown>
+    : null;
+  if (draft) {
+    const experiment = draft.minimumExperiment;
+    const minimum = experiment && typeof experiment === "object" && !Array.isArray(experiment)
+      ? experiment as Record<string, unknown> : {};
+    const feasibility = draft.feasibility;
+    const assessment = feasibility && typeof feasibility === "object" && !Array.isArray(feasibility)
+      ? feasibility as Record<string, unknown> : {};
+    const fallback: Record<string, unknown> = {
+      datasets: minimum.data,
+      baselines: minimum.baseline,
+      metrics: minimum.primaryMetric,
+      challenges: Array.isArray(assessment.blockers) ? assessment.blockers[0] : undefined,
+    };
+    for (const [key, source] of Object.entries(fallback))
+      if ((!Array.isArray(draft[key]) || !draft[key].length) &&
+          typeof source === "string" && source.trim().length >= 2)
+        draft[key] = [source.trim()];
+  }
+  const parsed = draftSchema.safeParse(draft ?? raw);
   if (!parsed.success)
     throw new Error(
       `方案字段不完整：${parsed.error.issues
