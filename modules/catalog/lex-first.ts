@@ -4,6 +4,7 @@ export type CatalogResult = {
   papers: Paper[];
   sources: string[];
   errors: string[];
+  candidateCount?: number;
 };
 type Search = (
   query: string,
@@ -18,13 +19,20 @@ export function createLexFirstCatalog(deps: {
   async function collectPapers(
     query: string,
     breadth: "query" | "corpus" = "query",
+    accepts: (paper: Paper) => boolean = () => true,
   ): Promise<CatalogResult> {
     const primary = await deps.primary(query, breadth);
-    if (primary.papers.length >= 8) return primary;
+    const relevantPrimary = primary.papers.filter(accepts);
+    if (relevantPrimary.length >= 8)
+      return {
+        ...primary,
+        papers: relevantPrimary,
+        candidateCount: primary.papers.length,
+      };
     const fallback = await deps.fallback(query, breadth);
-    const known = new Set(primary.papers.map((p) => p.id));
+    const known = new Set(relevantPrimary.map((p) => p.id));
     const candidates = dedupePapers(fallback.papers)
-      .filter((p) => !known.has(p.id))
+      .filter((p) => !known.has(p.id) && accepts(p))
       .slice(0, 9);
     const verified: Paper[] = [];
     const failures: string[] = [];
@@ -41,7 +49,9 @@ export function createLexFirstCatalog(deps: {
       });
     }
     return {
-      papers: dedupePapers([...primary.papers, ...verified]),
+      candidateCount: dedupePapers([...primary.papers, ...fallback.papers])
+        .length,
+      papers: dedupePapers([...relevantPrimary, ...verified]),
       sources: [
         ...new Set([
           ...primary.sources,

@@ -183,8 +183,8 @@ export async function searchPubMed(query: string, limit = 8): Promise<Paper[]> {
 export async function searchArxiv(query: string, limit = 8): Promise<Paper[]> {
   const words = query
     .split(/\s+/)
-    .filter((w) => w.length > 3)
-    .slice(0, 4);
+    .filter((w) => w.length > 1)
+    .slice(0, 8);
   const search =
     words
       .map((w) => `all:${w.replace(/[^a-z0-9-]/gi, "")}`)

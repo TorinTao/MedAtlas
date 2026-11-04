@@ -1,3 +1,4 @@
+import type { Paper } from "../shared/models";
 import { createCatalogService } from "../modules/catalog/service";
 import { createLexFirstCatalog } from "../modules/catalog/lex-first";
 import {
@@ -54,6 +55,7 @@ const pipeline = createLexFirstCatalog({
 export async function collectPapers(
   input: string,
   breadth: "query" | "corpus" = "query",
+  accepts?: (paper: Paper) => boolean,
 ) {
   if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID")) {
     return {
@@ -62,7 +64,7 @@ export async function collectPapers(
       errors: ["Lexmount Web Fetch 尚未配置，无法完成必需的公开页面核验"],
     };
   }
-  return pipeline.collectPapers(input, breadth);
+  return pipeline.collectPapers(input, breadth, accepts);
 }
 export {
   searchOpenAlex,

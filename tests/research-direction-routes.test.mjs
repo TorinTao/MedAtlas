@@ -23,7 +23,7 @@ try {
  await build({stdin:{contents:`export {POST} from './app/api/research/route.ts';export * from './tests/support/research-search-runtime.mjs';`,resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'search.mjs'),external:['node:*'],plugins:[{name:'external-fixtures',setup(b){b.onResolve({filter:/(composition\/(catalog|research)|platform\/storage\/papers)$/},()=>({path:searchRuntime}))}}]});
  const search=await import(pathToFileURL(path.join(temp,'search.mjs')));
  const result=await search.POST(request({query:'chest report generation'}));assert.equal(result.status,200);
- assert.deepEqual((await result.json()).papers.map(p=>p.id),['fresh-external']);assert.equal(search.calls.local,0);assert.equal(search.calls.external,1);
+ assert.deepEqual((await result.json()).papers.map(p=>p.id),['fresh-external']);assert.equal(search.calls.local,0);assert.ok(search.calls.external>=2);
  search.setUnavailable(true);assert.equal((await search.POST(request({query:'chest report generation'}))).status,502);assert.equal(search.calls.local,0);
  console.log('PASS external retrieval on every search; no existing-library fallback on failure');
 } finally {await rm(temp,{recursive:true,force:true})}

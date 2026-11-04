@@ -15,6 +15,7 @@ import {
   papersInScope,
   type ResearchScope,
 } from "../../modules/atlas/research-scope";
+import type { SearchDiagnostics } from "../../modules/catalog/research-search";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -168,7 +169,10 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, options);
   const data: any = await response.json();
   if (!response.ok)
-    throw new Error(data.error || `请求失败 ${response.status}`);
+    throw Object.assign(
+      new Error(data.error || `请求失败 ${response.status}`),
+      { diagnostics: data.diagnostics },
+    );
   return data as T;
 }
 
@@ -214,6 +218,8 @@ export default function AtlasApp({
   const [auditing, setAuditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [searchDiagnostics, setSearchDiagnostics] =
+    useState<SearchDiagnostics | null>(null);
   useEffect(() => {
     if (!message) return;
     const timer = window.setTimeout(() => setMessage(""), 5000);
@@ -719,13 +725,18 @@ export default function AtlasApp({
       locallySaved = false;
     }
     if (user) {
-      const toSync = researchScope && directionKey(researchScope.query) !== directionKey(scope.query) ? [researchScope, scope] : [scope];
+      const toSync =
+        researchScope &&
+        directionKey(researchScope.query) !== directionKey(scope.query)
+          ? [researchScope, scope]
+          : [scope];
       void (async () => {
-        for (const item of toSync) await api("/api/research/history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item),
-        });
+        for (const item of toSync)
+          await api("/api/research/history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(item),
+          });
       })().catch((error) => setMessage((error as Error).message));
     }
     return locallySaved;
@@ -746,6 +757,7 @@ export default function AtlasApp({
         throw new Error(
           "该方向的论文暂时无法恢复，历史标签已保留，可重新探索文献",
         );
+      setSearchDiagnostics(null);
       setResearchScope(scope);
       setQuery(scope.query);
       setPapers(result.papers);
@@ -774,9 +786,11 @@ export default function AtlasApp({
     const revision = ++researchRevision.current;
     setLoading(true);
     setMessage("");
+    setSearchDiagnostics(null);
     try {
       const result = await api<{
         papers: Paper[];
+        diagnostics: SearchDiagnostics;
         matchingCount: number;
         lexmountCount: number;
         sources: string[];
@@ -787,6 +801,7 @@ export default function AtlasApp({
         body: JSON.stringify({ query: requestedQuery }),
       });
       if (revision !== researchRevision.current) return;
+      setSearchDiagnostics(result.diagnostics);
       const scope = {
         query: requestedQuery,
         paperIds: result.papers.map((p) => p.id),
@@ -816,6 +831,13 @@ export default function AtlasApp({
         `Lexmount 优先检索完成：本次发现或核验 ${result.lexmountCount} 篇论文；当前方向「${requestedQuery}」展示 ${result.papers.length} 篇${!locallySaved ? "；本地保存失败，未登录时关闭页面将无法恢复" : ""}${result.warnings.length ? `。部分路径未成功，已尝试替代路径：${result.warnings.join("；")}` : ""}`,
       );
     } catch (e) {
+      if (
+        revision === researchRevision.current &&
+        (e as { diagnostics?: SearchDiagnostics }).diagnostics
+      )
+        setSearchDiagnostics(
+          (e as { diagnostics: SearchDiagnostics }).diagnostics,
+        );
       if (revision === researchRevision.current)
         setMessage((e as Error).message);
     } finally {
@@ -1498,6 +1520,32 @@ export default function AtlasApp({
                   ))}
                 </div>
               </nav>
+            )}
+          {searchDiagnostics &&
+            (section === "atlas" ||
+              section === "library" ||
+              section === "settings") && (
+              <details className="search-diagnostics">
+                <summary>
+                  本轮检索详情 · {searchDiagnostics.queries.length} 条检索式 ·
+                  去重后 {searchDiagnostics.matched} 篇主题相关论文
+                </summary>
+                <p>{searchDiagnostics.description}</p>
+                <ul>
+                  {searchDiagnostics.queries.map((path) => (
+                    <li key={path.query}>
+                      <code>{path.query}</code>
+                      <span>
+                        候选 {path.candidates} · 核验且匹配 {path.accepted}
+                        {path.status === "failed" ? " · 请求失败" : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <small>
+                  不同检索式的结果可能重复；数量受来源覆盖、限流、页面访问和主题筛选影响，不代表领域论文总数。
+                </small>
+              </details>
             )}
           {message && (
             <div className="notice" role="status">

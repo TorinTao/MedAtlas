@@ -1,6 +1,5 @@
-import { selectEvidence } from "../../../modules/ideas/selection";
+import { createResearchSearch } from "../../../modules/catalog/research-search";
 import { makeResearchFocus } from "../../../composition/research";
-import { dedupePapers } from "../../../modules/catalog/papers";
 import { collectPapers } from "../../../composition/catalog";
 import {
   jsonError,
@@ -24,11 +23,16 @@ export async function POST(request: Request) {
     return jsonError("研究方向解析失败，请重试；此前的星图未切换", 503);
   }
   const searchQuery = focus.searchQuery;
-  const result = await collectPapers(searchQuery);
+  const result = await createResearchSearch(collectPapers)(query, focus);
   if (!result.papers.length)
-    return jsonError(
-      `本次未完成 Lexmount 论文发现或核验，请重试。${result.errors.join("；")}`,
-      502,
+    return Response.json(
+      {
+        error:
+          "已尝试多路外部检索，但本轮没有同时通过 Lexmount 核验与主题筛选的论文；此前星图已保留。可展开检索详情查看各路径结果。",
+        diagnostics: result.diagnostics,
+        warnings: result.errors,
+      },
+      { status: 502 },
     );
   try {
     await putPapers(result.papers);
@@ -42,13 +46,7 @@ export async function POST(request: Request) {
       ),
     ),
   ];
-  const papers = selectEvidence(
-    focus,
-    dedupePapers(result.papers),
-    [],
-    [],
-    500,
-  ).map((paper) => {
+  const papers = result.papers.map((paper) => {
     const text = `${paper.title} ${paper.abstract}`.toLowerCase();
     const matched = terms.filter((term) => text.includes(term)).length;
     return {
@@ -59,23 +57,27 @@ export async function POST(request: Request) {
       ),
     };
   });
-  if (!papers.length)
-    return jsonError(
-      "本次抓取成功，但没有匹配当前研究方向的论文；此前的星图未切换，请调整关键词",
-      404,
-    );
   return Response.json({
     query,
     searchQuery,
     strategy: "lexmount-first",
     origin: "external-search",
+    diagnostics: result.diagnostics,
     papers,
     matchingCount: papers.length,
     lexmountCount: papers.filter(
       (paper) => paper.discovery?.method === "Lexmount Web Fetch",
     ).length,
     sources: result.sources,
-    warnings: [...planningWarnings, ...result.errors],
+    warnings: [
+      ...planningWarnings,
+      ...result.errors,
+      ...(papers.length < 10
+        ? [
+            "本轮已完成多路外部检索，但通过核验且匹配主题的论文仍较少；这不代表该领域只有这些文献。",
+          ]
+        : []),
+    ],
     fetchedAt: new Date().toISOString(),
   });
 }
