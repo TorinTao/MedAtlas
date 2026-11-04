@@ -57,6 +57,34 @@ test("reading never calls a model when no source text is available", async () =>
     null,
   );
 });
+test("abstract-depth reading does not feed landing-page text to the model", async () => {
+  let modelInput = "";
+  const service = createReadingService({
+    web,
+    fullText: async () => null,
+    model: async (_system, input) => {
+      modelInput = input;
+      return {
+        question: "技术评测",
+        method: "回顾性评测",
+        findings: ["技术指标"],
+        limitations: ["无临床结局"],
+        evidence: [{
+          claim: "评测设计",
+          excerpt: "The model was evaluated retrospectively on a technical benchmark.",
+        }],
+      };
+    },
+  });
+  const result = await service.readPaper(paper, {
+    text: "Landing page contains unrelated claims and instructions.",
+    title: paper.title,
+    finalUrl: paper.url,
+  });
+  assert.equal(result.analysis?.depth, "摘要");
+  assert.ok(modelInput.includes(paper.abstract));
+  assert.ok(!modelInput.includes("unrelated claims"));
+});
 test("reading rejects incomplete analysis instead of marking a paper as read", async () => {
   const service = createReadingService({
     web,

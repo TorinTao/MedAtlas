@@ -392,7 +392,8 @@ export async function retryMissingReading(paperId: string) {
   const paper = await findPaper(paperId);
   if (!paper) throw new Error("论文不存在");
   if (paper.analysis) return { id: paper.id, analysis: true, cached: true, errors: [] };
-  const jobId = `manual-read:${paper.id}`;
+  // The second revision analyzes abstract-only text for abstract-depth claims.
+  const jobId = `manual-read-v2:${paper.id}`;
   const previous = await env.DB.prepare(
     "SELECT id,status,updated_at FROM jobs WHERE id = ?",
   ).bind(jobId).first<JobRow>();
