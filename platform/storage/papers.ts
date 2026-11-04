@@ -100,6 +100,7 @@ export async function putPapers(items: Paper[]) {
   const sql = `INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET
     title=excluded.title,
     data=json_set(excluded.data,
+      '$.abstract',coalesce(nullif(trim(json_extract(excluded.data,'$.abstract')),''),json_extract(papers.data,'$.abstract'),''),
       '$.summaryZh',coalesce(json_extract(excluded.data,'$.summaryZh'),json_extract(papers.data,'$.summaryZh')),
       '$.summaryBasis',coalesce(json_extract(excluded.data,'$.summaryBasis'),json_extract(papers.data,'$.summaryBasis')),
       '$.summarySourceUrl',coalesce(json_extract(excluded.data,'$.summarySourceUrl'),json_extract(papers.data,'$.summarySourceUrl')),

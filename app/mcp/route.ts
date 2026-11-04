@@ -59,13 +59,21 @@ export async function POST(request: Request) {
     ].includes(rpc.params?.name)
   )
     return error(-32601, "Method not found");
-  const owner = runtime("MCP_OWNER_EMAIL")?.toLowerCase();
+  const owner = runtime("MCP_OWNER_EMAIL").trim().toLowerCase();
   const caller = request.headers
     .get("oai-authenticated-user-email")
-    ?.toLowerCase();
+    ?.trim()
+    .toLowerCase();
   if (!owner || !caller || caller !== owner)
     return result({
-      content: [{ type: "text", text: "只有站点所有者可以更新文献语料" }],
+      content: [{
+        type: "text",
+        text: !owner
+          ? "站点所有者邮箱尚未配置，无法更新文献语料"
+          : !caller
+            ? "站点未收到已验证的用户邮箱，无法更新文献语料"
+            : "当前登录账号与配置的站点所有者邮箱不一致",
+      }],
       isError: true,
     });
   try {

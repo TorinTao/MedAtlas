@@ -18,7 +18,7 @@ function prepare(sql, values = []) {
   async raw(){const s=stmt();s.setReturnArrays(true);return s.all(...values)}
  };
 }
-export const env = { DB: {prepare}, BUCKET: {
+export const env = { DB: {prepare,async batch(statements){return Promise.all(statements.map(statement=>statement.run()))}}, BUCKET: {
  async put(key, data) { if(failures.put && key.endsWith('.txt')) throw new Error('Test R2 failure');objects.set(key,data); },
  async get(key) {if(!objects.has(key))return null;const value=objects.get(key);return {body:value,async text(){return String(value)},async json(){return JSON.parse(String(value))}}},
  async delete(key){objects.delete(key)}
