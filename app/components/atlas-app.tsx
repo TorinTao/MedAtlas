@@ -2135,27 +2135,29 @@ export default function AtlasApp({
                       {selected.discovery && (
                         <div className="lex-discovery-proof">
                           <strong>Lexmount Web Fetch 发现 / 核验</strong>
-                          <a
-                            href={selected.discovery.searchUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {selected.discovery.stage === "article-verification"
-                              ? "Lexmount 已核验页面"
-                              : "Lexmount 公开搜索页"}{" "}
-                            <ExternalLink size={12} />
-                          </a>
-                          {selected.discovery.articleUrl &&
-                            selected.discovery.articleUrl !==
-                              selected.discovery.searchUrl && (
-                              <a
-                                href={selected.discovery.articleUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                公开论文页 <ExternalLink size={12} />
-                              </a>
-                            )}
+                          <div className="lex-discovery-links">
+                            <a
+                              href={selected.discovery.searchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {selected.discovery.stage === "article-verification"
+                                ? "Lexmount 已核验页面"
+                                : "Lexmount 公开搜索页"}{" "}
+                              <ExternalLink size={12} />
+                            </a>
+                            {selected.discovery.articleUrl &&
+                              selected.discovery.articleUrl !==
+                                selected.discovery.searchUrl && (
+                                <a
+                                  href={selected.discovery.articleUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  公开论文页 <ExternalLink size={12} />
+                                </a>
+                              )}
+                          </div>
                           <small>
                             抓取：{selected.discovery.capturedAt.slice(0, 10)} ·
                             请求 ID：{selected.discovery.requestId || "未返回"}

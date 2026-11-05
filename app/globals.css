@@ -439,3 +439,16 @@
   .rail-related{grid-template-columns:1fr}
   .library-row h3{font-size:14px}
 }
+
+/* Give the source record and its paper actions separate visual rhythms. */
+.lex-discovery-proof{display:grid;gap:10px;margin:18px 0 0;padding:16px 18px;border-radius:10px}
+.lex-discovery-proof strong{font-size:12px;line-height:1.45}
+.lex-discovery-links{display:flex;flex-wrap:wrap;gap:8px 18px}
+.lex-discovery-proof .lex-discovery-links a{font-size:11px;line-height:1.5}
+.lex-discovery-proof small{width:auto;font-size:10px;line-height:1.6;overflow-wrap:anywhere}
+.paper-detail .detail-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0 28px}
+.paper-detail .detail-actions a,.paper-detail .detail-actions button{min-height:46px;padding:10px 12px;border-radius:8px;font-size:12px;white-space:nowrap}
+@media(max-width:540px){
+  .lex-discovery-proof{padding:14px 15px}
+  .paper-detail .detail-actions{grid-template-columns:1fr;gap:9px}
+}
