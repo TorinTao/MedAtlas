@@ -2967,7 +2967,7 @@ export default function AtlasApp({
             </>
           )}
           {section === "settings" && (
-            <>
+            <div className="settings-grid">
               <div className="research-settings">
                 <h3>研究方向</h3>
                 <p className="direction-help">
@@ -3124,7 +3124,7 @@ export default function AtlasApp({
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
       </div>

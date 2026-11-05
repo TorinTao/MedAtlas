@@ -326,7 +326,7 @@
 }
 
 .draw-header-row { display:flex; align-items:stretch; gap:10px; margin-bottom:12px; }
-.api-settings-layout { grid-template-columns:minmax(0,1fr); max-width:720px; }
+.api-settings-layout { grid-template-columns:minmax(0,1fr); width:100%; max-width:none; }
 .draw-header-row .draw-toolbar { flex:1; min-width:0; margin:0; }
 .draw-header-row .draw-toolbar b { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; font-size:18px; line-height:1.5; }
 .draw-title-accent { padding:1px 7px; border-radius:6px; background:#dff3e9; color:#126d5d; font-size:24px; font-weight:900; line-height:1.3; }
@@ -451,4 +451,20 @@
 @media(max-width:540px){
   .lex-discovery-proof{padding:14px 15px}
   .paper-detail .detail-actions{grid-template-columns:1fr;gap:9px}
+}
+
+/* Settings: research direction and model access share one row on wide screens. */
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start}
+.settings-grid>.research-settings{min-width:0;margin:0;padding:24px;border:1px solid #dce8e2;border-radius:12px;background:#fff;box-shadow:0 10px 30px #174b380b}
+.settings-grid .research-settings h3{font-size:17px;margin-bottom:10px}
+.settings-grid .direction-help{margin:0 0 22px;font-size:12px}
+.settings-grid .settings-search{width:100%;margin:0;box-shadow:none}
+.settings-grid .api-settings-layout{min-width:0}
+.settings-grid .api-settings-card{min-width:0;box-shadow:0 10px 30px #174b380b}
+.settings-grid>.workspace-login{min-width:0}
+@media(max-width:1050px){.settings-grid{grid-template-columns:1fr;gap:18px}}
+@media(max-width:600px){
+  .settings-grid>.research-settings{padding:18px}
+  .settings-grid .settings-search{height:auto;min-height:72px;flex-wrap:wrap;padding:11px}
+  .settings-grid .settings-search>button{width:100%;height:46px}
 }
