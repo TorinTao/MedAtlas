@@ -45,6 +45,7 @@ type Prepared = {
   expiresAt: string;
   drawCount: number;
   draws: IdeaSummary[];
+  progress?: { id: string; stage: string; message: string };
 };
 async function ownerOf(request: Request, userId?: string) {
   const address =
@@ -79,6 +80,26 @@ async function searchNearby(query: string) {
       );
   });
   return { papers: dedupePapers(papers), sources, warnings };
+}
+
+export async function GET(request: Request) {
+  if (!env.DB) return jsonError("文献数据库不可用", 503);
+  const url = new URL(request.url);
+  const jobId = url.searchParams.get("jobId") || "";
+  const progressId = url.searchParams.get("progressId") || "";
+  if (!/^ideas:[\w-]{36}$/.test(jobId) || !/^[\w-]{36}$/.test(progressId))
+    return jsonError("进度参数无效");
+  const user = await getChatGPTUser();
+  const owner = await ownerOf(request, user?.userId);
+  const row = await env.DB.prepare("SELECT detail FROM jobs WHERE id = ? AND status = 'ready'")
+    .bind(jobId).first<{ detail: string }>();
+  if (!row) return jsonError("调研任务已失效", 404);
+  const prepared = JSON.parse(row.detail) as Prepared;
+  if (prepared.owner !== owner || Date.now() > Date.parse(prepared.expiresAt))
+    return jsonError("调研任务已过期或无权访问", 403);
+  return Response.json(prepared.progress?.id === progressId
+    ? prepared.progress
+    : { id: progressId, stage: "pending", message: "正在启动本张抽卡" });
 }
 
 export async function POST(request: Request) {
@@ -270,12 +291,14 @@ export async function POST(request: Request) {
     }
   }
   const jobId = String(body.jobId || ""),
-    drawIndex = Number(body.drawIndex);
+    drawIndex = Number(body.drawIndex),
+    progressId = String(body.progressId || "");
   if (
     !/^ideas:[\w-]{36}$/.test(jobId) ||
     !Number.isInteger(drawIndex) ||
     drawIndex < 0 ||
-    drawIndex > 9
+    drawIndex > 9 ||
+    (progressId && !/^[\w-]{36}$/.test(progressId))
   )
     return jsonError("抽卡参数无效");
   const row = await env.DB.prepare(
@@ -291,6 +314,16 @@ export async function POST(request: Request) {
     return jsonError("调研逻辑已更新，请刷新页面后重新调研", 409);
   if (!(await takeQuota(request, "ideas-draw", user ? 30 : 10, user?.userId)))
     return jsonError("今日抽卡次数已用完", 429);
+  const db = env.DB;
+  const reportProgress = async (stage: string, message: string) => {
+    if (!progressId) return;
+    try {
+      await db.prepare("UPDATE jobs SET detail = json_set(detail, '$.progress', json(?)) WHERE id = ? AND status = 'ready'")
+        .bind(JSON.stringify({ id: progressId, stage, message }), jobId).run();
+    } catch {
+      // A progress write must never interrupt an otherwise valid draw.
+    }
+  };
   try {
     const reservation = await env.DB.prepare(
       "UPDATE jobs SET detail = json_set(detail, '$.drawCount', coalesce(json_extract(detail, '$.drawCount'), 0) + 1) WHERE id = ? AND status = 'ready' RETURNING detail",
@@ -308,11 +341,13 @@ export async function POST(request: Request) {
     ) as Paper[];
     if (papers.length < 2)
       return jsonError("调研论文暂不可用，请重新调研", 503);
+    await reportProgress("searching", "正在补查相近工作和近期论文");
     const nearby = await searchNearby(opportunity.searchQuery);
     const extra = selectEvidence(prepared.focus, nearby.papers, [], [], 8);
     // Dedupe preserves the first ID, keeping existing candidate references stable.
     papers = dedupePapers([...papers, ...extra]);
     if (extra.length) await putPapers(papers);
+    await reportProgress("comparing", `已补查 ${nearby.papers.length} 篇候选论文，正在比对相近工作`);
     const previous: IdeaSummary[] = [];
     if (user) {
       const history = await env.DB.prepare(
@@ -356,6 +391,7 @@ export async function POST(request: Request) {
         opportunity,
         distinctPrevious,
         prepared.paperRoles,
+        reportProgress,
       )),
       favorite: false,
       targetedSearch: {
@@ -392,6 +428,7 @@ export async function POST(request: Request) {
         jobId,
       )
       .run();
+    await reportProgress("completed", "这张选题已通过证据核验，可以立即阅读");
     return Response.json({
       idea,
       evidencePapers: papers,
@@ -399,6 +436,7 @@ export async function POST(request: Request) {
       saved: false,
     });
   } catch (error) {
+    await reportProgress("failed", "这张选题未完成，可查看具体错误并重试");
     return jsonError((error as Error).message, 503);
   }
 }

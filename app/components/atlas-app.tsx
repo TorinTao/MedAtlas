@@ -216,6 +216,13 @@ export default function AtlasApp({
   const [reading, setReading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [drawProgress, setDrawProgress] = useState("");
+  const [drawRun, setDrawRun] = useState<{
+    total: number;
+    results: ("complete" | "failed")[];
+    startedAt: number;
+    finishedAt?: number;
+  } | null>(null);
+  const [drawElapsed, setDrawElapsed] = useState(0);
   const [researchBrief, setResearchBrief] = useState<IdeasResearch | null>(
     null,
   );
@@ -239,6 +246,13 @@ export default function AtlasApp({
     const timer = window.setTimeout(() => setMessage(""), 5000);
     return () => window.clearTimeout(timer);
   }, [message]);
+  useEffect(() => {
+    if (!generating || !drawRun) return;
+    const tick = () => setDrawElapsed(Math.floor((Date.now() - drawRun.startedAt) / 1000));
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [generating, drawRun?.startedAt]);
   const [ideas, setIdeas] = useState<ResearchIdea[]>([]);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [ideaHistory, setIdeaHistory] = useState<IdeaHistoryItem[]>([]);
@@ -947,6 +961,9 @@ export default function AtlasApp({
     setSection("ideas");
     setMessage("");
     setIdeas([]);
+    setDrawRun({ total: count, results: [], startedAt: Date.now() });
+    setDrawElapsed(0);
+    let finalProgress = "本轮抽卡已结束";
     try {
       let research = researchBrief;
       if (
@@ -954,6 +971,7 @@ export default function AtlasApp({
         research.query !== query.trim() ||
         Date.now() > Date.parse(research.expiresAt)
       ) {
+        setResearchBrief(null);
         setDrawProgress(
           "正在检索已有与最新研究，并由 AI 规划相近工作补充检索…",
         );
@@ -986,8 +1004,9 @@ export default function AtlasApp({
       const drawn: ResearchIdea[] = [];
       for (let drawIndex = 0; drawIndex < count; drawIndex++) {
         setDrawProgress(
-          `第 ${drawIndex + 1} / ${count} 张 · 补查相近工作、构建方案并审查证据，每张可能需要几分钟`,
+          `第 ${drawIndex + 1} / ${count} 张 · 正在启动抽卡`,
         );
+        let succeeded = false;
         try {
           const previousIdeas = [
             ...ideaHistory
@@ -998,6 +1017,24 @@ export default function AtlasApp({
           ]
             .slice(-20)
             .map(({ title, gap, hypothesis }) => ({ title, gap, hypothesis }));
+          const progressId = crypto.randomUUID();
+          let active = true;
+          let polling = false;
+          const progressTimer = window.setInterval(async () => {
+            if (!active || polling) return;
+            polling = true;
+            try {
+              const progress = await api<{ stage: string; message: string }>(
+                `/api/ideas?jobId=${encodeURIComponent(selected.jobId)}&progressId=${progressId}`,
+              );
+              if (active && progress.stage !== "pending")
+                setDrawProgress(`第 ${drawIndex + 1} / ${count} 张 · ${progress.message}`);
+            } catch {
+              // The draw request can continue if progress polling is unavailable.
+            } finally {
+              polling = false;
+            }
+          }, 2000);
           const result = await api<{
             idea: ResearchIdea;
             evidencePapers: Paper[];
@@ -1009,10 +1046,15 @@ export default function AtlasApp({
               action: "draw",
               jobId: selected.jobId,
               drawIndex,
+              progressId,
               previousIdeas,
             }),
+          }).finally(() => {
+            active = false;
+            window.clearInterval(progressTimer);
           });
           const idea = result.idea;
+          succeeded = true;
           drawn.push(idea);
           setIdeas([...drawn]);
           setPapers((previous) => [
@@ -1050,6 +1092,10 @@ export default function AtlasApp({
           failures++;
           failureMessages.push((error as Error).message);
         }
+        setDrawRun((run) => run && ({
+          ...run,
+          results: [...run.results, succeeded ? "complete" : "failed"],
+        }));
         setDrawProgress(
           `已处理 ${drawIndex + 1} / ${count} 张${failures ? `，${failures} 张未完成` : ""}`,
         );
@@ -1057,11 +1103,14 @@ export default function AtlasApp({
       setMessage(
         `本次生成 ${drawn.length} 个通过证据核验与模型审查的选题${failures ? `；${failures} 张未完成：${[...new Set(failureMessages)].slice(0, 2).join("；")}` : ""}${drawn.length ? (user ? "；已加入抽卡历史，收藏后进入工作区" : "；已保存到本设备的抽卡历史，登录后可收藏") : ""}`,
       );
+      finalProgress = `${drawn.length} 张已生成${failures ? `，${failures} 张未完成：${[...new Set(failureMessages)].slice(0, 1).join("；")}` : "，可直接阅读"}`;
     } catch (error) {
       setMessage((error as Error).message);
+      finalProgress = `调研未完成：${(error as Error).message}`;
     } finally {
+      setDrawRun((run) => run && ({ ...run, finishedAt: Date.now() }));
       setGenerating(false);
-      setDrawProgress("");
+      setDrawProgress(finalProgress);
     }
   }
   async function openHistoryIdea(item: IdeaHistoryItem) {
@@ -2478,7 +2527,7 @@ export default function AtlasApp({
                     onClick={() => generateIdeas(count)}
                     disabled={loading || generating || query.trim().length < 4}
                   >
-                    {generating ? (
+                    {generating && drawRun?.total === count ? (
                       <LoaderCircle size={14} className="spin" />
                     ) : (
                       <Sparkles size={14} />
@@ -2594,11 +2643,57 @@ export default function AtlasApp({
                   </div>
                 </section>
               )}
-              {drawProgress && (
-                <p className="draw-progress" role="status">
-                  <LoaderCircle size={15} className="spin" />
-                  {drawProgress}
-                </p>
+              {drawRun && (
+                <section className="draw-status-panel" aria-label="抽卡进度">
+                  <div className="draw-status-head">
+                    <div>
+                      <strong>{generating ? "正在抽卡" : "本轮抽卡结束"}</strong>
+                      <span>{drawRun.results.filter((result) => result === "complete").length} / {drawRun.total} 张已生成</span>
+                    </div>
+                    <small aria-hidden="true">已用 {Math.floor(drawElapsed / 60)} 分 {String(drawElapsed % 60).padStart(2, "0")} 秒</small>
+                  </div>
+                  <div className="draw-slots" aria-label="每张卡片的完成状态">
+                    {Array.from({ length: drawRun.total }, (_, index) => {
+                      const status = index < drawRun.results.length ? drawRun.results[index] : (generating && index === drawRun.results.length ? "active" : "waiting");
+                      return <span key={index} className={`draw-slot draw-slot-${status}`}>
+                        {status === "complete" ? <Check size={14} /> : status === "active" ? <LoaderCircle size={14} className="spin" /> : status === "failed" ? "!" : index + 1}
+                        第 {index + 1} 张 · {status === "complete" ? "已生成" : status === "active" ? "生成中" : status === "failed" ? "未完成" : "待开始"}
+                      </span>;
+                    })}
+                  </div>
+                  <p className="draw-stage" role="status" aria-live="polite">{drawProgress}</p>
+                </section>
+              )}
+              {ideas.length ? (
+                <div className="idea-list">
+                  {ideas.map((idea, i) => (
+                    <IdeaCard
+                      key={idea.id}
+                      idea={idea}
+                      index={i}
+                      papers={papers}
+                      onPaper={(p) => {
+                        selectPaper(p);
+                        setSection("library");
+                      }}
+                      onFavorite={toggleIdeaFavorite}
+                      favoriteBusy={favoriteBusyId === idea.id}
+                      authenticated={Boolean(user)}
+                      signInPath={signInPath}
+                    />
+                  ))}
+                </div>
+              ) : (
+                !generating && (
+                  <div className="empty-ideas">
+                    <div className="empty-icon">
+                      <Sparkles size={32} />
+                    </div>
+                    <h3 className="empty-ideas-promise">
+                      <span>五连出金</span>，<span>十连出红</span>
+                    </h3>
+                  </div>
+                )
               )}
               {researchBrief && (
                 <details className="research-brief">
@@ -2646,37 +2741,6 @@ export default function AtlasApp({
                     )}
                   </div>
                 </details>
-              )}
-              {ideas.length ? (
-                <div className="idea-list">
-                  {ideas.map((idea, i) => (
-                    <IdeaCard
-                      key={idea.id}
-                      idea={idea}
-                      index={i}
-                      papers={papers}
-                      onPaper={(p) => {
-                        selectPaper(p);
-                        setSection("library");
-                      }}
-                      onFavorite={toggleIdeaFavorite}
-                      favoriteBusy={favoriteBusyId === idea.id}
-                      authenticated={Boolean(user)}
-                      signInPath={signInPath}
-                    />
-                  ))}
-                </div>
-              ) : (
-                !generating && (
-                  <div className="empty-ideas">
-                    <div className="empty-icon">
-                      <Sparkles size={32} />
-                    </div>
-                    <h3 className="empty-ideas-promise">
-                      <span>五连出金</span>，<span>十连出红</span>
-                    </h3>
-                  </div>
-                )
               )}
               <div className="research-note">
                 <CircleHelp size={17} />{" "}
