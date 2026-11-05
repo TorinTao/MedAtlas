@@ -363,3 +363,79 @@
 .idea-model-links .discussion-model:disabled { opacity:.6; cursor:wait; transform:none; }
 
 .search-role-counts{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.search-role-counts span,.paper-context-role{display:inline-block;padding:3px 7px;border:1px solid #c5dcd3;border-radius:5px;background:#edf6f1;color:#39796a;font-size:10px;font-weight:700}.paper-context-role{margin:4px 0 7px 7px}.rail-card .paper-context-role{margin-left:0}
+
+/* Visual pass: keep navigation and research context together on laptop screens. */
+.site-header{border-bottom-color:#dce9e3;box-shadow:0 7px 25px #1d4c4010}
+.site-header .top-brand{color:#315f58;font-size:18px}
+.site-header .top-brand small{color:#668e82;font-size:8px;letter-spacing:.15em}
+.primary-nav{background:#f4f8f5;border-color:#e1ebe5;box-shadow:inset 0 1px 2px #254b3410}
+.primary-nav-item{font-size:12px;color:#496c64}
+.primary-nav-item.active{color:#176e60;border-color:#c9e3d5;box-shadow:0 2px 8px #1d6a4a16}
+.header-direction-trigger{background:#fff;border-color:#d5e5db;box-shadow:0 2px 8px #1d6a4a0b}
+.header-direction-trigger:hover{box-shadow:0 4px 12px #1d6a4a13}
+@media(min-width:1120px){
+  .site-header{grid-template-columns:minmax(148px,190px) minmax(0,1fr) minmax(210px,300px) max-content;gap:clamp(10px,1.35vw,21px);padding:calc(10px + env(safe-area-inset-top)) clamp(20px,3.3vw,60px) 10px}
+  .site-header .top-left{grid-column:1;grid-row:1}
+  .primary-nav{grid-column:2;grid-row:1;width:100%}
+  .header-direction{grid-column:3;grid-row:1}
+  .site-header .top-actions{grid-column:4;grid-row:1}
+  .primary-nav-item{min-height:42px}
+}
+@media(min-width:1120px) and (max-width:1320px){
+  .nav-label-full{display:none}
+  .nav-label-compact{display:inline}
+}
+
+/* The atlas remains the focal point while its controls and selected paper read clearly. */
+.atlas-main{border-color:#315361;box-shadow:0 24px 64px #0c303e21}
+.map-canvas{background:radial-gradient(ellipse at 49% 38%,#0a2230 0%,#061521 50%,#010810 100%)}
+.map-overlay-top{top:22px}
+.map-overlay-top>span{color:#a8d8d2;font-size:11px;letter-spacing:.15em;text-shadow:0 1px 10px #000}
+.map-overlay-top button{min-height:34px;padding:7px 11px;color:#d4ebe7;border-color:#5a8490;background:#123743cc;border-radius:7px;font-size:11px}
+.map-overlay-top button:hover{background:#1d5059;border-color:#8ac7c1}
+.map-footer{background:#0d2b37;border-top-color:#315563}
+.legend button{min-height:32px;border-color:#3c6570;background:#163a47;color:#d0e3e1}
+.legend button:hover,.legend button.active{background:#276273;border-color:#8dcac3}
+.scene-loading{background-image:radial-gradient(circle at 14% 24%,#86d8cc 0 1px,transparent 2px),radial-gradient(circle at 31% 63%,#b8d5ec 0 1px,transparent 2px),radial-gradient(circle at 72% 31%,#f0d08a 0 1.5px,transparent 3px),radial-gradient(circle at 83% 70%,#88bdd6 0 1px,transparent 2px),radial-gradient(circle at 58% 17%,#a4d7e2 0 1px,transparent 2px),radial-gradient(ellipse at 50% 42%,#0c2633 0%,#051420 53%,#01070d 100%)}
+.scene-loading-content{border-color:#83c7bd4d;background:#092a38d9;box-shadow:0 22px 55px #0006,0 0 50px #3fbdac16}
+.scene-loading-content strong{font-size:16px}
+.scene-loading-content small{font-size:12px}
+.rail-card.featured{border-color:#d8e8df;background:linear-gradient(180deg,#fff 0%,#fcfefc 100%);box-shadow:0 14px 40px #164a3510}
+.rail-label{color:#428378;font-size:10px}
+.rail-card h3{font-size:19px;line-height:1.48;letter-spacing:-.018em}
+.rail-card.featured>p{font-size:13px;line-height:1.75;color:#486968}
+.rail-tags span{font-size:11px;padding:6px 9px}
+.rail-action-grid .rail-actions>button:first-child,.rail-action-grid>.read-mark{min-height:44px;font-size:12px}
+.rail-related strong{font-size:11px}
+.rail-related button{padding:11px 12px;border-radius:8px;font-size:12px;line-height:1.55}
+.rail-related button small{font-size:10px}
+
+/* Library cards and reading details use the same type scale as the atlas. */
+.library-row{border-color:#dce8e2;box-shadow:0 3px 14px #174b3810;transition:border-color .16s,box-shadow .16s,transform .16s}
+.library-row:hover,.library-row.active{box-shadow:0 9px 26px #174b3819;transform:translateY(-1px)}
+.library-row h3{font-size:15px;line-height:1.5}
+.library-summary{font-size:12px;line-height:1.65}
+.library-meta,.library-row .library-venue{font-size:11px}
+.paper-detail{border-color:#dce8e2;box-shadow:0 12px 36px #174b3810}
+.paper-detail>h2{font-size:22px;line-height:1.45}
+.detail-section p,.detail-section li,.detail-section blockquote{font-size:12px;line-height:1.75}
+.detail-section h4{font-size:13px}
+@media(max-width:1119px){.paper-detail{top:135px;max-height:calc(100vh - 150px)}}
+@media(max-width:760px){
+  .site-header{box-shadow:0 5px 18px #1d4c4010}
+  .content{padding-top:17px}
+  .paper-detail{position:static;max-height:none}
+  .map-overlay-top>span{font-size:9px;letter-spacing:.1em}
+  .map-overlay-top button{font-size:10px;min-height:32px}
+  .rail-card.featured{padding:18px}
+  .rail-card h3{font-size:17px}
+  .rail-related button{font-size:11px}
+}
+@media(max-width:520px){
+  .site-header .top-brand{font-size:16px}
+  .site-header .top-brand small{font-size:7px}
+  .primary-nav-item{font-size:10px}
+  .rail-action-grid{grid-template-columns:1fr}
+  .rail-related{grid-template-columns:1fr}
+  .library-row h3{font-size:14px}
+}
