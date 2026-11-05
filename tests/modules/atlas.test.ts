@@ -55,6 +55,7 @@ test("scope persists only valid query and paper IDs and never falls back to all 
 });
 
 import {
+  loadSavedDirections,
   mergeDirectionHistory,
   parseDirectionHistory,
 } from "../../modules/atlas/research-scope";
@@ -84,6 +85,18 @@ test("direction history preserves previous labels and replaces only the same dir
     ).length,
     2,
   );
+});
+
+test("show-all keeps earlier directions from guest and legacy storage", () => {
+  const values = new Map<string, string>([
+    ["medatlas-research-scope-v1:user-1", "all"],
+    ["medatlas-research-scope-v1", JSON.stringify({ query: "医学影像 + 病历文本 Agent", paperIds: ["original"] })],
+    ["medatlas-research-history-v1:guest", JSON.stringify([{ query: "医学Agent + Memory管理", paperIds: ["memory"], updatedAt: "2026-11-04T00:00:00Z" }])],
+  ]);
+  const loaded = loadSavedDirections((key) => values.get(key) || null, "user-1");
+  assert.equal(loaded.showAll, true);
+  assert.deepEqual(new Set(loaded.history.map((item) => item.query)), new Set(["医学影像 + 病历文本 Agent", "医学Agent + Memory管理"]));
+  assert.equal(loaded.saved?.query, "医学影像 + 病历文本 Agent");
 });
 
 test("direction roles survive saving and ignore roles for papers outside that direction", () => {

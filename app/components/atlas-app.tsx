@@ -9,9 +9,9 @@ import {
   RESEARCH_HISTORY_KEY,
   parseDirectionHistory,
   mergeDirectionHistory,
+  loadSavedDirections,
   directionKey,
   type ResearchDirection,
-  parseResearchScope,
   papersInScope,
   type ResearchScope,
 } from "../../modules/atlas/research-scope";
@@ -297,19 +297,10 @@ export default function AtlasApp({
       let showAll = false;
       let history: ResearchDirection[] = [];
       try {
-        showAll = localStorage.getItem(scopeStorageKey) === "all";
-        saved = parseResearchScope(
-          localStorage.getItem(scopeStorageKey) ||
-            localStorage.getItem(RESEARCH_SCOPE_KEY),
-        );
-        history = parseDirectionHistory(
-          localStorage.getItem(historyStorageKey),
-        );
-        if (saved)
-          history = mergeDirectionHistory(
-            [{ ...saved, updatedAt: new Date(0).toISOString() }],
-            history,
-          );
+        ({ saved, showAll, history } = loadSavedDirections(
+          (key) => localStorage.getItem(key),
+          user?.id || "guest",
+        ));
       } catch {
         /* Browser storage may be disabled. */
       }
@@ -770,6 +761,27 @@ export default function AtlasApp({
       })().catch((error) => setMessage((error as Error).message));
     }
     return locallySaved;
+  }
+  async function refreshDirectionHistory() {
+    if (!user) return;
+    try {
+      const remote = await api<{ directions: ResearchDirection[] }>(
+        "/api/research/history",
+      );
+      const history = mergeDirectionHistory(
+        directionHistoryRef.current,
+        parseDirectionHistory(JSON.stringify(remote.directions)),
+      );
+      directionHistoryRef.current = history;
+      setDirectionHistory(history);
+      try {
+        localStorage.setItem(historyStorageKey, JSON.stringify(history));
+      } catch {
+        /* Account history remains available from the server. */
+      }
+    } catch {
+      setMessage("账户方向暂时无法同步，已显示本设备可恢复的方向");
+    }
   }
   useEffect(() => {
     if (!directionMenuOpen) return;
@@ -1654,7 +1666,11 @@ export default function AtlasApp({
               aria-expanded={directionMenuOpen}
               aria-controls="direction-menu"
               disabled={loading || generating}
-              onClick={() => setDirectionMenuOpen((open) => !open)}
+              onClick={() => {
+                const next = !directionMenuOpen;
+                setDirectionMenuOpen(next);
+                if (next) void refreshDirectionHistory();
+              }}
             >
               <span>{researchScope?.query || "显示全部"}</span>
               {researchScope && (
@@ -1703,6 +1719,15 @@ export default function AtlasApp({
                     <small>{direction.paperIds.length} 篇</small>
                   </button>
                 ))}
+                {!directionHistory.length && (
+                  <div className="header-direction-empty">
+                    {user ? (
+                      <span>正在同步账户中的研究方向；若仍未出现，请重新打开菜单。</span>
+                    ) : (
+                      <a href={signInPath} target="_top">登录以查看账户保存的研究方向</a>
+                    )}
+                  </div>
+                )}
                 <button
                   type="button"
                   className="direction-new"

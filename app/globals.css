@@ -314,6 +314,8 @@
 .header-direction-menu button span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .header-direction-menu button small { flex:none; color:#78978b; font-size:10px; }
 .header-direction-menu .direction-new { margin-top:5px; border-top:1px solid #e6eee8; border-radius:0 0 8px 8px; color:#216d60; font-weight:700; }
+.header-direction-empty { padding:12px 11px; color:#68877c; font-size:11px; line-height:1.6; }
+.header-direction-empty a { color:#176a68; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
 .site-header .account-pill { color:#758b84; }
 .site-header .account-pill span { background:#eff5f1; color:#608f7e; border:1px solid #e2ece6; }
 @media(max-width:1350px) { .header-direction { grid-column:2; grid-row:1; } }

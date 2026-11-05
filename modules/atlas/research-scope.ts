@@ -94,3 +94,34 @@ export function mergeDirectionHistory(
     (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
   );
 }
+
+export function loadSavedDirections(
+  read: (key: string) => string | null,
+  owner: string,
+): { showAll: boolean; saved: ResearchScope | null; history: ResearchDirection[] } {
+  const safeRead = (key: string) => {
+    try { return read(key); } catch { return null; }
+  };
+  const scopeKey = `${RESEARCH_SCOPE_KEY}:${owner}`;
+  const historyKey = `${RESEARCH_HISTORY_KEY}:${owner}`;
+  const guestScopeKey = `${RESEARCH_SCOPE_KEY}:guest`;
+  const guestHistoryKey = `${RESEARCH_HISTORY_KEY}:guest`;
+  const current = safeRead(scopeKey);
+  const scopeSources = [
+    safeRead(RESEARCH_SCOPE_KEY),
+    ...(owner === "guest" ? [] : [safeRead(guestScopeKey)]),
+    current,
+  ];
+  const saved = scopeSources.map(parseResearchScope).reverse().find(Boolean) || null;
+  const recoveredScopes = scopeSources.flatMap((raw) => {
+    const scope = parseResearchScope(raw);
+    return scope ? [{ ...scope, updatedAt: new Date(0).toISOString() }] : [];
+  });
+  const history = mergeDirectionHistory(
+    parseDirectionHistory(safeRead(RESEARCH_HISTORY_KEY)),
+    ...(owner === "guest" ? [] : [parseDirectionHistory(safeRead(guestHistoryKey))]),
+    parseDirectionHistory(safeRead(historyKey)),
+    recoveredScopes,
+  );
+  return { showAll: current === "all", saved, history };
+}
