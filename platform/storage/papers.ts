@@ -18,9 +18,28 @@ export async function allPapers(): Promise<Paper[]> {
       .from(paperTable)
       .orderBy(desc(paperTable.updatedAt))
       .limit(500);
+    const recentIds = new Set(rows.map((row) => row.id));
+    const olderSeedIds = seedPapers
+      .filter((paper) => !recentIds.has(paper.id))
+      .map((paper) => paper.id);
+    const olderSeedRows: (typeof rows)[number][] = [];
+    for (let start = 0; start < olderSeedIds.length; start += 80) {
+      olderSeedRows.push(
+        ...(await getDb()
+          .select()
+          .from(paperTable)
+          .where(inArray(paperTable.id, olderSeedIds.slice(start, start + 80)))),
+      );
+    }
+    const olderSeedData = new Map(
+      olderSeedRows.map((row) => [
+        row.id,
+        securePaperUrls(JSON.parse(row.data) as Paper),
+      ]),
+    );
     return dedupePapers([
       ...rows.map((r) => securePaperUrls(JSON.parse(r.data) as Paper)),
-      ...seedPapers,
+      ...seedPapers.map((paper) => olderSeedData.get(paper.id) || paper),
     ])
       .filter((paper) => paper.year <= new Date().getUTCFullYear())
       .slice(0, 500)
@@ -100,6 +119,7 @@ export async function putPapers(items: Paper[]) {
   const sql = `INSERT INTO papers (id,title,data,updated_at) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET
     title=excluded.title,
     data=json_set(excluded.data,
+      '$.abstract',coalesce(nullif(trim(json_extract(excluded.data,'$.abstract')),''),json_extract(papers.data,'$.abstract'),''),
       '$.summaryZh',coalesce(json_extract(excluded.data,'$.summaryZh'),json_extract(papers.data,'$.summaryZh')),
       '$.summaryBasis',coalesce(json_extract(excluded.data,'$.summaryBasis'),json_extract(papers.data,'$.summaryBasis')),
       '$.summarySourceUrl',coalesce(json_extract(excluded.data,'$.summarySourceUrl'),json_extract(papers.data,'$.summarySourceUrl')),

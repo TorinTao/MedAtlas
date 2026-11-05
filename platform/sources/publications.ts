@@ -124,29 +124,9 @@ export async function searchPubMed(query: string, limit = 8): Promise<Paper[]> {
   const data = await getJson(
     `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?${new URLSearchParams({ db: "pubmed", id: list.join(","), retmode: "json" })}`,
   );
-  const abstracts = new Map<string, string>();
+  let abstracts = new Map<string, string>();
   try {
-    const response = await fetch(
-      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?${new URLSearchParams({ db: "pubmed", id: list.join(","), retmode: "xml" })}`,
-      { signal: AbortSignal.timeout(15000) },
-    );
-    if (response.ok) {
-      const xml = await response.text();
-      for (const match of xml.matchAll(
-        /<PubmedArticle>([\s\S]*?)<\/PubmedArticle>/g,
-      )) {
-        const id = tag(match[1], "PMID");
-        const abstract = [
-          ...match[1].matchAll(
-            /<AbstractText(?:\s[^>]*)?>([\s\S]*?)<\/AbstractText>/gi,
-          ),
-        ]
-          .map((part) => xmlText(part[1]))
-          .filter(Boolean)
-          .join(" ");
-        if (id && abstract) abstracts.set(id, abstract);
-      }
-    }
+    abstracts = await fetchPubMedAbstracts(list);
   } catch {
     /* PubMed metadata remains useful if an abstract is temporarily unavailable. */
   }
@@ -179,6 +159,28 @@ export async function searchPubMed(query: string, limit = 8): Promise<Paper[]> {
       });
     })
     .filter(Boolean) as Paper[];
+}
+/** Retrieve English abstracts from the official PubMed record, keyed by PMID. */
+export async function fetchPubMedAbstracts(pmids: string[]): Promise<Map<string, string>> {
+  const ids = [...new Set(pmids.filter((id) => /^\d{1,12}$/.test(id)))].slice(0, 40);
+  if (!ids.length) return new Map();
+  const response = await fetch(
+    `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?${new URLSearchParams({ db: "pubmed", id: ids.join(","), retmode: "xml" })}`,
+    { signal: AbortSignal.timeout(15000) },
+  );
+  if (!response.ok) throw new Error(`PubMed abstract HTTP ${response.status}`);
+  const xml = await response.text();
+  const abstracts = new Map<string, string>();
+  for (const match of xml.matchAll(/<PubmedArticle>([\s\S]*?)<\/PubmedArticle>/g)) {
+    const id = tag(match[1], "PMID");
+    if (!ids.includes(id)) continue;
+    const abstract = [...match[1].matchAll(/<AbstractText(?:\s[^>]*)?>([\s\S]*?)<\/AbstractText>/gi)]
+      .map((part) => xmlText(part[1]))
+      .filter(Boolean)
+      .join(" ");
+    if (abstract) abstracts.set(id, abstract);
+  }
+  return abstracts;
 }
 export async function searchArxiv(query: string, limit = 8): Promise<Paper[]> {
   const words = query

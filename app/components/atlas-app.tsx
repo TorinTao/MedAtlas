@@ -9,9 +9,9 @@ import {
   RESEARCH_HISTORY_KEY,
   parseDirectionHistory,
   mergeDirectionHistory,
+  loadSavedDirections,
   directionKey,
   type ResearchDirection,
-  parseResearchScope,
   papersInScope,
   type ResearchScope,
 } from "../../modules/atlas/research-scope";
@@ -213,6 +213,13 @@ export default function AtlasApp({
   const [reading, setReading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [drawProgress, setDrawProgress] = useState("");
+  const [drawRun, setDrawRun] = useState<{
+    total: number;
+    results: ("complete" | "failed")[];
+    startedAt: number;
+    finishedAt?: number;
+  } | null>(null);
+  const [drawElapsed, setDrawElapsed] = useState(0);
   const [researchBrief, setResearchBrief] = useState<IdeasResearch | null>(
     null,
   );
@@ -236,6 +243,13 @@ export default function AtlasApp({
     const timer = window.setTimeout(() => setMessage(""), 5000);
     return () => window.clearTimeout(timer);
   }, [message]);
+  useEffect(() => {
+    if (!generating || !drawRun) return;
+    const tick = () => setDrawElapsed(Math.floor((Date.now() - drawRun.startedAt) / 1000));
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [generating, drawRun?.startedAt]);
   const [ideas, setIdeas] = useState<ResearchIdea[]>([]);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [ideaHistory, setIdeaHistory] = useState<IdeaHistoryItem[]>([]);
@@ -279,18 +293,10 @@ export default function AtlasApp({
       let saved: ResearchScope | null = null;
       let history: ResearchDirection[] = [];
       try {
-        saved = parseResearchScope(
-          localStorage.getItem(scopeStorageKey) ||
-            localStorage.getItem(RESEARCH_SCOPE_KEY),
-        );
-        history = parseDirectionHistory(
-          localStorage.getItem(historyStorageKey),
-        );
-        if (saved)
-          history = mergeDirectionHistory(
-            [{ ...saved, updatedAt: new Date(0).toISOString() }],
-            history,
-          );
+        ({ saved, history } = loadSavedDirections(
+          (key) => localStorage.getItem(key),
+          user?.id || "guest",
+        ));
       } catch {
         /* Browser storage may be disabled. */
       }
@@ -752,6 +758,27 @@ export default function AtlasApp({
     }
     return locallySaved;
   }
+  async function refreshDirectionHistory() {
+    if (!user) return;
+    try {
+      const remote = await api<{ directions: ResearchDirection[] }>(
+        "/api/research/history",
+      );
+      const history = mergeDirectionHistory(
+        directionHistoryRef.current,
+        parseDirectionHistory(JSON.stringify(remote.directions)),
+      );
+      directionHistoryRef.current = history;
+      setDirectionHistory(history);
+      try {
+        localStorage.setItem(historyStorageKey, JSON.stringify(history));
+      } catch {
+        /* Account history remains available from the server. */
+      }
+    } catch {
+      setMessage("账户方向暂时无法同步，已显示本设备可恢复的方向");
+    }
+  }
   async function restoreDirection(scope: ResearchScope) {
     if (loading || generating) return;
     const revision = ++researchRevision.current;
@@ -891,6 +918,9 @@ export default function AtlasApp({
     setSection("ideas");
     setMessage("");
     setIdeas([]);
+    setDrawRun({ total: count, results: [], startedAt: Date.now() });
+    setDrawElapsed(0);
+    let finalProgress = "本轮抽卡已结束";
     try {
       let research = researchBrief;
       if (
@@ -898,6 +928,7 @@ export default function AtlasApp({
         research.query !== query.trim() ||
         Date.now() > Date.parse(research.expiresAt)
       ) {
+        setResearchBrief(null);
         setDrawProgress(
           "正在检索已有与最新研究，并由 AI 规划相近工作补充检索…",
         );
@@ -925,8 +956,9 @@ export default function AtlasApp({
       const drawn: ResearchIdea[] = [];
       for (let drawIndex = 0; drawIndex < count; drawIndex++) {
         setDrawProgress(
-          `第 ${drawIndex + 1} / ${count} 张 · 补查相近工作、构建方案并审查证据，每张可能需要几分钟`,
+          `第 ${drawIndex + 1} / ${count} 张 · 正在启动抽卡`,
         );
+        let succeeded = false;
         try {
           const previousIdeas = [
             ...ideaHistory
@@ -937,6 +969,24 @@ export default function AtlasApp({
           ]
             .slice(-20)
             .map(({ title, gap, hypothesis }) => ({ title, gap, hypothesis }));
+          const progressId = crypto.randomUUID();
+          let active = true;
+          let polling = false;
+          const progressTimer = window.setInterval(async () => {
+            if (!active || polling) return;
+            polling = true;
+            try {
+              const progress = await api<{ stage: string; message: string }>(
+                `/api/ideas?jobId=${encodeURIComponent(selected.jobId)}&progressId=${progressId}`,
+              );
+              if (active && progress.stage !== "pending")
+                setDrawProgress(`第 ${drawIndex + 1} / ${count} 张 · ${progress.message}`);
+            } catch {
+              // The draw request can continue if progress polling is unavailable.
+            } finally {
+              polling = false;
+            }
+          }, 2000);
           const result = await api<{
             idea: ResearchIdea;
             evidencePapers: Paper[];
@@ -948,10 +998,15 @@ export default function AtlasApp({
               action: "draw",
               jobId: selected.jobId,
               drawIndex,
+              progressId,
               previousIdeas,
             }),
+          }).finally(() => {
+            active = false;
+            window.clearInterval(progressTimer);
           });
           const idea = result.idea;
+          succeeded = true;
           drawn.push(idea);
           setIdeas([...drawn]);
           setPapers((previous) => [
@@ -989,6 +1044,10 @@ export default function AtlasApp({
           failures++;
           failureMessages.push((error as Error).message);
         }
+        setDrawRun((run) => run && ({
+          ...run,
+          results: [...run.results, succeeded ? "complete" : "failed"],
+        }));
         setDrawProgress(
           `已处理 ${drawIndex + 1} / ${count} 张${failures ? `，${failures} 张未完成` : ""}`,
         );
@@ -996,11 +1055,14 @@ export default function AtlasApp({
       setMessage(
         `本次生成 ${drawn.length} 个通过证据核验与模型审查的选题${failures ? `；${failures} 张未完成：${[...new Set(failureMessages)].slice(0, 2).join("；")}` : ""}${drawn.length ? (user ? "；已加入抽卡历史，收藏后进入工作区" : "；已保存到本设备的抽卡历史，登录后可收藏") : ""}`,
       );
+      finalProgress = `${drawn.length} 张已生成${failures ? `，${failures} 张未完成：${[...new Set(failureMessages)].slice(0, 1).join("；")}` : "，可直接阅读"}`;
     } catch (error) {
       setMessage((error as Error).message);
+      finalProgress = `调研未完成：${(error as Error).message}`;
     } finally {
+      setDrawRun((run) => run && ({ ...run, finishedAt: Date.now() }));
       setGenerating(false);
-      setDrawProgress("");
+      setDrawProgress(finalProgress);
     }
   }
   async function openHistoryIdea(item: IdeaHistoryItem) {
@@ -1538,6 +1600,7 @@ export default function AtlasApp({
           <label className="header-direction">
             <select
               aria-label="切换研究方向"
+              onFocus={() => void refreshDirectionHistory()}
               title={researchScope?.query || "选择研究方向"}
               value={
                 directionHistory.some(
@@ -1807,20 +1870,6 @@ export default function AtlasApp({
 
           {section === "library" && (
             <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">02 / READ</span>
-                  <h2>
-                    文献库 <span>Paper Library</span>
-                  </h2>
-                  <p>筛选、比较和精读真实文献；每条结论都可回溯到来源。</p>
-                </div>
-                <span className="source-chip">
-                  {visible.length === papers.length
-                    ? `${papers.length} 篇已收录`
-                    : `${visible.length} / ${papers.length} 篇结果`}
-                </span>
-              </div>
               <div className="filters">
                 <Filter size={17} />
                 {[
@@ -2033,27 +2082,29 @@ export default function AtlasApp({
                       {selected.discovery && (
                         <div className="lex-discovery-proof">
                           <strong>Lexmount Web Fetch 发现 / 核验</strong>
-                          <a
-                            href={selected.discovery.searchUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {selected.discovery.stage === "article-verification"
-                              ? "Lexmount 已核验页面"
-                              : "Lexmount 公开搜索页"}{" "}
-                            <ExternalLink size={12} />
-                          </a>
-                          {selected.discovery.articleUrl &&
-                            selected.discovery.articleUrl !==
-                              selected.discovery.searchUrl && (
-                              <a
-                                href={selected.discovery.articleUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                公开论文页 <ExternalLink size={12} />
-                              </a>
-                            )}
+                          <div className="lex-discovery-links">
+                            <a
+                              href={selected.discovery.searchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {selected.discovery.stage === "article-verification"
+                                ? "Lexmount 已核验页面"
+                                : "Lexmount 公开搜索页"}{" "}
+                              <ExternalLink size={12} />
+                            </a>
+                            {selected.discovery.articleUrl &&
+                              selected.discovery.articleUrl !==
+                                selected.discovery.searchUrl && (
+                                <a
+                                  href={selected.discovery.articleUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  公开论文页 <ExternalLink size={12} />
+                                </a>
+                              )}
+                          </div>
                           <small>
                             抓取：{selected.discovery.capturedAt.slice(0, 10)} ·
                             请求 ID：{selected.discovery.requestId || "未返回"}
@@ -2370,10 +2421,11 @@ export default function AtlasApp({
                 {([1, 3, 5, 10] as const).map((count) => (
                   <button
                     key={count}
+                    className={`draw-option-${count}`}
                     onClick={() => generateIdeas(count)}
                     disabled={loading || generating || query.trim().length < 4}
                   >
-                    {generating ? (
+                    {generating && drawRun?.total === count ? (
                       <LoaderCircle size={14} className="spin" />
                     ) : (
                       <Sparkles size={14} />
@@ -2489,11 +2541,57 @@ export default function AtlasApp({
                   </div>
                 </section>
               )}
-              {drawProgress && (
-                <p className="draw-progress" role="status">
-                  <LoaderCircle size={15} className="spin" />
-                  {drawProgress}
-                </p>
+              {drawRun && (
+                <section className="draw-status-panel" aria-label="抽卡进度">
+                  <div className="draw-status-head">
+                    <div>
+                      <strong>{generating ? "正在抽卡" : "本轮抽卡结束"}</strong>
+                      <span>{drawRun.results.filter((result) => result === "complete").length} / {drawRun.total} 张已生成</span>
+                    </div>
+                    <small aria-hidden="true">已用 {Math.floor(drawElapsed / 60)} 分 {String(drawElapsed % 60).padStart(2, "0")} 秒</small>
+                  </div>
+                  <div className="draw-slots" aria-label="每张卡片的完成状态">
+                    {Array.from({ length: drawRun.total }, (_, index) => {
+                      const status = index < drawRun.results.length ? drawRun.results[index] : (generating && index === drawRun.results.length ? "active" : "waiting");
+                      return <span key={index} className={`draw-slot draw-slot-${status}`}>
+                        {status === "complete" ? <Check size={14} /> : status === "active" ? <LoaderCircle size={14} className="spin" /> : status === "failed" ? "!" : index + 1}
+                        第 {index + 1} 张 · {status === "complete" ? "已生成" : status === "active" ? "生成中" : status === "failed" ? "未完成" : "待开始"}
+                      </span>;
+                    })}
+                  </div>
+                  <p className="draw-stage" role="status" aria-live="polite">{drawProgress}</p>
+                </section>
+              )}
+              {ideas.length ? (
+                <div className="idea-list">
+                  {ideas.map((idea, i) => (
+                    <IdeaCard
+                      key={idea.id}
+                      idea={idea}
+                      index={i}
+                      papers={papers}
+                      onPaper={(p) => {
+                        selectPaper(p);
+                        setSection("library");
+                      }}
+                      onFavorite={toggleIdeaFavorite}
+                      favoriteBusy={favoriteBusyId === idea.id}
+                      authenticated={Boolean(user)}
+                      signInPath={signInPath}
+                    />
+                  ))}
+                </div>
+              ) : (
+                !generating && (
+                  <div className="empty-ideas">
+                    <div className="empty-icon">
+                      <Sparkles size={32} />
+                    </div>
+                    <h3 className="empty-ideas-promise">
+                      <span>五连出金</span>，<span>十连出红</span>
+                    </h3>
+                  </div>
+                )
               )}
               {researchBrief && (
                 <details className="research-brief">
@@ -2542,38 +2640,6 @@ export default function AtlasApp({
                   </div>
                 </details>
               )}
-              {ideas.length ? (
-                <div className="idea-list">
-                  {ideas.map((idea, i) => (
-                    <IdeaCard
-                      key={idea.id}
-                      idea={idea}
-                      index={i}
-                      papers={papers}
-                      onPaper={(p) => {
-                        selectPaper(p);
-                        setSection("library");
-                      }}
-                      onFavorite={toggleIdeaFavorite}
-                      favoriteBusy={favoriteBusyId === idea.id}
-                      authenticated={Boolean(user)}
-                      signInPath={signInPath}
-                    />
-                  ))}
-                </div>
-              ) : (
-                !generating && (
-                  <div className="empty-ideas">
-                    <div className="empty-icon">
-                      <Sparkles size={32} />
-                    </div>
-                    <h3>从一个待验证的问题开始</h3>
-                    <p>
-                      点击抽卡，系统会先检索文献、比对证据，再生成研究方案。
-                    </p>
-                  </div>
-                )
-              )}
               <div className="research-note">
                 <CircleHelp size={17} />{" "}
                 研究选题是待检验假设，不能替代系统综述、实验复现或临床验证。
@@ -2582,18 +2648,6 @@ export default function AtlasApp({
           )}
           {section === "workspace" && (
             <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">04 / YOUR RESEARCH</span>
-                  <h2>
-                    我的工作区 <span>Workspace</span>
-                  </h2>
-                  <p>
-                    保存重要文献、导入公开论文链接或上传
-                    PDF，并持续打磨研究选题。
-                  </p>
-                </div>
-              </div>
               {!user ? (
                 <div className="workspace-login">
                   <LockKeyhole size={30} />
@@ -2875,18 +2929,7 @@ export default function AtlasApp({
             </>
           )}
           {section === "settings" && (
-            <>
-              <div className="section-heading">
-                <div>
-                  <span className="section-index">
-                    05 / PERSONAL CONFIGURATION
-                  </span>
-                  <h2>
-                    系统设置 <span>System Settings</span>
-                  </h2>
-                  <p>设定研究方向，并管理文献解读和选题生成所用的模型。</p>
-                </div>
-              </div>
+            <div className="settings-grid">
               <div className="research-settings">
                 <h3>研究方向</h3>
                 <p className="direction-help">
@@ -3041,31 +3084,9 @@ export default function AtlasApp({
                       )}
                     </div>
                   </div>
-                  <aside className="api-settings-note">
-                    <CircleHelp size={19} />
-                    <div>
-                      <h4>使用范围</h4>
-                      <p>
-                        公开文献检索、Lexmount 网页读取仍由站点服务提供。个人
-                        DeepSeek Key 只用于 AI 模型请求；用量和费用由你的
-                        DeepSeek 账户承担。
-                      </p>
-                      <p>
-                        本站服务端用独立加密密钥保存个人
-                        Key。浏览器不会保存它，也不会通过设置接口读取原文。
-                      </p>
-                      <a
-                        href="https://platform.deepseek.com/api_keys"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        前往 DeepSeek 创建 API Key <ExternalLink size={13} />
-                      </a>
-                    </div>
-                  </aside>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
       </div>

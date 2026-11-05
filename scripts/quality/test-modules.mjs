@@ -5,6 +5,7 @@ const suites = {
     "tests/modules/research-search.test.ts",
     "tests/modules/lex-first.test.ts",
     "tests/papers.test.ts",
+    "tests/pubmed-abstracts.test.mjs",
   ],
   reading: ["tests/modules/reading.test.ts"],
   atlas: [
@@ -29,7 +30,7 @@ const suites = {
     "tests/workspace-saving.test.mjs",
   ],
   automation: ["tests/modules/automation.test.ts"],
-  platform: ["tests/modules/providers.test.ts"],
+  platform: ["tests/modules/providers.test.ts", "tests/mcp-owner-route.test.mjs"],
 };
 const selected = process.argv.slice(2);
 const names = selected.length ? selected : Object.keys(suites);

@@ -167,6 +167,7 @@ export function createIdeasService(deepseekJson: JsonModel) {
     brief: ResearchBrief,
     opportunity: IdeaOpportunity,
     previous: IdeaSummary[],
+    onProgress?: (stage: string, message: string) => Promise<void> | void,
   ): Promise<ResearchIdea> {
     const context = {
       query,
@@ -178,6 +179,7 @@ export function createIdeasService(deepseekJson: JsonModel) {
     let feedback: string[] = [],
       priorDraft: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
+      await onProgress?.(attempt ? "revising" : "drafting", attempt ? "正在根据审查意见修订方案" : "正在生成研究方案与原文证据链");
       let raw: {
         idea?: unknown;
       };
@@ -206,6 +208,7 @@ export function createIdeasService(deepseekJson: JsonModel) {
       }
       priorDraft = raw?.idea;
       let idea: ResearchIdea;
+      await onProgress?.("verifying", "正在逐条核对引用、原文摘录与实验设计");
       try {
         idea = validateIdea(raw?.idea, papers, query);
       } catch (error) {
@@ -213,6 +216,7 @@ export function createIdeasService(deepseekJson: JsonModel) {
         if (attempt === 0) continue;
         throw new Error(`方案证据核验未通过：${feedback[0]}`);
       }
+      await onProgress?.("reviewing", "正在进行第二轮模型审查");
       const review = (await deepseekJson(
         `${untrusted}你是第二阶段研究方案审查员。只依据原文证据检查：1研究主张是否被锚点支持、是否把背景当实证或技术指标当临床效果；2最相近工作差异是否真实，不把未报告解释为没人做过；3数据集是否确有需要的模态/标签，未知是否明确而非伪装已验证；4最小实验能否执行，是否有具体基线、主指标、失败判据；5核心机制是否与历史卡片重复。不要奖励篇幅或字段齐全。只输出JSON {"pass":true或false,"summary":"中文审查理由","issues":["必须修正的问题；通过时为空"],"limitations":["当前模型审查无法确认的事项"]}。有任何重大问题必须pass=false，不替方案编造证据。`,
         JSON.stringify({

@@ -55,6 +55,7 @@ test("a permanently invalid generation is bounded and cannot enter history as a 
     nearestPaperIds: ["one", "two"],
     searchQuery: "radiology report generation",
   };
+  const stages: string[] = [];
   await assert.rejects(
     service.makeIdea(
       "topic",
@@ -67,8 +68,10 @@ test("a permanently invalid generation is bounded and cannot enter history as a 
       },
       candidate,
       [],
+      (stage) => { stages.push(stage); },
     ),
     /方案证据核验未通过/,
   );
   assert.equal(calls, 2);
+  assert.deepEqual(stages, ["drafting", "verifying", "revising", "verifying"]);
 });

@@ -56,18 +56,9 @@ export function createReadingService(deps: {
           "公开来源未提供可核验的摘要或全文，无法生成结构化精读",
         ],
       };
-    const text = (
-      open?.text ||
-      [
-        paper.abstract,
-        lexmount?.text
-          ? `公开论文页面（Lexmount Web Fetch）：${lexmount.text.slice(0, 12000)}`
-          : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n") ||
-      ""
-    ).slice(0, 60000);
+    // Landing pages corroborate metadata; abstract-depth claims must come from
+    // the stored abstract, which is also the source checked for exact quotes.
+    const text = (open?.text || paper.abstract || "").slice(0, 60000);
     if (!text)
       return {
         analysis: null,

@@ -1,4 +1,5 @@
 import { backgroundTasks } from "../../composition/automation";
+import { retryMissingReading } from "../../composition/jobs/enrich";
 import { runtime } from "../../platform/config";
 
 const refreshTool = {
@@ -12,6 +13,23 @@ const enrichTool = {
   description:
     "Enrich up to two papers missing a Chinese overview or detailed reading, translate review abstracts, and evaluate linked GitHub repositories. Lexmount Web Fetch reads public paper and repository pages; DeepSeek produces evidence-aware Chinese explanations. Persists results and retries incomplete work later.",
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
+};
+const readingsTool = {
+  name: "enrich_missing_readings",
+  description:
+    "Complete evidence-checked detailed readings for up to two public papers with English abstracts. Saves results, skips recently claimed papers, and leaves repository evaluation to its separate task.",
+  inputSchema: { type: "object", properties: {}, additionalProperties: false },
+};
+const retryReadingTool = {
+  name: "retry_missing_reading",
+  description:
+    "Retry one incomplete public paper reading by paper ID. Only the Site owner can call this tool; source evidence is checked before saving.",
+  inputSchema: {
+    type: "object",
+    properties: { paperId: { type: "string" } },
+    required: ["paperId"],
+    additionalProperties: false,
+  },
 };
 const repoTool = {
   name: "enrich_missing_repositories",
@@ -46,29 +64,47 @@ export async function POST(request: Request) {
     });
   if (rpc.method === "tools/list")
     return result({
-      tools: [refreshTool, enrichTool, repoTool, summaryTool, venueTool],
+      tools: [refreshTool, enrichTool, readingsTool, retryReadingTool, repoTool, summaryTool, venueTool],
     });
   if (
     rpc.method !== "tools/call" ||
     ![
       refreshTool.name,
       enrichTool.name,
+      readingsTool.name,
+      retryReadingTool.name,
       repoTool.name,
       summaryTool.name,
       venueTool.name,
     ].includes(rpc.params?.name)
   )
     return error(-32601, "Method not found");
-  const owner = runtime("MCP_OWNER_EMAIL")?.toLowerCase();
+  const owner = runtime("MCP_OWNER_EMAIL").trim().toLowerCase();
   const caller = request.headers
     .get("oai-authenticated-user-email")
-    ?.toLowerCase();
+    ?.trim()
+    .toLowerCase();
   if (!owner || !caller || caller !== owner)
     return result({
-      content: [{ type: "text", text: "只有站点所有者可以更新文献语料" }],
+      content: [{
+        type: "text",
+        text: !owner
+          ? "站点所有者邮箱尚未配置，无法更新文献语料"
+          : !caller
+            ? "站点未收到已验证的用户邮箱，无法更新文献语料"
+            : `当前插件登录邮箱 ${caller} 与配置的站点所有者邮箱不一致`,
+      }],
       isError: true,
     });
   try {
+    if (rpc.params.name === retryReadingTool.name) {
+      const paperId = rpc.params?.arguments?.paperId;
+      if (typeof paperId !== "string" || !/^[\w.-]{3,80}$/.test(paperId))
+        return error(-32602, "论文 ID 无效");
+      return result({
+        content: [{ type: "text", text: JSON.stringify(await retryMissingReading(paperId)) }],
+      });
+    }
     const executed = await backgroundTasks.run(rpc.params.name);
     return result({
       content: [

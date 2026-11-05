@@ -8,10 +8,12 @@ import { runtime } from "../../platform/config";
 import {
   allPapers,
   allPapersForEnrichment,
+  findPaper,
   putPapers,
 } from "../../platform/storage/papers";
 import { summarizePaperZh, translateAbstractZh } from "../research";
 import { needsGeneratedSummary } from "../../modules/catalog/summary-fallback";
+import { fetchPubMedAbstracts } from "../../platform/sources/publications";
 import type { Paper } from "../../shared/models";
 type JobRow = {
   id: string;
@@ -20,6 +22,14 @@ type JobRow = {
 };
 const RETRY_AFTER_MS = 6 * 60 * 60 * 1000;
 const LEASE_MS = 10 * 60 * 1000;
+function needsPubMedAbstract(paper: Paper): boolean {
+  return (
+    !paper.analysis &&
+    !paper.abstract.trim() &&
+    paper.source === "PubMed" &&
+    /^\d{1,12}$/.test(paper.pmid)
+  );
+}
 function publicRepoLinks(text: string): string[] {
   const found = [
     ...text.matchAll(/https?:\/\/github\.com\/([\w.-]+)\/([\w.-]+)/gi),
@@ -80,20 +90,76 @@ export async function enrichMissingPapers(limit = 2) {
   if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
     throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
   if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
-  const papers = await allPapersForEnrichment();
+  let papers = await allPapersForEnrichment();
+  let abstractsRecovered = 0;
+  let abstractBackfillError = "";
+  const abstractJobs = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'abstract:%'",
+  ).all<JobRow>();
+  const abstractJobsById = new Map(
+    (abstractJobs.results || []).map((job) => [job.id, job]),
+  );
+  const missingPubMedAbstracts = papers.filter(needsPubMedAbstract);
+  const claimedAbstracts: typeof missingPubMedAbstracts = [];
+  for (const paper of missingPubMedAbstracts) {
+    if (claimedAbstracts.length >= 8) break;
+    const jobId = `abstract:${paper.id}`;
+    if (await claim(jobId, abstractJobsById.get(jobId)))
+      claimedAbstracts.push(paper);
+  }
+  if (claimedAbstracts.length) {
+    try {
+      const abstracts = await fetchPubMedAbstracts(
+        claimedAbstracts.map((paper) => paper.pmid),
+      );
+      const recovered = claimedAbstracts
+        .filter((paper) => abstracts.has(paper.pmid))
+        .map((paper) => ({ ...paper, abstract: abstracts.get(paper.pmid)! }));
+      if (recovered.length) {
+        await putPapers(recovered);
+        abstractsRecovered = recovered.length;
+        const byId = new Map(recovered.map((paper) => [paper.id, paper]));
+        papers = papers.map((paper) => byId.get(paper.id) || paper);
+      }
+      for (const paper of claimedAbstracts)
+        await finish(
+          `abstract:${paper.id}`,
+          abstracts.has(paper.pmid) ? "done" : "partial",
+          { sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${paper.pmid}/` },
+        );
+    } catch (error) {
+      abstractBackfillError = (error as Error).message;
+      for (const paper of claimedAbstracts)
+        await finish(`abstract:${paper.id}`, "failed", {
+          error: abstractBackfillError,
+        });
+    }
+  }
   const jobs = await env.DB.prepare(
     "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'",
   ).all<JobRow>();
   const byId = new Map((jobs.results || []).map((job) => [job.id, job]));
+  const abstractStatuses = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'abstract:%'",
+  ).all<JobRow>();
+  const abstractStatusById = new Map(
+    (abstractStatuses.results || []).map((job) => [job.id, job.status]),
+  );
   const pending = papers
     .filter(
       (paper) =>
-        needsGeneratedSummary(paper) ||
-        !paper.analysis ||
-        (paper.abstract.trim() &&
-          !paper.abstractZh &&
-          !paper.reviewAbstractZh) ||
-        (paper.repoUrl && !paper.repoAudit?.evaluation),
+        // Wait for another worker's PubMed abstract claim before attempting
+        // reading. Failed/partial abstract jobs may still have open full text.
+        (!needsPubMedAbstract(paper) ||
+          ["failed", "partial"].includes(
+            abstractStatusById.get(`abstract:${paper.id}`) || "",
+          )) &&
+        (needsGeneratedSummary(paper) ||
+          !paper.analysis ||
+          (paper.abstract.trim() &&
+            !paper.abstractZh &&
+            !paper.reviewAbstractZh) ||
+          (paper.repoUrl && !paper.repoAudit?.evaluation)),
     )
     .sort(
       (a, b) =>
@@ -238,12 +304,117 @@ export async function enrichMissingPapers(limit = 2) {
   }));
   return {
     processed: results.length,
+    abstractsRecovered,
+    ...(abstractBackfillError ? { abstractBackfillError } : {}),
     remaining:
       pending.length -
       results.filter((result) => result.status === "done").length,
     results,
     repository,
   };
+}
+/** Short MCP batch for the reading backlog; repository work has its own task. */
+export async function enrichMissingReadings(limit = 2) {
+  if (!env.DB) throw new Error("文献数据库不可用");
+  if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
+    throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
+  if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
+  const papers = await allPapersForEnrichment();
+  const jobs = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id LIKE 'enrich:%'",
+  ).all<JobRow>();
+  const byId = new Map((jobs.results || []).map((job) => [job.id, job]));
+  const pending = papers
+    .filter((paper) => !paper.analysis && Boolean(paper.abstract.trim()))
+    .sort(
+      (a, b) =>
+        Number(Boolean(byId.get(`enrich:${a.id}`))) -
+          Number(Boolean(byId.get(`enrich:${b.id}`))) ||
+        b.citedByCount - a.citedByCount ||
+        b.year - a.year,
+    );
+  const results: {
+    id: string;
+    analysis: boolean;
+    status: string;
+    depth: string;
+    errors: string[];
+  }[] = [];
+  for (const paper of pending) {
+    if (results.length >= Math.max(1, Math.min(limit, 2))) break;
+    const jobId = `enrich:${paper.id}`;
+    if (!(await claim(jobId, byId.get(jobId)))) continue;
+    try {
+      const reading = await readPaper(paper);
+      if (reading.analysis)
+        await putPapers([{
+          ...paper,
+          analysis: reading.analysis,
+          fulltextStatus: reading.depth === "全文" ? "全文可用" : "仅摘要",
+        }]);
+      const status = reading.analysis ? "done" : "partial";
+      await finish(jobId, status, {
+        sourceUrl: reading.sourceUrl,
+        errors: reading.errors,
+      });
+      results.push({
+        id: paper.id,
+        analysis: Boolean(reading.analysis),
+        status,
+        depth: reading.depth,
+        errors: reading.errors,
+      });
+    } catch (error) {
+      const message = (error as Error).message;
+      await finish(jobId, "failed", { errors: [message] });
+      results.push({
+        id: paper.id,
+        analysis: false,
+        status: "failed",
+        depth: "",
+        errors: [message],
+      });
+    }
+  }
+  return {
+    processed: results.length,
+    readingsCompleted: results.filter((result) => result.analysis).length,
+    remainingWithAbstract: pending.length - results.filter((result) => result.analysis).length,
+    results,
+  };
+}
+/** Owner-triggered retry for one paper after a previous incomplete reading. */
+export async function retryMissingReading(paperId: string) {
+  if (!env.DB) throw new Error("文献数据库不可用");
+  if (!runtime("LEXMOUNT_API_KEY") || !runtime("LEXMOUNT_PROJECT_ID"))
+    throw new Error("Lexmount Web Fetch 服务端凭据尚未配置");
+  if (!runtime("DEEPSEEK_API_KEY")) throw new Error("DeepSeek API 尚未配置");
+  const paper = await findPaper(paperId);
+  if (!paper) throw new Error("论文不存在");
+  if (paper.analysis) return { id: paper.id, analysis: true, cached: true, errors: [] };
+  // The second revision analyzes abstract-only text for abstract-depth claims.
+  const jobId = `manual-read-v2:${paper.id}`;
+  const previous = await env.DB.prepare(
+    "SELECT id,status,updated_at FROM jobs WHERE id = ?",
+  ).bind(jobId).first<JobRow>();
+  if (!(await claim(jobId, previous || undefined)))
+    return { id: paper.id, analysis: false, status: "cooldown", errors: ["该论文的手动重试正在运行或等待冷却"] };
+  try {
+    const reading = await readPaper(paper);
+    if (reading.analysis)
+      await putPapers([{
+        ...paper,
+        analysis: reading.analysis,
+        fulltextStatus: reading.depth === "全文" ? "全文可用" : "仅摘要",
+      }]);
+    const status = reading.analysis ? "done" : "partial";
+    await finish(jobId, status, { sourceUrl: reading.sourceUrl, errors: reading.errors });
+    return { id: paper.id, analysis: Boolean(reading.analysis), status, depth: reading.depth, errors: reading.errors };
+  } catch (error) {
+    const message = (error as Error).message;
+    await finish(jobId, "failed", { errors: [message] });
+    return { id: paper.id, analysis: false, status: "failed", errors: [message] };
+  }
 }
 export async function enrichMissingRepositories(limit = 2) {
   if (!env.DB) throw new Error("文献数据库不可用");
