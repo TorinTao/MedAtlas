@@ -2,6 +2,8 @@
 Description=MedAtlas personal research site
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
 
 [Service]
 Type=simple
@@ -14,15 +16,19 @@ Environment=NODE_OPTIONS=--max-old-space-size=256
 Environment=MEDATLAS_CONFIG=/home/ubuntu/.config/medatlas/config.json
 ExecStart=/home/ubuntu/.local/opt/node-v22.23.4-linux-x64/bin/node deployment/self-host/server.mjs
 Restart=on-failure
-RestartSec=5
+RestartSec=15
 TimeoutStopSec=25
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ReadWritePaths=/home/ubuntu/coding/medatlas-data
-MemoryHigh=512M
-MemoryMax=768M
+Nice=10
+IOSchedulingClass=idle
+CPUQuota=50%
+MemoryHigh=384M
+MemoryMax=640M
+MemorySwapMax=512M
 
 [Install]
 WantedBy=multi-user.target
