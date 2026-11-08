@@ -31,8 +31,8 @@ export function publicRouteError(pathname, method) {
 }
 
 export function requestUser(config) {
-  // Public requests must never inherit the migrated owner's private workspace.
-  return config.mode === "public-demo"
+  // Exposing the owner workspace requires an explicit server-side choice.
+  return config.mode === "public-demo" && config.publicWorkspace !== "owner"
     ? { userId: "medatlas-public-demo", email: "demo@localhost", name: "演示访客" }
     : config.user;
 }
