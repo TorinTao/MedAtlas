@@ -29,7 +29,9 @@
     .header-nav{display:flex;gap:4px;padding:5px;border:1px solid #e1ebe5;border-radius:13px;background:#f4f8f5;box-shadow:inset 0 1px 2px #254b3410}
     .header-nav a{padding:9px 15px;border:1px solid transparent;border-radius:8px;color:#496c64;text-decoration:none;font-size:12px;font-weight:650;white-space:nowrap}
     .header-nav a:hover{background:#e8f1ed;color:#30675e}.header-nav a.active{border-color:#c9e3d5;background:#fff;color:#176e60;box-shadow:0 2px 8px #1d6a4a16}
-    #how,#features,#cloud{scroll-margin-top:110px}
+    #how,#features,#cloud,#atlas-feature{scroll-margin-top:110px}
+    #atlas-feature:focus{outline:2px solid #5ba697;outline-offset:3px}
+    .feature-link{display:inline-flex;margin-top:13px;color:#176e69;font-size:12px;font-weight:750;text-decoration:none}.feature-link:hover{text-decoration:underline}
     .head-link{justify-self:end;padding:9px 12px;border:1px solid #d5e5db;border-radius:8px;background:#fff;color:#416e64;font-size:11px;font-weight:700}.head-link:hover{background:#e8f4ef;color:#176e60}
     .hero{border-bottom:0;background:radial-gradient(circle at 82% 34%,#d9ebe633,transparent 37%),var(--bg)}
     .hero .wrap{grid-template-columns:minmax(0,.91fr) minmax(390px,1.09fr);gap:42px;min-height:490px;padding:56px 0 54px}
@@ -49,23 +51,22 @@
   </style>
 </head>
 <body>
-  <header class="site-head"><div class="wrap"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">MedAtlas<small>RESEARCH INTELLIGENCE</small></span></a><nav class="header-nav" aria-label="作品导航"><a class="active" href="#top">研究星图</a><a href="#how">工作方式</a><a href="#features">功能模块</a><a href="#cloud">云平台分工</a></nav><a class="head-link" href="https://github.com/TorinTao/MedAtlas" target="_blank" rel="noopener noreferrer">查看源码 ↗</a></div></header>
+  <header class="site-head"><div class="wrap"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">MedAtlas<small>RESEARCH INTELLIGENCE</small></span></a><nav class="header-nav" aria-label="作品导航"><a class="active" data-section="atlas-feature" href="#atlas-feature">研究星图</a><a data-section="how" href="#how">工作方式</a><a data-section="features" href="#features">功能模块</a><a data-section="cloud" href="#cloud">云平台分工</a></nav><a class="head-link" href="https://github.com/TorinTao/MedAtlas" target="_blank" rel="noopener noreferrer">查看源码 ↗</a></div></header>
   <main id="top">
     <div class="hero"><div class="wrap"><div><div class="eyebrow">医学 AI · 文献研究 · 研究选题</div><h1>从论文海洋，<br>找到<em>下一步研究</em>。</h1><p class="lead">MedAtlas 把分散的医学 AI 论文整理成可探索的研究地图，帮你读懂已有工作，并提出能够继续验证的研究问题。</p><div class="actions"><a class="btn" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">打开完整网站 ↗</a><a class="btn secondary" href="#how">了解工作方式 ↓</a></div><small class="note">完整网站承载实时检索、登录与个人工作区；本页为 Yours 作品展示入口。</small></div><div class="atlas" role="img" aria-label="示意图：不同颜色的小星点沿时间轴分布，代表不同方向的研究论文"><span class="atlas-label">RESEARCH ATLAS · 研究星图</span><span class="star lg" style="left:16%;top:71%"></span><span class="star mint" style="left:25%;top:49%"></span><span class="star blue sm" style="left:32%;top:67%"></span><span class="star" style="left:39%;top:35%"></span><span class="star mint sm" style="left:43%;top:73%"></span><span class="star lg blue" style="left:48%;top:54%"></span><span class="star sm" style="left:54%;top:27%"></span><span class="star mint" style="left:59%;top:62%"></span><span class="star" style="left:62%;top:45%"></span><span class="star blue sm" style="left:67%;top:24%"></span><span class="star lg" style="left:73%;top:38%"></span><span class="star mint sm" style="left:79%;top:59%"></span><span class="star blue" style="left:83%;top:29%"></span><span class="star sm" style="left:88%;top:49%"></span><span class="axis"><span>早期工作</span><span>发表时间 →</span><span>近期研究</span></span></div></div></div>
     <section class="content" id="how"><div class="wrap"><div class="section-head"><div class="eyebrow">01 / 从问题到方案</div><h2>一条可以追溯的研究路径</h2><p>为刚进入医学 AI 方向的研究者，减少搜集和初读论文的重复劳动。</p></div><div class="steps"><div class="card"><span class="num">STEP 01</span><h3>输入研究方向</h3><p>从医学影像与病历文本 Agent 出发，也可以探索更具体的子方向。</p></div><div class="card"><span class="num">STEP 02</span><h3>查找与核验论文</h3><p>跨论文来源检索，再读取公开页面，保留可查看的来源与获取时间。</p></div><div class="card"><span class="num">STEP 03</span><h3>看脉络、读证据</h3><p>用研究星图查看发展过程，阅读中文概述和标明依据的论文解读。</p></div><div class="card"><span class="num">STEP 04</span><h3>形成研究选题</h3><p>提出研究空白、假设和实验方案，并附上关联论文供继续核对。</p></div></div></div></section>
-    <section class="content" id="features"><div class="wrap"><div class="section-head"><div class="eyebrow">02 / 已实现的能力</div><h2>把检索、理解和行动放在一起</h2></div><div class="features"><div class="card"><h3>研究星图</h3><p>按时间与研究方向探索论文，打开节点查看原文链接与相关工作。</p></div><div class="card"><h3>中文阅读</h3><p>显示中文概述、摘要译文与结构化精读，并区分摘要和开放全文依据。</p></div><div class="card"><h3>Ideas 工作台</h3><p>补查相近工作后逐张生成研究方案，提供证据链、可行性与实验要点。</p></div><div class="card"><h3>代码仓库评价</h3><p>检查公开 README、许可证、依赖、代码入口等，并说明尚未实际复现。</p></div><div class="card"><h3>个人工作区</h3><p>登录后收藏论文、导入论文链接或 PDF、标记已阅读并保存选题。</p></div><div class="card"><h3>方向切换</h3><p>记录已探索的研究方向，可恢复以往的论文集合继续阅读。</p></div></div></div></section>
+    <section class="content" id="features"><div class="wrap"><div class="section-head"><div class="eyebrow">02 / 已实现的能力</div><h2>把检索、理解和行动放在一起</h2></div><div class="features"><div class="card" id="atlas-feature" tabindex="-1"><h3>研究星图</h3><p>按时间与研究方向探索论文，打开节点查看原文链接与相关工作。</p><a class="feature-link" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">打开完整星图 ↗</a></div><div class="card"><h3>中文阅读</h3><p>显示中文概述、摘要译文与结构化精读，并区分摘要和开放全文依据。</p></div><div class="card"><h3>Ideas 工作台</h3><p>补查相近工作后逐张生成研究方案，提供证据链、可行性与实验要点。</p></div><div class="card"><h3>代码仓库评价</h3><p>检查公开 README、许可证、依赖、代码入口等，并说明尚未实际复现。</p></div><div class="card"><h3>个人工作区</h3><p>登录后收藏论文、导入论文链接或 PDF、标记已阅读并保存选题。</p></div><div class="card"><h3>方向切换</h3><p>记录已探索的研究方向，可恢复以往的论文集合继续阅读。</p></div></div></div></section>
     <section class="content" id="cloud"><div class="wrap"><div class="section-head"><div class="eyebrow">03 / 云平台与人工</div><h2>各自完成擅长的环节</h2></div><div class="split"><div class="panel"><h3>云端负责</h3><ul><li><strong class="source">Lexmount Web Fetch</strong> 读取并核验公开论文页面，留下来源记录。</li><li><strong class="source">DeepSeek</strong> 辅助翻译、论文解读和研究方案草拟。</li><li><strong class="source">Sites</strong> 运行完整网站、保存文献数据及用户的私有工作区。</li></ul></div><div class="panel"><h3>研究者负责</h3><ul><li>决定研究方向，选择值得深入阅读的论文。</li><li>返回原文核对关键事实、数据使用条件和代码仓库内容。</li><li>通过真正的实验检验研究假设，判断结果是否有学术或临床意义。</li></ul></div></div><div class="callout">研究选题是待验证的假设；代码仓库评价是静态检查。技术指标不能直接当作临床效果。</div></div></section>
   </main>
   <div class="outro"><div class="wrap"><h2>从一篇论文，走向下一个问题。</h2><p>打开完整网站，亲自输入研究方向，探索文献并生成有来源的研究思路。</p><div class="actions"><a class="btn" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">体验 MedAtlas ↗</a><a class="btn secondary" href="https://github.com/TorinTao/MedAtlas" target="_blank" rel="noopener noreferrer">查看 GitHub 源码 ↗</a></div></div></div>
   <footer class="footer"><div class="wrap"><span>MedAtlas · 医学 AI 文献地图与研究选题助手</span><span>仅供科研探索，不提供临床诊断建议。</span></div></footer>
   <script>
     (() => {
-      const nav = [...document.querySelectorAll('.header-nav a[href^="#"]')];
+      const nav = [...document.querySelectorAll('.header-nav a[data-section]')];
       const header = document.querySelector('.site-head');
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       const setActive = (id) => {
         for (const link of nav) {
-          const active = link.getAttribute('href') === `#${id}`;
+          const active = link.dataset.section === id;
           link.classList.toggle('active', active);
           if (active) link.setAttribute('aria-current', 'location');
           else link.removeAttribute('aria-current');
@@ -79,8 +80,9 @@
           event.preventDefault();
           const offset = id === 'top' ? 0 : header.getBoundingClientRect().height + 16;
           const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
-          setActive(id);
-          window.scrollTo({ top, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+          window.scrollTo({ top, behavior: 'instant' });
+          if (id === 'atlas-feature') target.focus({ preventScroll: true });
+          setActive(id === 'top' ? 'atlas-feature' : id);
         });
       }
       let ticking = false;
@@ -89,16 +91,23 @@
         ticking = true;
         requestAnimationFrame(() => {
           const threshold = header.getBoundingClientRect().height + 36;
-          let active = 'top';
+          let active = 'atlas-feature';
+          let closest = -1;
           for (const link of nav) {
-            const id = link.getAttribute('href').slice(1);
-            if (id !== 'top' && document.getElementById(id).getBoundingClientRect().top <= threshold) active = id;
+            const id = link.dataset.section;
+            const target = document.getElementById(id);
+            const top = target.getBoundingClientRect().top;
+            const documentTop = top + window.scrollY;
+            if (top <= threshold && documentTop > closest) {
+              active = id;
+              closest = documentTop;
+            }
           }
           setActive(active);
           ticking = false;
         });
       }, { passive: true });
-      setActive('top');
+      setActive('atlas-feature');
     })();
   </script>
 </body>
