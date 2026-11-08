@@ -12,5 +12,7 @@ declare namespace Cloudflare {
     REFRESH_TOKEN?: string;
     SUMMARY_BACKFILL_TOKEN?: string;
     MCP_OWNER_EMAIL?: string;
+    MIGRATION_EXPORT_TOKEN?: string;
+    MIGRATION_EXPORT_UNTIL?: string;
   }
 }
