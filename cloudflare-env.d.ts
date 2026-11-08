@@ -14,5 +14,6 @@ declare namespace Cloudflare {
     MCP_OWNER_EMAIL?: string;
     MIGRATION_EXPORT_TOKEN?: string;
     MIGRATION_EXPORT_UNTIL?: string;
+    SELF_HOSTED_PERSONAL_MODE?: string;
   }
 }

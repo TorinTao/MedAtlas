@@ -181,10 +181,12 @@ export default function AtlasApp({
   user,
   signInPath,
   signOutPath,
+  personalMode = false,
 }: {
   user: { name: string; id: string } | null;
   signInPath: string;
   signOutPath: string;
+  personalMode?: boolean;
 }) {
   const [section, setSection] = useState<Section>("atlas");
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -1743,7 +1745,12 @@ export default function AtlasApp({
             )}
           </div>
           <div className="top-actions">
-            {user ? (
+            {user && personalMode ? (
+              <div className="account-pill" title="个人展示工作区">
+                <span>{user.name.slice(0, 1).toUpperCase()}</span>
+                {user.name}
+              </div>
+            ) : user ? (
               <a
                 className="account-pill"
                 href={signOutPath}

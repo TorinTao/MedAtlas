@@ -42,6 +42,6 @@ for (const [directory, info] of visited) {
   await cp(directory, destination, { recursive: true, dereference: true });
 }
 await writeFile(join(stage, "runtime-manifest.json"), JSON.stringify({ platform: "linux-x64-glibc", createdAt: new Date().toISOString(), packages: [...visited.values()] }, null, 2));
-const result = spawnSync("tar", ["-czf", output, "-C", stage, "node_modules", "runtime-manifest.json"], { stdio: "inherit", env: { ...process.env, GZIP: "-1" } });
+const result = spawnSync("tar", ["-I", "gzip -1", "-cf", output, "-C", stage, "node_modules", "runtime-manifest.json"], { stdio: "inherit" });
 if (result.status !== 0) process.exit(result.status || 1);
 console.log(JSON.stringify({ archive: output, packages: visited.size, compressedMiB: Math.round((await stat(output)).size / 1048576) }));
