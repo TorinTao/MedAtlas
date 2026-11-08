@@ -1,6 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { allowedRequest, publicRouteError, workerHeaders } from "../deployment/self-host/gateway.mjs";
+import { allowedRequest, publicRouteError, requestUser, workerHeaders } from "../deployment/self-host/gateway.mjs";
+
+test("public visitors never inherit the migrated owner's private workspace", () => {
+  const owner = { userId: "original-owner", email: "torin@localhost", name: "torin" };
+  assert.equal(requestUser({ mode: "ssh-personal", user: owner }), owner);
+  const demo = requestUser({ mode: "public-demo", user: owner });
+  assert.notEqual(demo.userId, owner.userId);
+  assert.equal(demo.name, "演示访客");
+  const headers = workerHeaders({ "oai-authenticated-user-id": owner.userId }, demo);
+  assert.equal(headers.get("oai-authenticated-user-id"), "medatlas-public-demo");
+});
 
 test("public demo accepts external navigation but not cross-site API calls", () => {
   const check = (headers, url = "/", method = "GET") => allowedRequest({ headers, url, method }, 5180, "http://39.106.14.223:5180");

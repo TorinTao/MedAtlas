@@ -30,6 +30,13 @@ export function publicRouteError(pathname, method) {
   return null;
 }
 
+export function requestUser(config) {
+  // Public requests must never inherit the migrated owner's private workspace.
+  return config.mode === "public-demo"
+    ? { userId: "medatlas-public-demo", email: "demo@localhost", name: "演示访客" }
+    : config.user;
+}
+
 export function workerHeaders(incoming, user) {
   const result = new Headers();
   for (const [key, value] of Object.entries(incoming)) {

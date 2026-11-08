@@ -2,7 +2,7 @@ import http from "node:http";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createRuntime, loadConfig } from "./runtime.mjs";
-import { allowedRequest, publicRouteError, workerHeaders } from "./gateway.mjs";
+import { allowedRequest, publicRouteError, requestUser, workerHeaders } from "./gateway.mjs";
 
 const config = await loadConfig();
 const publicDemo = config.mode === "public-demo";
@@ -41,7 +41,7 @@ const server = http.createServer(async (request, response) => {
       callback(size > limit ? new Error("Request body too large") : null, chunk);
     } });
     const hasBody = request.method !== "GET" && request.method !== "HEAD";
-    const forwardedHeaders = workerHeaders(request.headers, config.user);
+    const forwardedHeaders = workerHeaders(request.headers, requestUser(config));
     forwardedHeaders.set("cf-connecting-ip", request.socket.remoteAddress || "local");
     const result = await runtime.dispatchFetch(url.href, {
       method: request.method,
