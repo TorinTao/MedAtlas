@@ -9,30 +9,19 @@
     :root{color-scheme:dark;--bg:#071923;--panel:#0d2730;--line:#24414a;--text:#ebf6f3;--muted:#a4bdc0;--mint:#8ce7c7;--gold:#e7c986;--blue:#8eb8ec}
     *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.7}
     a{color:inherit}a:focus-visible{outline:2px solid var(--gold);outline-offset:4px}button{font:inherit}
-    .wrap{width:min(1140px,calc(100% - 44px));margin:auto}.site-head{border-bottom:1px solid var(--line);background:#081b24e8}.site-head .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0}.brand{display:flex;align-items:center;gap:13px;text-decoration:none;font-size:20px;font-weight:800;letter-spacing:-.03em}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border:1px solid #4c9e99;border-radius:10px;color:var(--mint);font-size:23px}.head-link{color:var(--muted);text-decoration:none;font-size:14px}.head-link:hover{color:var(--text)}
+    .wrap{width:min(1140px,calc(100% - 44px));margin:auto}
     .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(circle at 69% 30%,#113c49 0%,transparent 40%),linear-gradient(135deg,#092631,#071923 70%)}.hero .wrap{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(330px,.97fr);gap:50px;align-items:center;min-height:600px;padding:78px 0 82px}.eyebrow{font-size:12px;letter-spacing:.19em;font-weight:800;color:var(--mint);text-transform:uppercase}.hero h1{font-size:clamp(45px,6vw,82px);letter-spacing:-.055em;line-height:1.14;margin:19px 0 20px}.hero h1 em{font-style:normal;color:var(--mint)}.lead{font-size:18px;color:#c9d9d9;max-width:38rem;margin:0 0 33px}.actions{display:flex;flex-wrap:wrap;gap:12px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 20px;border:1px solid #6fc9b0;border-radius:9px;background:var(--mint);color:#06232b;text-decoration:none;font-weight:800}.btn:hover{background:#b1f3dc}.btn.secondary{background:transparent;color:var(--text);border-color:#64838b}.btn.secondary:hover{background:#1c3841}.note{display:block;color:var(--muted);font-size:12px;margin-top:16px}
     .atlas{height:390px;position:relative;border:1px solid #2a5360;border-radius:24px;background:radial-gradient(circle at 53% 47%,#174253 0%,#08222f 52%,#061821 100%);box-shadow:0 30px 70px #0005;overflow:hidden}.atlas:before,.atlas:after{content:"";position:absolute;inset:0;pointer-events:none}.atlas:before{background:repeating-linear-gradient(0deg,transparent 0 45px,#acd5d512 46px 47px),repeating-linear-gradient(90deg,transparent 0 46px,#acd5d50f 47px 48px);transform:perspective(500px) rotateX(58deg) scale(1.8) translateY(35%);transform-origin:center bottom}.atlas:after{background:linear-gradient(90deg,#071923cc,transparent 22%,transparent 75%,#071923a6)}.axis{position:absolute;left:8%;bottom:8%;right:7%;color:#8bb3bb;font-size:11px;letter-spacing:.08em;z-index:2;display:flex;justify-content:space-between}.star{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 5px 1px currentColor,0 0 18px 2px currentColor;color:#d7bd79}.star.mint{background:var(--mint);color:#74d4c2}.star.blue{background:var(--blue);color:#86aee3}.star.lg{width:7px;height:7px}.star.sm{width:3px;height:3px}.atlas-label{position:absolute;left:7%;top:8%;z-index:2;padding:6px 9px;border:1px solid #426e78;border-radius:5px;color:#bad7d5;background:#0a2a36bd;font-size:11px;letter-spacing:.12em}
     section.content{padding:76px 0}section.content+.content{border-top:1px solid var(--line)}.section-head{max-width:720px;margin-bottom:34px}.section-head h2{font-size:clamp(29px,3.7vw,43px);letter-spacing:-.04em;line-height:1.25;margin:10px 0}.section-head p{color:var(--muted);margin:0}.steps,.features{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{border:1px solid var(--line);background:linear-gradient(160deg,#12313b,#0b232c);border-radius:14px;padding:24px;min-height:204px}.num{display:block;color:var(--mint);font-size:12px;font-weight:800;letter-spacing:.12em}.card h3{font-size:19px;margin:24px 0 8px}.card p{color:var(--muted);font-size:14px;margin:0}.features{grid-template-columns:repeat(3,1fr)}.features .card{min-height:175px}.features .card h3{margin-top:5px}.split{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{border:1px solid var(--line);border-radius:15px;padding:30px;background:#0b252e}.panel h3{font-size:21px;margin:0 0 14px}.panel p,.panel li{color:var(--muted)}.panel ul{padding-left:20px;margin:0}.panel li+li{margin-top:8px}.source{color:var(--mint)}.callout{border-left:3px solid var(--gold);background:#162c30;padding:18px 22px;color:#e9ddbb;border-radius:0 9px 9px 0;margin-top:18px}.outro{padding:54px 0 80px;border-top:1px solid var(--line);text-align:center;background:radial-gradient(circle at 50% 0%,#164047,transparent 63%)}.outro h2{font-size:clamp(30px,4vw,47px);line-height:1.25;margin:0 0 16px}.outro p{color:var(--muted);margin:0 auto 26px;max-width:640px}.outro .actions{justify-content:center}.footer{border-top:1px solid var(--line);padding:18px 0;color:#92adb2;font-size:12px}.footer .wrap{display:flex;justify-content:space-between;gap:16px}
     @media(max-width:900px){.hero .wrap{grid-template-columns:1fr;gap:35px;min-height:auto;padding:64px 0}.atlas{height:300px}.steps,.features{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:580px){.wrap{width:min(100% - 32px,1140px)}.hero h1{font-size:45px}.lead{font-size:16px}.atlas{height:250px}.steps,.features,.split{grid-template-columns:1fr}.card{min-height:0}.site-head .wrap{padding:15px 0}.head-link{font-size:12px}.footer .wrap{display:block}}
+    @media(max-width:580px){.wrap{width:min(100% - 32px,1140px)}.hero h1{font-size:45px}.lead{font-size:16px}.atlas{height:250px}.steps,.features,.split{grid-template-columns:1fr}.card{min-height:0}.footer .wrap{display:block}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
     /* Match the live MedAtlas palette: light workspace, dark research atlas. */
     :root{color-scheme:light;--bg:#f6f7f4;--panel:#fff;--line:#e2e8e7;--text:#172b35;--muted:#6c7d83;--mint:#168783;--gold:#c19d6b;--blue:#7c9fd6}
     body{background:var(--bg);color:var(--text);font-family:Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
     .wrap{width:min(1240px,calc(100% - 48px))}
-    .site-head{position:sticky;top:0;z-index:10;background:#fffffff2;border-bottom-color:#dce9e3;box-shadow:0 7px 25px #1d4c4010;backdrop-filter:blur(16px)}
-    .site-head .wrap{display:grid;grid-template-columns:minmax(170px,1fr) auto minmax(170px,1fr);gap:24px;align-items:center;padding:13px 0}
-    .brand{gap:10px;color:#315f58;font-size:18px;line-height:1.1}.brand-name small{display:block;margin-top:5px;color:#668e82;font-size:8px;font-weight:600;letter-spacing:.15em}
-    .brand-mark{position:relative;width:36px;height:36px;flex:none;border:1px solid #d4e9dc;border-radius:11px;background:#eaf5ef;color:transparent;font-size:0}
-    .brand-mark:before,.brand-mark:after,.brand-mark span{content:"";position:absolute;left:7px;top:7px;width:20px;height:20px;border:1.4px solid #6a9e8f;border-radius:50%;transform:rotate(50deg) scaleX(.5)}
-    .brand-mark:after{transform:rotate(-50deg) scaleX(.5)}.brand-mark span{transform:rotate(90deg) scaleX(.5)}
-    .header-nav{display:flex;gap:4px;padding:5px;border:1px solid #e1ebe5;border-radius:13px;background:#f4f8f5;box-shadow:inset 0 1px 2px #254b3410}
-    .header-nav a{padding:9px 15px;border:1px solid transparent;border-radius:8px;color:#496c64;text-decoration:none;font-size:12px;font-weight:650;white-space:nowrap}
-    .header-nav a:hover{background:#e8f1ed;color:#30675e}.header-nav a.active{border-color:#c9e3d5;background:#fff;color:#176e60;box-shadow:0 2px 8px #1d6a4a16}
-    #how,#features,#cloud,#atlas-feature{scroll-margin-top:110px}
-    #atlas-feature:focus{outline:2px solid #5ba697;outline-offset:3px}
+    #how{scroll-margin-top:16px}
     .feature-link{display:inline-flex;margin-top:13px;color:#176e69;font-size:12px;font-weight:750;text-decoration:none}.feature-link:hover{text-decoration:underline}
-    .head-link{justify-self:end;padding:9px 12px;border:1px solid #d5e5db;border-radius:8px;background:#fff;color:#416e64;font-size:11px;font-weight:700}.head-link:hover{background:#e8f4ef;color:#176e60}
     .hero{border-bottom:0;background:radial-gradient(circle at 82% 34%,#d9ebe633,transparent 37%),var(--bg)}
     .hero .wrap{grid-template-columns:minmax(0,.91fr) minmax(390px,1.09fr);gap:42px;min-height:490px;padding:56px 0 54px}
     .eyebrow{color:#17847e;font-size:10px;letter-spacing:.17em}.hero h1{font-size:clamp(42px,4.5vw,66px);font-weight:720}.hero h1 em{color:#168783}.lead{font-size:14px;line-height:1.9;color:#66787d}.note{color:#7d8e8e}
@@ -46,68 +35,30 @@
     .steps,.features{gap:14px}.card{min-height:180px;padding:22px;border:1px solid #dfe7e4;border-radius:10px;background:#fff;box-shadow:0 4px 16px #173f4305}.card h3{margin:16px 0 8px;font-size:17px;color:#1a383e}.card p{font-size:12px;line-height:1.75;color:#708186}.num{font-size:10px;color:#17847e}.features .card{min-height:154px}.features .card h3{margin:0 0 10px}
     .panel{border:1px solid #dfe7e4;border-radius:11px;background:#fff;box-shadow:0 4px 16px #173f4305}.panel h3{font-size:19px;color:#1a383e}.panel p,.panel li{color:#6c7d83;font-size:13px}.source{color:#176e69}.callout{border-left-color:#5ba697;border-radius:0 8px 8px 0;background:#e9f5ef;color:#346c61;font-size:13px}
     .outro{border-top-color:var(--line);background:#e9f2ee}.outro h2{font-size:clamp(28px,3.5vw,39px)}.outro p{color:#6c7d83;font-size:13px}.footer{border-top-color:#d6e6de;color:#7b8d8c;background:#fff}
-    @media(max-width:1000px){.site-head .wrap{grid-template-columns:1fr auto}.header-nav{grid-column:1/-1;grid-row:2;justify-content:center}.head-link{grid-column:2;grid-row:1}.hero .wrap{grid-template-columns:1fr;min-height:auto;padding:47px 0}.atlas{height:310px}.steps,.features{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:580px){.wrap{width:calc(100% - 32px)}.site-head .wrap{gap:9px;padding:11px 0}.brand{font-size:16px}.brand-name small{font-size:7px}.head-link{padding:8px;font-size:10px}.header-nav{width:100%;overflow-x:auto;justify-content:flex-start}.header-nav a{padding:8px 10px;font-size:10px}.hero .wrap{gap:25px;padding:35px 0 42px}.hero h1{font-size:40px}.lead{font-size:13px}.atlas{height:260px}.steps,.features,.split{grid-template-columns:1fr}.card{min-height:auto}.panel{padding:23px}section.content{padding:43px 0}.footer .wrap{display:grid;gap:4px}}
+    @media(max-width:1000px){.hero .wrap{grid-template-columns:1fr;min-height:auto;padding:47px 0}.atlas{height:310px}.steps,.features{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:580px){.wrap{width:calc(100% - 32px)}.hero .wrap{gap:25px;padding:35px 0 42px}.hero h1{font-size:40px}.lead{font-size:13px}.atlas{height:260px}.steps,.features,.split{grid-template-columns:1fr}.card{min-height:auto}.panel{padding:23px}section.content{padding:43px 0}.footer .wrap{display:grid;gap:4px}}
   </style>
 </head>
 <body>
-  <header class="site-head"><div class="wrap"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span></span><span class="brand-name">MedAtlas<small>RESEARCH INTELLIGENCE</small></span></a><nav class="header-nav" aria-label="作品导航"><a class="active" data-section="atlas-feature" href="#atlas-feature">研究星图</a><a data-section="how" href="#how">工作方式</a><a data-section="features" href="#features">功能模块</a><a data-section="cloud" href="#cloud">云平台分工</a></nav><a class="head-link" href="https://github.com/TorinTao/MedAtlas" target="_blank" rel="noopener noreferrer">查看源码 ↗</a></div></header>
   <main id="top">
     <div class="hero"><div class="wrap"><div><div class="eyebrow">医学 AI · 文献研究 · 研究选题</div><h1>从论文海洋，<br>找到<em>下一步研究</em>。</h1><p class="lead">MedAtlas 把分散的医学 AI 论文整理成可探索的研究地图，帮你读懂已有工作，并提出能够继续验证的研究问题。</p><div class="actions"><a class="btn" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">打开完整网站 ↗</a><a class="btn secondary" href="#how">了解工作方式 ↓</a></div><small class="note">完整网站承载实时检索、登录与个人工作区；本页为 Yours 作品展示入口。</small></div><div class="atlas" role="img" aria-label="示意图：不同颜色的小星点沿时间轴分布，代表不同方向的研究论文"><span class="atlas-label">RESEARCH ATLAS · 研究星图</span><span class="star lg" style="left:16%;top:71%"></span><span class="star mint" style="left:25%;top:49%"></span><span class="star blue sm" style="left:32%;top:67%"></span><span class="star" style="left:39%;top:35%"></span><span class="star mint sm" style="left:43%;top:73%"></span><span class="star lg blue" style="left:48%;top:54%"></span><span class="star sm" style="left:54%;top:27%"></span><span class="star mint" style="left:59%;top:62%"></span><span class="star" style="left:62%;top:45%"></span><span class="star blue sm" style="left:67%;top:24%"></span><span class="star lg" style="left:73%;top:38%"></span><span class="star mint sm" style="left:79%;top:59%"></span><span class="star blue" style="left:83%;top:29%"></span><span class="star sm" style="left:88%;top:49%"></span><span class="axis"><span>早期工作</span><span>发表时间 →</span><span>近期研究</span></span></div></div></div>
     <section class="content" id="how"><div class="wrap"><div class="section-head"><div class="eyebrow">01 / 从问题到方案</div><h2>一条可以追溯的研究路径</h2><p>为刚进入医学 AI 方向的研究者，减少搜集和初读论文的重复劳动。</p></div><div class="steps"><div class="card"><span class="num">STEP 01</span><h3>输入研究方向</h3><p>从医学影像与病历文本 Agent 出发，也可以探索更具体的子方向。</p></div><div class="card"><span class="num">STEP 02</span><h3>查找与核验论文</h3><p>跨论文来源检索，再读取公开页面，保留可查看的来源与获取时间。</p></div><div class="card"><span class="num">STEP 03</span><h3>看脉络、读证据</h3><p>用研究星图查看发展过程，阅读中文概述和标明依据的论文解读。</p></div><div class="card"><span class="num">STEP 04</span><h3>形成研究选题</h3><p>提出研究空白、假设和实验方案，并附上关联论文供继续核对。</p></div></div></div></section>
-    <section class="content" id="features"><div class="wrap"><div class="section-head"><div class="eyebrow">02 / 已实现的能力</div><h2>把检索、理解和行动放在一起</h2></div><div class="features"><div class="card" id="atlas-feature" tabindex="-1"><h3>研究星图</h3><p>按时间与研究方向探索论文，打开节点查看原文链接与相关工作。</p><a class="feature-link" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">打开完整星图 ↗</a></div><div class="card"><h3>中文阅读</h3><p>显示中文概述、摘要译文与结构化精读，并区分摘要和开放全文依据。</p></div><div class="card"><h3>Ideas 工作台</h3><p>补查相近工作后逐张生成研究方案，提供证据链、可行性与实验要点。</p></div><div class="card"><h3>代码仓库评价</h3><p>检查公开 README、许可证、依赖、代码入口等，并说明尚未实际复现。</p></div><div class="card"><h3>个人工作区</h3><p>登录后收藏论文、导入论文链接或 PDF、标记已阅读并保存选题。</p></div><div class="card"><h3>方向切换</h3><p>记录已探索的研究方向，可恢复以往的论文集合继续阅读。</p></div></div></div></section>
+    <section class="content" id="features"><div class="wrap"><div class="section-head"><div class="eyebrow">02 / 已实现的能力</div><h2>把检索、理解和行动放在一起</h2></div><div class="features"><div class="card"><h3>研究星图</h3><p>按时间与研究方向探索论文，打开节点查看原文链接与相关工作。</p><a class="feature-link" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">打开完整星图 ↗</a></div><div class="card"><h3>中文阅读</h3><p>显示中文概述、摘要译文与结构化精读，并区分摘要和开放全文依据。</p></div><div class="card"><h3>Ideas 工作台</h3><p>补查相近工作后逐张生成研究方案，提供证据链、可行性与实验要点。</p></div><div class="card"><h3>代码仓库评价</h3><p>检查公开 README、许可证、依赖、代码入口等，并说明尚未实际复现。</p></div><div class="card"><h3>个人工作区</h3><p>登录后收藏论文、导入论文链接或 PDF、标记已阅读并保存选题。</p></div><div class="card"><h3>方向切换</h3><p>记录已探索的研究方向，可恢复以往的论文集合继续阅读。</p></div></div></div></section>
     <section class="content" id="cloud"><div class="wrap"><div class="section-head"><div class="eyebrow">03 / 云平台与人工</div><h2>各自完成擅长的环节</h2></div><div class="split"><div class="panel"><h3>云端负责</h3><ul><li><strong class="source">Lexmount Web Fetch</strong> 读取并核验公开论文页面，留下来源记录。</li><li><strong class="source">DeepSeek</strong> 辅助翻译、论文解读和研究方案草拟。</li><li><strong class="source">Sites</strong> 运行完整网站、保存文献数据及用户的私有工作区。</li></ul></div><div class="panel"><h3>研究者负责</h3><ul><li>决定研究方向，选择值得深入阅读的论文。</li><li>返回原文核对关键事实、数据使用条件和代码仓库内容。</li><li>通过真正的实验检验研究假设，判断结果是否有学术或临床意义。</li></ul></div></div><div class="callout">研究选题是待验证的假设；代码仓库评价是静态检查。技术指标不能直接当作临床效果。</div></div></section>
   </main>
   <div class="outro"><div class="wrap"><h2>从一篇论文，走向下一个问题。</h2><p>打开完整网站，亲自输入研究方向，探索文献并生成有来源的研究思路。</p><div class="actions"><a class="btn" href="https://medatlas-research-2026.zhouxiuzhuang.chatgpt.site" target="_blank" rel="noopener noreferrer">体验 MedAtlas ↗</a><a class="btn secondary" href="https://github.com/TorinTao/MedAtlas" target="_blank" rel="noopener noreferrer">查看 GitHub 源码 ↗</a></div></div></div>
   <footer class="footer"><div class="wrap"><span>MedAtlas · 医学 AI 文献地图与研究选题助手</span><span>仅供科研探索，不提供临床诊断建议。</span></div></footer>
   <script>
     (() => {
-      const nav = [...document.querySelectorAll('.header-nav a[data-section]')];
-      const header = document.querySelector('.site-head');
-      const setActive = (id) => {
-        for (const link of nav) {
-          const active = link.dataset.section === id;
-          link.classList.toggle('active', active);
-          if (active) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
-        }
-      };
       for (const link of document.querySelectorAll('a[href^="#"]')) {
         link.addEventListener('click', (event) => {
           const id = link.getAttribute('href').slice(1);
           const target = document.getElementById(id);
           if (!target) return;
           event.preventDefault();
-          const offset = id === 'top' ? 0 : header.getBoundingClientRect().height + 16;
-          const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
-          window.scrollTo({ top, behavior: 'instant' });
-          if (id === 'atlas-feature') target.focus({ preventScroll: true });
-          setActive(id === 'top' ? 'atlas-feature' : id);
+          target.scrollIntoView({ behavior: 'instant', block: 'start' });
         });
       }
-      let ticking = false;
-      window.addEventListener('scroll', () => {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(() => {
-          const threshold = header.getBoundingClientRect().height + 36;
-          let active = 'atlas-feature';
-          let closest = -1;
-          for (const link of nav) {
-            const id = link.dataset.section;
-            const target = document.getElementById(id);
-            const top = target.getBoundingClientRect().top;
-            const documentTop = top + window.scrollY;
-            if (top <= threshold && documentTop > closest) {
-              active = id;
-              closest = documentTop;
-            }
-          }
-          setActive(active);
-          ticking = false;
-        });
-      }, { passive: true });
-      setActive('atlas-feature');
     })();
   </script>
 </body>
