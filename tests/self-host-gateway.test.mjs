@@ -25,7 +25,7 @@ test("public demo accepts external navigation but not cross-site API calls", () 
 });
 
 test("public demo protects provider settings, private PDFs and administrative routes", () => {
-  for (const path of ["/api/admin/migration", "/api/%61dmin/refresh", "/api/admin/summaries"]) assert.equal(publicRouteError(path, "POST").status, 404);
+  for (const path of ["/api/admin/migration", "/api/%61dmin/refresh", "/api/admin/summaries", "/mcp"]) assert.equal(publicRouteError(path, "POST").status, 404);
   for (const path of ["/api/upload", "/api/upload/abc", "/api/upload/abc/analyze"]) assert.equal(publicRouteError(path, "GET").status, 403);
   for (const method of ["POST", "PUT", "DELETE"]) assert.equal(publicRouteError("/api/settings/ai", method).status, 403);
   assert.equal(publicRouteError("/api/%2561dmin/refresh", "POST").status, 400);

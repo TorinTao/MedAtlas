@@ -15,6 +15,7 @@ const suites = {
   ],
   repositories: ["tests/modules/repositories.test.ts"],
   ideas: [
+    "tests/browser-id.test.mjs",
     "tests/modules/ideas.test.ts",
     "tests/idea-evidence.test.ts",
     "tests/idea-schema.test.ts",

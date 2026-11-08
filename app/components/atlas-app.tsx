@@ -3,6 +3,7 @@
 import { IdeaCard } from "../../modules/ideas/ui/idea-card";
 import { RepoEvaluationView } from "../../modules/repositories/ui/evaluation";
 import { PaperSummary } from "../../modules/reading/ui/paper-summary";
+import { browserId } from "../../shared/browser-id";
 
 import {
   RESEARCH_SCOPE_KEY,
@@ -1031,7 +1032,7 @@ export default function AtlasApp({
           ]
             .slice(-20)
             .map(({ title, gap, hypothesis }) => ({ title, gap, hypothesis }));
-          const progressId = crypto.randomUUID();
+          const progressId = browserId();
           let active = true;
           let polling = false;
           const progressTimer = window.setInterval(async () => {

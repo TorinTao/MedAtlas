@@ -22,7 +22,7 @@ export function publicRouteError(pathname, method) {
   try { path = decodeURIComponent(pathname); } catch { return { status: 400, error: "无效路径" }; }
   // Reject ambiguous escaped paths before forwarding to the application router.
   if (/[\\%]/.test(path)) return { status: 400, error: "无效路径" };
-  if (/^\/api\/admin(?:\/|$)/.test(path)) return { status: 404, error: "Not found" };
+  if (/^\/api\/admin(?:\/|$)/.test(path) || /^\/mcp(?:\/|$)/.test(path)) return { status: 404, error: "Not found" };
   if (/^\/api\/upload(?:\/|$)/.test(path)) return { status: 403, error: "公开演示不开放私人 PDF 上传与读取" };
   if (/^\/api\/settings(?:\/|$)/.test(path) && !["GET", "HEAD"].includes(method))
     return { status: 403, error: "公开演示使用站点配置，密钥只能在服务器上设置" };
