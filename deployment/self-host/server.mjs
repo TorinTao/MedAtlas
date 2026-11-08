@@ -2,9 +2,10 @@ import http from "node:http";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createRuntime, loadConfig } from "./runtime.mjs";
-import { allowedRequest, workerHeaders } from "./gateway.mjs";
+import { allowedRequest, publicRouteError, workerHeaders } from "./gateway.mjs";
 
 const config = await loadConfig();
+const publicDemo = config.mode === "public-demo";
 const runtime = await createRuntime(config);
 const server = http.createServer(async (request, response) => {
   const fail = (status, message) => {
@@ -12,8 +13,15 @@ const server = http.createServer(async (request, response) => {
     response.end(message);
   };
   try {
-    if (!allowedRequest(request, config.port)) return fail(403, "此实例只允许通过 SSH 隧道访问。");
+    if (!allowedRequest(request, config.port, publicDemo ? config.publicOrigin : undefined)) return fail(403, "请求来源不被允许。");
     const url = new URL(request.url, `http://${request.headers.host}`);
+    if (publicDemo) {
+      const denied = publicRouteError(url.pathname, request.method);
+      if (denied) {
+        response.writeHead(denied.status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+        return response.end(JSON.stringify({ error: denied.error }));
+      }
+    }
     if (["/signin-with-chatgpt", "/signout-with-chatgpt", "/callback"].includes(url.pathname)) {
       response.writeHead(303, { Location: "/", "Cache-Control": "no-store" });
       return response.end();
@@ -33,9 +41,11 @@ const server = http.createServer(async (request, response) => {
       callback(size > limit ? new Error("Request body too large") : null, chunk);
     } });
     const hasBody = request.method !== "GET" && request.method !== "HEAD";
+    const forwardedHeaders = workerHeaders(request.headers, config.user);
+    forwardedHeaders.set("cf-connecting-ip", request.socket.remoteAddress || "local");
     const result = await runtime.dispatchFetch(url.href, {
       method: request.method,
-      headers: workerHeaders(request.headers, config.user),
+      headers: forwardedHeaders,
       ...(hasBody ? { body: Readable.toWeb(request.pipe(bounded)), duplex: "half" } : {}),
     });
     const headers = Object.fromEntries(result.headers);
@@ -52,7 +62,8 @@ const server = http.createServer(async (request, response) => {
   }
 });
 server.requestTimeout = 600_000;
-server.listen(config.port, "127.0.0.1", () => console.log(`MedAtlas ready on 127.0.0.1:${config.port} (SSH personal mode)`));
+const host = publicDemo ? "0.0.0.0" : "127.0.0.1";
+server.listen(config.port, host, () => console.log(`MedAtlas ready on ${host}:${config.port} (${config.mode})`));
 for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => {
   server.close(async () => { await runtime.dispose(); process.exit(0); });
   setTimeout(() => process.exit(1), 15_000).unref();

@@ -8,11 +8,16 @@ export const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export async function loadConfig() {
   const filename = process.env.MEDATLAS_CONFIG || join(homedir(), ".config/medatlas/config.json");
   const config = JSON.parse(await readFile(filename, "utf8"));
-  if (config.mode !== "ssh-personal" || !config.user?.userId || !config.user?.email)
+  if (!["ssh-personal", "public-demo"].includes(config.mode) || !config.user?.userId || !config.user?.email)
     throw new Error("Personal deployment configuration is incomplete");
   if (!Number.isInteger(config.port) || config.port < 1024 || config.port > 65535)
     throw new Error("Invalid listen port");
   if (!config.statePath?.startsWith("/")) throw new Error("Use an absolute statePath");
+  if (config.mode === "public-demo") {
+    const origin = new URL(config.publicOrigin);
+    if (origin.protocol !== "http:" || origin.origin !== config.publicOrigin || origin.port !== String(config.port))
+      throw new Error("Use an explicit HTTP public origin matching the listen port");
+  }
   return config;
 }
 
