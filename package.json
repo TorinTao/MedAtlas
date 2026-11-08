@@ -15,12 +15,15 @@
     "test": "node scripts/quality/check-architecture.mjs && node scripts/quality/test-modules.mjs",
     "test:module": "node scripts/quality/test-modules.mjs",
     "check:architecture": "node scripts/quality/check-architecture.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "serve:self-host": "node deployment/self-host/server.mjs",
+    "test:self-host": "node --import tsx --test tests/self-host-gateway.test.mjs tests/migration-access.test.ts"
   },
   "dependencies": {
     "@react-three/fiber": "^9.3.0",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.31.0",
+    "miniflare": "4.20260515.0",
     "next": "16.3.4",
     "pdfjs-dist": "^5.4.0",
     "react": "19.2.6",
