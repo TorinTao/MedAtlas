@@ -38,7 +38,11 @@ export async function createRuntime(config) {
     d1Persist: join(config.statePath, "d1"),
     r2Buckets: { BUCKET: "medatlas" },
     r2Persist: join(config.statePath, "r2"),
-    assets: { directory: join(root, "dist/client") },
+    assets: {
+      directory: join(root, "dist/client"),
+      binding: "ASSETS",
+      routerConfig: { has_user_worker: true },
+    },
     log: new Log(LogLevel.WARN),
   });
   await runtime.ready;
